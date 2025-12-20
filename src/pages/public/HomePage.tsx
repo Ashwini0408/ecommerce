@@ -1,5 +1,5 @@
 import Navbar from '../../layout/Navbar';
-import HeroSection from '../../home/HeroSection';
+import HeroSection from '../../components/home/HeroSection';
 
 const HomePage = () => {
   return (

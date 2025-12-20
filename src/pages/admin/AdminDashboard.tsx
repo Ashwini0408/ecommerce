@@ -14,9 +14,9 @@ import {
 import Navbar from '../../layout/Navbar';
 import AdminProducts from './AdminProducts';
 import AdminOrders from './AdminOrders';
-import { orderApi } from '../../../api/orderApi';
-import { appointmentApi } from '../../../api/appointmentApi';
-import { OrderStatistics, AppointmentStatistics } from '../../../types';
+import { orderApi } from '../../api/orderApi';
+import { appointmentApi } from '../../api/appointmentApi';
+import type { OrderStatistics, AppointmentStatistics } from '../../types';
 import toast from 'react-hot-toast';
 
 const AdminOverview = () => {

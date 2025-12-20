@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPackage, FiTruck, FiCheck, FiX, FiEye } from 'react-icons/fi';
-import { orderApi } from '../../../api/orderApi';
-import { Order } from '../../types';
+import { orderApi } from '../../api/orderApi';
+import type { Order } from '../../types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 

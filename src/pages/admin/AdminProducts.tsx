@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiImage } from 'react-icons/fi';
-import { productApi } from '../../../api/productApi';
-import { Product, CreateProductRequest } from '../../types';
+import { productApi } from '../../api/productApi';
+import type { Product, CreateProductRequest } from '../../types';
 import toast from 'react-hot-toast';
 
 const AdminProducts = () => {

@@ -1,5 +1,5 @@
 import axiosInstance from './axios';
-import {
+import type {
   Order,
   CreateOrderRequest,
   UpdateOrderStatusRequest,

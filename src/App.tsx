@@ -5,17 +5,17 @@ import { loadUserFromStorage } from './store/slices/authSlice';
 import { loadCartFromStorage } from './store/slices/cartSlice';
 
 // Public Pages
-import HomePage from './components/pages/public/HomePage';
-import LoginPage from './components/pages/auth/LoginPage';
-import SignUpPage from './components/pages/auth/SignUpPage';
-import ProductsPage from './components/pages/public/ProductsPage';
-import ProductDetailPage from './components/pages/public/ProductDetailPage';
-import CartPage from './components/pages/public/CartPage';
-import CheckoutPage from './components/pages/public/CheckoutPage';
+import HomePage from './pages/public/HomePage';
+import LoginPage from './pages/auth/LoginPage';
+import SignUpPage from './pages/auth/SignUpPage';
+import ProductsPage from './pages/public/ProductsPage';
+import ProductDetailPage from './pages/public/ProductDetailPage';
+import CartPage from './pages/public/CartPage';
+import CheckoutPage from './pages/public/CheckoutPage';
 
 // User & Admin Pages
-import UserDashboard from './components/pages/user/UserDashboard';
-import AdminDashboard from './components/pages/admin/AdminDashboard';
+import UserDashboard from './pages/user/UserDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
 const NotFound = () => <div className="p-8 text-center text-red-500">404 - Page Not Found</div>;

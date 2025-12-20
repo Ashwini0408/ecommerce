@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft } from 'react-icons/fi';
 import Navbar from '../../layout/Navbar';
-import { productApi } from '../../../api/productApi';
-import { Product } from '../../types';
-import { useAppDispatch } from '../../../hooks/useAuth';
-import { addToCart } from '../../../store/slices/cartSlice';
+import { productApi } from '../../api/productApi';
+import type { Product } from '../../types';
+import { useAppDispatch } from '../../hooks/useAuth';
+import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
 
 const ProductDetailPage = () => {

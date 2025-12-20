@@ -1,10 +1,15 @@
+import './index.css'; // make sure this line exists near the top
+
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [],
-  theme: {
-    extend: {
-         colors: {
-        primary: {
+    content: [
+        "./index.html",
+        "./src/**/*.{js,ts,jsx,tsx}",
+    ],
+    theme: {
+        extend: {
+            colors: {
+                primary: {
                     50: '#f0f9ff',
                     100: '#e0f2fe',
                     200: '#bae6fd',
@@ -30,8 +35,8 @@ export default {
                     900: '#0f172a',
                     950: '#020617',
                 }
-      },
-       fontFamily: {
+            },
+            fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
                 display: ['Outfit', 'Inter', 'sans-serif'],
             },
@@ -74,6 +79,5 @@ export default {
             }
         },
     },
-  plugins: [],
+    plugins: [],
 }
-

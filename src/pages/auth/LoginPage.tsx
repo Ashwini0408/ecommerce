@@ -1,21 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiMail, FiLock, FiUser, FiPhone, FiArrowRight } from 'react-icons/fi';
-import { useAuth } from '../../../hooks/useAuth';
-import { signup } from '../../../store/slices/authSlice';
+import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth';
+import { login } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
 
-const SignUpPage = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, dispatch } = useAuth();
+  const { isAuthenticated, isLoading, error, dispatch } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    phone: '',
   });
 
   useEffect(() => {
@@ -27,35 +24,17 @@ const SignUpPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.name || !formData.email || !formData.password) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+    if (!formData.email || !formData.password) {
+      toast.error('Please fill in all fields');
       return;
     }
 
     try {
-      await dispatch(
-        signup({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone || undefined,
-        })
-      ).unwrap();
-      toast.success('Account created successfully!');
+      await dispatch(login(formData)).unwrap();
+      toast.success('Login successful!');
       navigate('/');
     } catch (err: any) {
-      toast.error(err || 'Signup failed');
+      toast.error(err || 'Login failed');
     }
   };
 
@@ -96,7 +75,7 @@ const SignUpPage = () => {
         />
       </div>
 
-      {/* Sign Up Card */}
+      {/* Login Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -108,34 +87,15 @@ const SignUpPage = () => {
             <Link to="/">
               <h1 className="text-3xl font-display font-bold gradient-text mb-2">STYLISTE</h1>
             </Link>
-            <p className="text-dark-400">Create your account and start shopping</p>
+            <p className="text-dark-400">Welcome back! Please login to your account</p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Full Name *
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="John Doe"
-                  className="input-field pl-10"
-                  required
-                />
-                <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
-              </div>
-            </div>
-
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
               <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Email Address *
+                Email Address
               </label>
               <div className="relative">
                 <input
@@ -151,28 +111,10 @@ const SignUpPage = () => {
               </div>
             </div>
 
-            {/* Phone */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Phone Number
-              </label>
-              <div className="relative">
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="+1 (555) 000-0000"
-                  className="input-field pl-10"
-                />
-                <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
-              </div>
-            </div>
-
             {/* Password */}
             <div>
               <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Password *
+                Password
               </label>
               <div className="relative">
                 <input
@@ -183,49 +125,24 @@ const SignUpPage = () => {
                   placeholder="••••••••"
                   className="input-field pl-10"
                   required
-                  minLength={6}
                 />
                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
               </div>
             </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Confirm Password *
-              </label>
-              <div className="relative">
+            {/* Remember & Forgot */}
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center space-x-2 cursor-pointer">
                 <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="••••••••"
-                  className="input-field pl-10"
-                  required
+                  type="checkbox"
+                  className="accent-primary-500"
                 />
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
-              </div>
+                <span className="text-dark-300">Remember me</span>
+              </label>
+              <a href="#" className="text-primary-400 hover:text-primary-300 transition-colors">
+                Forgot password?
+              </a>
             </div>
-
-            {/* Terms */}
-            <label className="flex items-start space-x-2 cursor-pointer text-sm">
-              <input
-                type="checkbox"
-                className="accent-primary-500 mt-1"
-                required
-              />
-              <span className="text-dark-300">
-                I agree to the{' '}
-                <a href="#" className="text-primary-400 hover:text-primary-300">
-                  Terms & Conditions
-                </a>{' '}
-                and{' '}
-                <a href="#" className="text-primary-400 hover:text-primary-300">
-                  Privacy Policy
-                </a>
-              </span>
-            </label>
 
             {/* Submit Button */}
             <motion.button
@@ -235,7 +152,7 @@ const SignUpPage = () => {
               whileTap={{ scale: 0.98 }}
               className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
             >
-              <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
+              <span>{isLoading ? 'Logging in...' : 'Login'}</span>
               {!isLoading && <FiArrowRight />}
             </motion.button>
           </form>
@@ -247,12 +164,12 @@ const SignUpPage = () => {
             <div className="flex-1 border-t border-white/10"></div>
           </div>
 
-          {/* Login Link */}
+          {/* Sign Up Link */}
           <div className="text-center">
             <p className="text-dark-400">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
-                Login
+              Don't have an account?{' '}
+              <Link to="/signup" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
+                Sign Up
               </Link>
             </p>
           </div>
@@ -269,4 +186,4 @@ const SignUpPage = () => {
   );
 };
 
-export default SignUpPage;
+export default LoginPage;

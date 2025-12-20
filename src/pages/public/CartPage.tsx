@@ -2,13 +2,13 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
 import Navbar from '../../layout/Navbar';
-import { useAppSelector, useAppDispatch } from '../../../hooks/useAuth';
+import { useAppSelector, useAppDispatch } from '../../hooks/useAuth';
 import {
   removeFromCart,
   incrementQuantity,
   decrementQuantity,
   clearCart,
-} from '../../../store/slices/cartSlice';
+} from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
 
 const CartPage = () => {

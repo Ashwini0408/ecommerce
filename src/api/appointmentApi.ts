@@ -1,5 +1,5 @@
 import axiosInstance from './axios';
-import {
+import type {
   Appointment,
   CreateAppointmentRequest,
   UpdateAppointmentRequest,

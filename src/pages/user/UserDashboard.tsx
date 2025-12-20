@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiPackage, FiUser, FiCalendar, FiMapPin, FiTruck } from 'react-icons/fi';
 import Navbar from '../../layout/Navbar';
-import { useAuth } from '../../../hooks/useAuth';
-import { orderApi } from '../../../api/orderApi';
-import { appointmentApi } from '../../../api/appointmentApi';
-import { Order, Appointment } from '../../../types';
+import { useAuth } from '../../hooks/useAuth';
+import { orderApi } from '../../api/orderApi';
+import { appointmentApi } from '../../api/appointmentApi';
+import type { Order, Appointment } from '../../types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
