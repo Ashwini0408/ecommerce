@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiLock, FiMapPin } from 'react-icons/fi';
-import Navbar from '../../layout/Navbar';
+import Navbar from '../../components/layout/Navbar';
 import { useAppSelector, useAppDispatch } from '../../hooks/useAuth';
 import { useAuth } from '../../hooks/useAuth';
 import { clearCart } from '../../store/slices/cartSlice';

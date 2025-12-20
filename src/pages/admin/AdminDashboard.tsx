@@ -11,7 +11,7 @@ import {
   FiDollarSign,
   FiShoppingCart,
 } from 'react-icons/fi';
-import Navbar from '../../layout/Navbar';
+import Navbar from '../../components/layout/Navbar';
 import AdminProducts from './AdminProducts';
 import AdminOrders from './AdminOrders';
 import { orderApi } from '../../api/orderApi';

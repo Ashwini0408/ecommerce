@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiFilter, FiX } from 'react-icons/fi';
-import Navbar from '../../layout/Navbar';
-import ProductCard from '../../product/ProductCard';
+import Navbar from '../../components/layout/Navbar';
+import ProductCard from '../../components/product/ProductCard';
 import { productApi } from '../../api/productApi';
 import type { Product, ProductFilterRequest } from '../../types';
 import toast from 'react-hot-toast';

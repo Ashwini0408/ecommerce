@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiShoppingCart, FiUser, FiMenu, FiX, FiLogOut, FiSearch } from 'react-icons/fi';
-import { useAuth } from '../hooks/useAuth';
-import { useAppSelector } from '../hooks/useAuth';
-import { logout } from '../store/slices/authSlice';
+// import { useAuth } from '../hooks/useAuth';
+import useAuth from '../../hooks/useAuth';
+import { useAppSelector } from '../../hooks/useAuth';
+import { logout } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
 
 const Navbar = () => {

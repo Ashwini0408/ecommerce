@@ -2,10 +2,7 @@ import './index.css'; // make sure this line exists near the top
 
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
-    ],
+    content: [],
     theme: {
         extend: {
             colors: {

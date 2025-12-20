@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
-import Navbar from '../../layout/Navbar';
+import Navbar from '../../components/layout/Navbar';
 import { useAppSelector, useAppDispatch } from '../../hooks/useAuth';
 import {
   removeFromCart,

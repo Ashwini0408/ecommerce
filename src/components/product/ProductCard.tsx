@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiShoppingCart, FiHeart } from 'react-icons/fi';
-import type { Product } from '../types';
-import { useAppDispatch } from '../hooks/useAuth';
-import { addToCart } from '../store/slices/cartSlice';
+import type { Product } from '../../types';
+import { useAppDispatch } from '../../hooks/useAuth';
+import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
 
 interface ProductCardProps {
