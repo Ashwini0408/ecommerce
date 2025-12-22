@@ -41,8 +41,9 @@ export const productApi = {
   },
 
   // Create product (Admin only)
-  createProduct: async (productData: CreateProductRequest): Promise<Product> => {
-    const response = await axiosInstance.post<Product>('/products', productData);
+  createProduct: async (formData: FormData): Promise<Product> => {
+    // Note: We don't manually set Content-Type here; Axios sets 'multipart/form-data' automatically when it sees FormData
+    const response = await axiosInstance.post<Product>('/products', formData);
     return response.data;
   },
 
@@ -60,6 +61,11 @@ export const productApi = {
   // Deactivate product (Admin only)
   deactivateProduct: async (id: number): Promise<void> => {
     await axiosInstance.patch(`/products/${id}/deactivate`);
+  },
+
+  // Add this new method
+  activateProduct: async (id: number): Promise<void> => {
+    await axiosInstance.patch(`/products/${id}/activate`);
   },
 };
 
