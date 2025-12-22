@@ -1,14 +1,14 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiError } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.1.111:8090/api';
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
   headers: {
-    "Content-Type": "application/json",
+    // "Content-Type": "application/json",
     
     // 👇 THIS HEADER IS THE KEY FIX
     "ngrok-skip-browser-warning": "true",
@@ -16,19 +16,32 @@ const axiosInstance: AxiosInstance = axios.create({
 });
 
 // Request interceptor - Attach JWT token to every request
+// Request interceptor
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // 1. Get token
     const token = localStorage.getItem('authToken');
     
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // DEBUG LOGS (Check your Browser Console for these!)
+    console.log(`[Interceptor] Preparing ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`[Interceptor] Token in Storage:`, token ? "YES (Found)" : "NO (Null/Empty)");
+
+    // 2. Attach Token
+    if (token) {
+        // Ensure headers object exists
+        if (!config.headers) {
+            config.headers = new axios.AxiosHeaders();
+        }
+        
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log(`[Interceptor] Header Attached: Bearer ${token.substring(0, 10)}...`);
+    } else {
+        console.warn(`[Interceptor] ⚠️ Sending request WITHOUT token!`);
     }
     
-    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error: AxiosError) => {
-    console.error('[API Request Error]', error);
     return Promise.reject(error);
   }
 );

@@ -23,10 +23,20 @@ export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue:
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
+      console.log("[Thunk] 1. Calling API...");
       const response = await authApi.login(credentials);
       
+      console.log("[Thunk] 2. API Success!", response); // Check if 'token' is visible here
+
+      if (!response.token) {
+          console.error("[Thunk] ❌ RESPONSE HAS NO TOKEN!", response);
+          throw new Error("Server response missing token");
+      }
+
       // Save token to localStorage
       localStorage.setItem('authToken', response.token);
+      console.log("[Thunk] 3. Token Saved to Storage:", localStorage.getItem('authToken'));
+
       localStorage.setItem('user', JSON.stringify({
         id: response.id,
         name: response.name,
@@ -36,6 +46,7 @@ export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue:
       
       return response;
     } catch (error: any) {
+      console.error("[Thunk] ❌ ERROR:", error);
       return rejectWithValue(error.message || 'Login failed');
     }
   }
