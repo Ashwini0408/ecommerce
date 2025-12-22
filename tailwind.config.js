@@ -32,8 +32,10 @@ export default {
                     800: '#1e293b',
                     900: '#0f172a',
                     950: '#020617',
-                }
+                },
+                sage: "hsl(var(--sage))",
       },
+
        fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
                 display: ['Outfit', 'Inter', 'sans-serif'],

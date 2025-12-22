@@ -7,6 +7,7 @@ import { productApi } from '../../api/productApi';
 import { categoryApi, type Category } from '../../api/categoryApi'; // 👈 Import Category API
 import type { Product, ProductFilterRequest } from '../../types';
 import toast from 'react-hot-toast';
+import { Footer } from '../../components/layout/Footer';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -290,6 +291,7 @@ const ProductsPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
