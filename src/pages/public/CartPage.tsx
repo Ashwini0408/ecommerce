@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
 import Navbar from '../../components/layout/Navbar';
+import { Footer } from '../../components/layout/Footer';
 import { useAppSelector, useAppDispatch } from '../../hooks/useAuth';
 import {
   removeFromCart,
@@ -250,6 +251,7 @@ const CartPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

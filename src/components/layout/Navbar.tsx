@@ -61,6 +61,12 @@ const Navbar = () => {
             <Link to="/products" className="text-dark-200 hover:text-white transition-colors">
               Products
             </Link>
+            <Link to="/about" className="text-dark-200 hover:text-white transition-colors">
+              About us
+            </Link>
+            <Link to="/contact" className="text-dark-200 hover:text-white transition-colors">
+              Contact us
+            </Link>
             {isAuthenticated && !isAdmin && (
               <Link to="/dashboard" className="text-dark-200 hover:text-white transition-colors">
                 Dashboard
@@ -201,6 +207,20 @@ const Navbar = () => {
                 className="block py-2 text-dark-200 hover:text-white transition-colors"
               >
                 Products
+              </Link>
+              <Link
+                to="/about"
+                onClick={() => setIsMenuOpen(false)}
+                className="block py-2 text-dark-200 hover:text-white transition-colors"
+              >
+                About us
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsMenuOpen(false)}
+                className="block py-2 text-dark-200 hover:text-white transition-colors"
+              >
+                Contact us
               </Link>
               <Link
                 to="/cart"

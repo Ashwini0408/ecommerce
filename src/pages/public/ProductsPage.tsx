@@ -6,6 +6,7 @@ import ProductCard from '../../components/product/ProductCard';
 import { productApi } from '../../api/productApi';
 import type { Product, ProductFilterRequest } from '../../types';
 import toast from 'react-hot-toast';
+import { Footer } from '../../components/layout/Footer';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -265,6 +266,7 @@ const ProductsPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

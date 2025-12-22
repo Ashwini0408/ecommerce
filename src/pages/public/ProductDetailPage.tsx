@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft } from 'react-icons/fi';
 import Navbar from '../../components/layout/Navbar';
+import { Footer } from '../../components/layout/Footer';
 import { productApi } from '../../api/productApi';
 import type { Product } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
@@ -326,6 +327,7 @@ const ProductDetailPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
