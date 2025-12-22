@@ -9,6 +9,25 @@ import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
 
+// ----------------------------------------------------------------------
+// 1. HELPER: Fix Image URLs
+// ----------------------------------------------------------------------
+const API_BASE_URL = 'http://192.168.1.111:8090'; // Your Spring Boot URL
+
+const getImageUrl = (path: string) => {
+  if (!path) return '/placeholder.jpg';
+  
+  // If it's already a full web URL (e.g. https://amazon.s3...), leave it alone
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Otherwise, prepend the backend URL
+  // Ensure path starts with /
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_URL}${cleanPath}`;
+};
+
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -62,7 +81,8 @@ const ProductDetailPage = () => {
         quantity,
         selectedSize,
         selectedColor,
-        image: product.images[0] || '/placeholder.jpg',
+        // ✅ Fix: Ensure cart gets the full image URL too
+        image: getImageUrl(product.images[0]), 
         stock: product.stock,
       })
     );
@@ -127,7 +147,8 @@ const ProductDetailPage = () => {
               className="aspect-square rounded-2xl overflow-hidden glass-card"
             >
               <img
-                src={product.images[selectedImage] || '/placeholder.jpg'}
+                // ✅ Fix: Use helper here
+                src={getImageUrl(product.images[selectedImage])}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -148,7 +169,12 @@ const ProductDetailPage = () => {
                         : 'glass-card'
                     }`}
                   >
-                    <img src={image} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
+                    <img 
+                        // ✅ Fix: Use helper here
+                        src={getImageUrl(image)} 
+                        alt={`${product.name} ${index + 1}`} 
+                        className="w-full h-full object-cover" 
+                    />
                   </motion.button>
                 ))}
               </div>
