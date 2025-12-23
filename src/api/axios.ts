@@ -1,7 +1,7 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiError } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.1.111:8090/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://tough-vans-float.loca.lt/api';
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({

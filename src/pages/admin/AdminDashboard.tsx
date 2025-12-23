@@ -16,6 +16,7 @@ import AdminProducts from './AdminProducts';
 import AdminOrders from './AdminOrders';
 import { orderApi } from '../../api/orderApi';
 import { appointmentApi } from '../../api/appointmentApi';
+import AdminAppointment from './AdminAppoinment';
 import type { OrderStatistics, AppointmentStatistics } from '../../types';
 import toast from 'react-hot-toast';
 
@@ -250,6 +251,7 @@ const AdminDashboard = () => {
           <Route index element={<AdminOverview />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="orders" element={<AdminOrders />} />
+          {/* <Route path="appointments" element={<AdminAppointment />} /> */}
           <Route
             path="users"
             element={
