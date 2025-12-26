@@ -214,49 +214,53 @@ const About = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-28 md:py-40 bg-sage text-primary-foreground">
-        <div className="container mx-auto px-6 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="font-serif text-4xl md:text-6xl mb-8"
-          >
-            Experience STYLISTE
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-primary-foreground/80 max-w-xl mx-auto mb-12 leading-relaxed"
-          >
-            Visit our boutique or schedule a personal styling appointment with one of our experts.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-          >
-           <Link
-  to="/appointment"
-  className="px-6 py-3 bg-background text-foreground border border-border hover:bg-background/80 transition group"
->
-  Book Appointment
-  <ArrowRight className="inline-block w-4 h-4 ml-2 group-hover:translate-x-1 transition" />
-</Link>
-<Link
-  to="/contact"
-  className="px-6 py-3 border border-white/50 hover:bg-white/10 transition"
->
-  Contact Us
-</Link>
+   <section className="py-28 md:py-40 bg-[#6E9F7D] text-black">
+  <div className="container mx-auto px-6 text-center">
 
-          </motion.div>
-        </div>
-      </section>
+    <motion.h2
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="font-serif text-4xl md:text-6xl mb-6"
+    >
+      Experience STYLISTE
+    </motion.h2>
+
+    <motion.p
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.1 }}
+      className="max-w-2xl mx-auto mb-12 text-black/80 leading-relaxed"
+    >
+      Visit our boutique or schedule a personal styling appointment with one of our experts.
+    </motion.p>
+
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.2 }}
+      className="flex flex-col sm:flex-row justify-center gap-4"
+    >
+      <Link
+        to="/appointment"
+        className="px-8 py-4 bg-black text-white font-medium hover:bg-black/90 transition group"
+      >
+        BOOK APPOINTMENT
+        <ArrowRight className="inline-block w-4 h-4 ml-2 group-hover:translate-x-1 transition" />
+      </Link>
+
+      <Link
+        to="/contact"
+        className="px-8 py-4 border border-black text-black hover:bg-black/10 transition"
+      >
+        CONTACT US
+      </Link>
+    </motion.div>
+  </div>
+</section>
+
       <Footer />
     </div>
   );
