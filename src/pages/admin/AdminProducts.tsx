@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 
 // --- CONFIGURATION ---
 // This points to your Spring Boot Server
-const SERVER_URL = 'http://192.168.1.111:8090';
+const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
 
 // Define the modes for our modal system
 type ModalType = 'NONE' | 'PRODUCT' | 'CATEGORY' | 'SUBCATEGORY';
@@ -280,7 +280,6 @@ const AdminProducts = () => {
                   src={getImageUrl(product.images[0])} 
                   alt={product.name} 
                   className="w-full h-full object-cover"
-                  onError={(e) => (e.target as HTMLImageElement).src = '/placeholder.jpg'}
                 />
                 {!product.isActive && (
                   <div className="absolute inset-0 bg-dark-950/80 flex items-center justify-center">

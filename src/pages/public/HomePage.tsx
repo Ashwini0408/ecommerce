@@ -3,7 +3,7 @@ import { Footer } from '../../components/layout/Footer';
 import { Hero } from '../../components/home/Hero';
 import { Categories } from '../../components/home/Categories';
 import { FeaturedProducts } from "../../components/home/FeaturedProducts";
-import { Newsletter } from "../../components/home/Newsletter";
+// import { Newsletter } from "../../components/home/Newsletter";
 
 
 const HomePage = () => {
@@ -14,7 +14,7 @@ const HomePage = () => {
       <Hero />
       <Categories />
       <FeaturedProducts />
-      <Newsletter />
+      {/* <Newsletter /> */}
       <Footer />
     </div>
   );

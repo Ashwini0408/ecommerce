@@ -168,7 +168,7 @@ import toast from 'react-hot-toast';
 // --- CONFIGURATION ---
 // In production, this should come from import.meta.env.VITE_API_URL
 // We strip '/api' if your env var includes it, or just define the server root.
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8090';
+const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
 
 interface ProductCardProps {
   product: Product;
