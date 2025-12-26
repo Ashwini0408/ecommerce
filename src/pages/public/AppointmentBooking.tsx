@@ -333,7 +333,7 @@ const timeSlots = [
   "6:00 PM",
 ];
 
-export default function Appointment() {
+export default function AppointmentBooking() {
   const [selectedService, setSelectedService] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
