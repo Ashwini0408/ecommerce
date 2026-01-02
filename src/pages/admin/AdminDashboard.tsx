@@ -299,7 +299,7 @@ import {
 import Navbar from '../../components/layout/Navbar';
 import AdminProducts from './AdminProducts';
 import AdminOrders from './AdminOrders';
-
+import AdminUsers from './AdminUsers';
 import { orderApi } from '../../api/orderApi';
 import { appointmentApi } from '../../api/appointmentApi';
 
@@ -308,6 +308,7 @@ import toast from 'react-hot-toast';
 
 // IMPORTANT — Correct Import
 import AdminAppointment from './AdminAppointment';
+// import { FiCalendar } from "react-icons/fi";
 
 
 const AdminOverview = () => {
@@ -449,7 +450,59 @@ const AdminOverview = () => {
           ))}
         </div>
       </div>
+       <div className="glass-card rounded-2xl p-6">
+  <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
+
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    
+    <Link to="/admin/products">
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="w-full btn-primary flex items-center justify-center space-x-2"
+      >
+        <FiPackage />
+        <span>Manage Products</span>
+      </motion.button>
+    </Link>
+
+    <Link to="/admin/orders">
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="w-full btn-ghost flex items-center justify-center space-x-2"
+      >
+        <FiShoppingBag />
+        <span>View Orders</span>
+      </motion.button>
+    </Link>
+
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="w-full btn-ghost flex items-center justify-center space-x-2"
+    >
+      <FiUsers />
+      <span>Manage Users</span>
+    </motion.button>
+
+    {/* ✅ New View Appointments Button */}
+    <Link to="/admin/appointments">
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="w-full btn-ghost flex items-center justify-center space-x-2"
+      >
+        <FiCalendar />
+        <span>View Appointments</span>
+      </motion.button>
+    </Link>
+
+  </div>
+</div>
+
     </div>
+    
   );
 };
 
@@ -468,7 +521,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-dark-950">
       <Navbar />
 
-      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8  mx-auto">
 
         {/* Header */}
         <div className="mb-8">
@@ -507,6 +560,7 @@ const AdminDashboard = () => {
           <Route index element={<AdminOverview />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="users" element={<AdminUsers />} />
 
           {/* FIXED — Uses AdminAppointment */}
           <Route path="appointments" element={<AdminAppointment />} />

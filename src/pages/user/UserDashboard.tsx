@@ -61,7 +61,7 @@ const UserDashboard = () => {
     <div className="min-h-screen bg-dark-950">
       <Navbar />
 
-      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-display font-bold text-white mb-2">

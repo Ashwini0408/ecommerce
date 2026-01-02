@@ -98,6 +98,7 @@ import About from './pages/public/About';
 import Contact from './pages/public/ContactUs';
 import Appointment from './pages/public/AppointmentBooking';
 import SizeGuide from './pages/public/SizeGuide';
+import services from './pages/public/Services';
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
@@ -151,6 +152,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/appointment" element={<Appointment />} />
         <Route path="/sizeGuide" element={<SizeGuide />} />
+        <Route path="/services" element={services()} />
 
         {/* Protected User Routes */}
         <Route

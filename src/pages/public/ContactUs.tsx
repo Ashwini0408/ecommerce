@@ -85,7 +85,7 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="Your name"
                       required
-                      className="h-14 px-5 bg-secondary border-border focus:border-sage"
+                      className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
                     />
                   </div>
                   <div>
@@ -100,7 +100,7 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="your@email.com"
                       required
-                      className="h-14 px-5 bg-secondary border-border focus:border-sage"
+                      className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
                     />
                   </div>
                 </div>
@@ -115,7 +115,7 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="How can we help?"
                     required
-                    className="h-14 px-5 bg-secondary border-border focus:border-sage"
+                   className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
                   />
                 </div>
                 <div>
@@ -130,7 +130,7 @@ const Contact = () => {
                     placeholder="Tell us more..."
                     rows={6}
                     required
-                    className="bg-secondary border-border resize-none focus:border-sage px-5 py-4"
+                    className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
                   />
                 </div>
                 <button
@@ -150,7 +150,7 @@ const Contact = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <h2 className="font-serif text-3xl mb-8">Visit Our Boutique</h2>
+              <h2 className="font-serif text-3xl mb-8 text-sage">Visit Our Boutique</h2>
               <p className="text-muted-foreground mb-10 leading-relaxed">
                 Experience STYLISTE in person at our flagship store. Our style consultants are available to provide personalized shopping assistance.
               </p>
