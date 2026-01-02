@@ -96,7 +96,7 @@ import CartPage from './pages/public/CartPage';
 import CheckoutPage from './pages/public/CheckoutPage';
 import About from './pages/public/About';
 import Contact from './pages/public/ContactUs';
-import Appointment from './pages/public/Appointment';
+import Appointment from './pages/public/AppointmentBooking';
 import SizeGuide from './pages/public/SizeGuide';
 
 // User & Admin Pages
