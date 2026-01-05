@@ -289,38 +289,8 @@ import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 
 import bookingApi from "../../api/BookingApi";
-
+import { useEffect } from "react";
 // ---------------- SERVICE UI DATA ----------------
-const serviceTypes = [
-  {
-    id: "styling",
-    name: "Personal Styling",
-    description: "One-on-one styling consultation with our experts",
-    duration: "60 min",
-    icon: Sparkles,
-  },
-  {
-    id: "fitting",
-    name: "Private Fitting",
-    description: "Exclusive fitting session for special occasions",
-    duration: "90 min",
-    icon: User,
-  },
-  {
-    id: "consultation",
-    name: "Wardrobe Consultation",
-    description: "Comprehensive wardrobe review and recommendations",
-    duration: "120 min",
-    icon: Calendar,
-  },
-];
-
-// Backend enum mapping
-const serviceTypeMap: Record<string, string> = {
-  styling: "STYLING_CONSULTATION",
-  fitting: "PERSONAL_SHOPPING",
-  consultation: "VIRTUAL_CONSULTATION",
-};
 
 const timeSlots = [
   "10:00 AM",
@@ -337,20 +307,37 @@ export default function AppointmentBooking() {
   const [selectedService, setSelectedService] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [services, setServices] = useState<string[]>([]);
+const [servicesLoading, setServicesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     notes: "",
   });
-
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   // Convert AM/PM → backend format HH:mm:ss
   const convertTo24Hour = (timeStr: string) => {
     const time = new Date(`1970-01-01 ${timeStr}`);
     return time.toTimeString().split(" ")[0];
   };
+// backend "HH:mm:ss" → "10:00 AM"
+const convertTo12Hour = (time24: string) => {
+  const [h, m] = time24.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m);
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+const formatServiceName = (service: string) =>
+  service
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase());
 
   const getAvailableDates = () => {
     const dates: Date[] = [];
@@ -389,10 +376,9 @@ export default function AppointmentBooking() {
       const payload = {
         appointmentDate: selectedDate,
         appointmentTime: convertTo24Hour(selectedTime),
-        serviceType: serviceTypeMap[selectedService],
+        serviceType: selectedService,
         notes: formData.notes || "",
       };
-
       const res = await bookingApi.createAppointment(payload);
 
       toast.success("Appointment booked successfully!");
@@ -412,6 +398,45 @@ export default function AppointmentBooking() {
       setLoading(false);
     }
   };
+useEffect(() => {
+  if (!selectedDate) {
+    setBookedSlots([]);
+    return;
+  }
+
+  const loadBookedSlots = async () => {
+    try {
+      const appointments =
+        await bookingApi.getAppointmentsByDate(selectedDate);
+
+      const slots = appointments.map((a) =>
+        convertTo12Hour(a.appointmentTime)
+      );
+
+      setBookedSlots(slots);
+    } catch (err) {
+      console.error("Failed to fetch booked slots", err);
+      setBookedSlots([]);
+    }
+  };
+
+  loadBookedSlots();
+}, [selectedDate]);
+useEffect(() => {
+  const loadServices = async () => {
+    try {
+      setServicesLoading(true);
+      const data = await bookingApi.getAppointmentTypes();
+      setServices(data);
+    } catch (err) {
+      toast.error("Failed to load services");
+    } finally {
+      setServicesLoading(false);
+    }
+  };
+
+  loadServices();
+}, []);
 
   return (
     <div>
@@ -438,36 +463,39 @@ export default function AppointmentBooking() {
         <div className="max-w-4xl mx-auto px-6">
           <form onSubmit={handleSubmit} className="space-y-16">
             {/* SERVICE SELECT */}
-            <div>
-              <h2 className="font-serif text-2xl mb-8">Select Service</h2>
+           <div>
+  <h2 className="font-serif text-2xl mb-8">Select Service</h2>
 
-              <div className="grid md:grid-cols-3 gap-4">
-                {serviceTypes.map((service) => {
-                  const Icon = service.icon;
-                  return (
-                    <button
-                      key={service.id}
-                      type="button"
-                      onClick={() => setSelectedService(service.id)}
-                      className={`p-8 border text-left transition-all ${
-                        selectedService === service.id
-                          ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
-                          : "hover:border-black/40"
-                      }`}
-                    >
-                      <Icon className="w-8 h-8 text-[#6E9F7D] mb-5" />
-                      <h3 className="font-medium mb-2">{service.name}</h3>
-                      <p className="text-sm text-gray-500 mb-3">
-                        {service.description}
-                      </p>
-                      <p className="text-sm font-medium text-[#6E9F7D]">
-                        {service.duration}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+  {servicesLoading ? (
+    <p className="text-gray-500">Loading services…</p>
+  ) : (
+    <div className="grid md:grid-cols-3 gap-4">
+      {services.map((service) => (
+        <button
+          key={service}
+          type="button"
+          onClick={() => setSelectedService(service)}
+          className={`p-8 border text-left transition-all rounded-lg
+            ${
+              selectedService === service
+                ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+                : "hover:border-black/40"
+            }`}
+        >
+          <Sparkles className="w-8 h-8 text-[#6E9F7D] mb-5" />
+
+          <h3 className="font-medium mb-2">
+            {formatServiceName(service)}
+          </h3>
+
+          <p className="text-sm text-gray-500">
+            Premium personalized service
+          </p>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
             {/* DATE */}
             <div>
@@ -499,20 +527,26 @@ export default function AppointmentBooking() {
               <h2 className="font-serif text-2xl mb-8">Select Time</h2>
 
               <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-                {timeSlots.map((time) => (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() => setSelectedTime(time)}
-                    className={`px-3 py-3 border text-xs tracking-wide ${
-                      selectedTime === time
-                        ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
-                        : "hover:border-black/40"
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))}
+                {timeSlots
+  .filter((time) => !bookedSlots.includes(time)) // 👈 HIDE booked
+  .map((time) => (
+    <button
+      key={time}
+      type="button"
+      onClick={() => setSelectedTime(time)}
+      className={`px-3 py-3 border text-xs tracking-wide
+        ${
+          selectedTime === time
+            ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+            : "hover:border-black/40"
+        }
+      `}
+    >
+      {time}
+    </button>
+  ))}
+
+
               </div>
             </div>
 

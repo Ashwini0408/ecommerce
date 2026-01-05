@@ -7,7 +7,7 @@ import useAuth from '../../hooks/useAuth';
 import { useAppSelector } from '../../hooks/useAuth';
 import { logout } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
-
+import logo from '../../assets/logo.png';
 const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, isAdmin, dispatch } = useAuth();
@@ -43,15 +43,16 @@ const Navbar = () => {
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="text-2xl font-display font-bold gradient-text"
-            >
-              STYLISTE
-            </motion.div>
-          </Link>
+<Link to="/" className="flex items-center">
+  <motion.img
+    src={logo}
+    alt="Styliste Logo"
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    className="h-12 w-auto object-contain"
+  />
+</Link>
+
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
