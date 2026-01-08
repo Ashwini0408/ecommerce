@@ -164,11 +164,12 @@ import type { Product } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
+import { formatINR } from "../../utils/currency";
 
 // --- CONFIGURATION ---
 // In production, this should come from import.meta.env.VITE_API_URL
 // We strip '/api' if your env var includes it, or just define the server root.
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8090';
+const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
 
 interface ProductCardProps {
   product: Product;
@@ -234,10 +235,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
             alt={product.name}
             loading="lazy" // Optimization for lists
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={(e) => {
-                // Fallback if image fails to load
-                (e.target as HTMLImageElement).src = '/placeholder.jpg';
-            }}
           />
 
           {/* Overlay Actions */}
@@ -303,16 +300,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {product.salePrice ? (
               <>
                 <span className="text-xl font-bold gradient-text">
-                  ${product.salePrice.toFixed(2)}
-                </span>
-                <span className="text-sm text-dark-500 line-through">
-                  ${product.price.toFixed(2)}
-                </span>
+  {formatINR(product.salePrice)}
+</span>
+<span className="text-sm text-dark-500 line-through">
+  {formatINR(product.price)}
+</span>
+
               </>
             ) : (
               <span className="text-xl font-bold gradient-text">
-                ${product.price.toFixed(2)}
-              </span>
+  {formatINR(product.price)}
+</span>
+
             )}
           </div>
 

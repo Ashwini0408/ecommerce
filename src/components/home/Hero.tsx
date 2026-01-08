@@ -247,110 +247,306 @@
 // };
 
 
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
+// import { Link } from "react-router-dom";
+// import { ArrowRight } from "lucide-react";
+
+// export const Hero = () => {
+//   return (
+//     <section className="relative min-h-screen flex items-center overflow-hidden">
+//       {/* Background Image */}
+//       <div className="absolute inset-0">
+//         <img
+//           src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80"
+//           alt="Fashion hero"
+//           className="w-full h-full object-cover object-right"
+//         />
+
+//         {/* Dark left → fade right */}
+//         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/90 to-transparent" />
+//       </div>
+
+//       {/* Content */}
+//       <div className="container mx-auto px-6 pt-15 md:pt-20 lg:pt-20 relative z-10">
+//         <div className="max-w-2xl">
+//           <motion.div
+//             initial={{ opacity: 0 }}
+//             animate={{ opacity: 1 }}
+//             transition={{ duration: 1, delay: 0.2 }}
+//             className="flex items-center gap-4 mb-8"
+//           >
+//             <div className="w-12 h-px bg-sage" />
+//             {/* <p className="text-sage font-sans tracking-[0.3em] text-xs uppercase">
+//               Collection 2025
+//             </p> */}
+//           </motion.div>
+
+//           {/* Heading */}
+//           <motion.h1
+//             initial={{ opacity: 0, y: 40 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ duration: 0.8, delay: 0.4 }}
+//             className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] font-light mb-8"
+//           >
+//             Redefining
+//             <br />
+//             <span className="italic  text-[hsl(var(--sage))]">Modern</span>
+//             <br />
+//             Luxury
+//           </motion.h1>
+
+//           {/* Description */}
+//           <motion.p
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ duration: 0.8, delay: 0.6 }}
+//             className="text-gray-300 text-lg md:text-xl max-w-md mb-12 leading-relaxed"
+//           >
+//             Discover meticulously curated pieces that transcend seasons and define your unique aesthetic.
+//           </motion.p>
+
+//           {/* Buttons */}
+//           <motion.div
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             transition={{ duration: 0.8, delay: 0.8 }}
+//             className="flex flex-col sm:flex-row gap-4"
+//           >
+//             {/* Explore Button */}
+//             <Link
+//               to="/shop"
+//               className="group px-8 py-4 bg-white text-black border border-white hover:bg-white/90 transition flex items-center gap-2 text-sm tracking-wide uppercase"
+//             >
+//               Explore Collection
+//               <ArrowRight
+//                 className="w-4 h-4 transition-transform group-hover:translate-x-1"
+//                 strokeWidth={1.5}
+//               />
+//             </Link>
+
+//             {/* Our Story */}
+//             <Link
+//               to="/about"
+//               className="px-8 py-4 border border-sage text-sage hover:bg-sage/10 transition text-sm tracking-wide uppercase"
+//             >
+//               Our Story
+//             </Link>
+//           </motion.div>
+//         </div>
+//       </div>
+
+//       {/* Scroll Indicator */}
+//       <motion.div
+//         initial={{ opacity: 0 }}
+//         animate={{ opacity: 1 }}
+//         transition={{ delay: 1.2 }}
+//         className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+//       >
+//         {/* <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+//           Scroll
+//         </span> */}
+//         <motion.div
+//           animate={{ y: [0, 8, 0] }}
+//           transition={{ repeat: Infinity, duration: 1.5 }}
+//           className="w-px h-8 bg-gradient-to-b from-sage to-transparent"
+//         />
+//       </motion.div>
+//     </section>
+//   );
+// };
+
+
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+
+import hero1 from "../../assets/hero-1.jpg";
+import hero2 from "../../assets/hero-2.jpg";
+import hero3 from "../../assets/hero-3.png";
+
+const slides = [
+  {
+    image: hero1,
+    subtitle: "Premium Custom Tailoring",
+    title: "Elegance Crafted",
+    titleHighlight: "Just For You",
+    description:
+      "Experience bespoke fashion with personalized measurements and doorstep service in Thane & Mulund areas.",
+  },
+  {
+    image: hero2,
+    subtitle: "Transform Your Wardrobe",
+    title: "Saree to Western",
+    titleHighlight: "Magic in 48 Hours",
+    description:
+      "Give your cherished sarees a new life. We transform old sarees into stunning western & Indo-western dresses.",
+  },
+  {
+    image: hero3,
+    subtitle: "Fashion Designing",
+    title: "Every Woman",
+    titleHighlight: "Deserves Confidence",
+    description:
+      "Our expert team helps every woman feel confident in fashionable clothing designed to complement her unique body type.",
+  },
+];
 
 export const Hero = () => {
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const timerRef = useRef<number | null>(null);
+
+  /* ---------- AUTO SLIDER (PAUSE ON HOVER) ---------- */
+  const start = () => {
+    timerRef.current = window.setInterval(() => {
+      setDirection(1);
+      setCurrent((p) => (p + 1) % slides.length);
+    }, 6000);
+  };
+
+  const stop = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    start();
+    return stop;
+  }, []);
+
+  const next = () => {
+    setDirection(1);
+    setCurrent((p) => (p + 1) % slides.length);
+  };
+
+  const prev = () => {
+    setDirection(-1);
+    setCurrent((p) => (p - 1 + slides.length) % slides.length);
+  };
+
+  /* ---------- VARIANTS (TS SAFE) ---------- */
+  const imageVariants: Variants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? "100%" : "-100%",
+      scale: 1.1,
+    }),
+    center: {
+      x: 0,
+      scale: 1,
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? "-100%" : "100%",
+      scale: 1.1,
+    }),
+  };
+
+  const textVariants: Variants = {
+    enter: { x: -60, opacity: 0 },
+    center: { x: 0, opacity: 1 },
+    exit: { x: 60, opacity: 0 },
+  };
+
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <img
-          src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80"
-          alt="Fashion hero"
-          className="w-full h-full object-cover object-right"
-        />
+    <section
+      className="relative h-screen w-screen overflow-hidden bg-black"
+      onMouseEnter={stop}
+      onMouseLeave={start}
+    >
+      {/* ---------- IMAGE SLIDES ---------- */}
+      <AnimatePresence initial={false} custom={direction}>
+        <motion.div
+          key={current}
+          custom={direction}
+          variants={imageVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 1.1, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          <motion.img
+            src={slides[current].image}
+            alt={slides[current].title}
+            className="absolute inset-0 w-full h-full object-cover"
+            animate={{ y: [0, -20, 0] }}
+            transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+          />
 
-        {/* Dark left → fade right */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/90 to-transparent" />
-      </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Content */}
-      <div className="container mx-auto px-6 pt-15 md:pt-20 lg:pt-20 relative z-10">
-        <div className="max-w-2xl">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="flex items-center gap-4 mb-8"
-          >
-            <div className="w-12 h-px bg-sage" />
-            {/* <p className="text-sage font-sans tracking-[0.3em] text-xs uppercase">
-              Collection 2025
-            </p> */}
-          </motion.div>
-
-          {/* Heading */}
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] font-light mb-8"
-          >
-            Redefining
-            <br />
-            <span className="italic  text-[hsl(var(--sage))]">Modern</span>
-            <br />
-            Luxury
-          </motion.h1>
-
-          {/* Description */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-gray-300 text-lg md:text-xl max-w-md mb-12 leading-relaxed"
-          >
-            Discover meticulously curated pieces that transcend seasons and define your unique aesthetic.
-          </motion.p>
-
-          {/* Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex flex-col sm:flex-row gap-4"
-          >
-            {/* Explore Button */}
-            <Link
-              to="/shop"
-              className="group px-8 py-4 bg-white text-black border border-white hover:bg-white/90 transition flex items-center gap-2 text-sm tracking-wide uppercase"
+      {/* ---------- CONTENT ---------- */}
+      <div className="relative z-10 h-full flex items-center">
+        <div className="container mx-auto px-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={current}
+              variants={textVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.6 }}
+              className="max-w-xl"
             >
-              Explore Collection
-              <ArrowRight
-                className="w-4 h-4 transition-transform group-hover:translate-x-1"
-                strokeWidth={1.5}
-              />
-            </Link>
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-full mb-6 border border-white/30">
+                <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                <span className="text-sm tracking-[0.25em] uppercase text-white">
+                  {slides[current].subtitle}
+                </span>
+              </div>
 
-            {/* Our Story */}
-            <Link
-              to="/about"
-              className="px-8 py-4 border border-sage text-sage hover:bg-sage/10 transition text-sm tracking-wide uppercase"
-            >
-              Our Story
-            </Link>
-          </motion.div>
+              <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl mb-6 text-white leading-[1.05]">
+                {slides[current].title}
+                <br />
+                <span className="italic text-accent">
+                  {slides[current].titleHighlight}
+                </span>
+              </h1>
+
+              <p className="text-white/80 text-lg md:text-xl mb-10">
+                {slides[current].description}
+              </p>
+
+              <div className="flex gap-4">
+                <Link
+                  to="/appointment"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  Book Appointment
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  to="/services"
+                  className="inline-flex items-center px-8 py-4 rounded-xl border border-white/40 text-white hover:bg-white/10"
+                >
+                  Explore Services
+                </Link>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+      {/* ---------- ARROWS ---------- */}
+      <button
+        onClick={prev}
+        className="absolute left-4 lg:left-10 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-20"
       >
-        {/* <span className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
-          Scroll
-        </span> */}
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="w-px h-8 bg-gradient-to-b from-sage to-transparent"
-        />
-      </motion.div>
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+
+      <button
+        onClick={next}
+        className="absolute right-4 lg:right-10 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-20"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
     </section>
   );
 };

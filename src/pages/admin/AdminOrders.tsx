@@ -5,6 +5,7 @@ import { orderApi } from '../../api/orderApi';
 import type { Order } from '../../types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { formatINR } from '../../utils/currency';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -132,7 +133,7 @@ const AdminOrders = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-dark-400">
                     <p>📅 {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</p>
-                    <p>💰 ${order.totalAmount.toFixed(2)}</p>
+                    <p>💰 {formatINR(order.totalAmount)}</p>
                     <p>📦 {order.items.length} items</p>
                     {order.trackingNumber && <p>🚚 {order.trackingNumber}</p>}
                   </div>
@@ -265,9 +266,10 @@ const AdminOrders = () => {
                               </div>
                             )}
                           </div>
-                          <p className="text-lg font-bold gradient-text">
-                            ${item.totalPrice.toFixed(2)}
-                          </p>
+                          <span className="text-white font-semibold">
+  {formatINR(item.totalPrice)}
+</span>
+
                         </div>
                       ))}
                     </div>

@@ -151,6 +151,8 @@ export interface OrderStatistics {
   pendingOrders: number;
   shippedOrders: number;
   deliveredOrders: number;
+  cancelledOrders: number;
+  processingOrders: number;
 }
 
 // ==================== APPOINTMENT ====================

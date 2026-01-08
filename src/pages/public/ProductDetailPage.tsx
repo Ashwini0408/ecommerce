@@ -63,7 +63,7 @@ const ProductDetailPage = () => {
         quantity,
         selectedSize,
         selectedColor,
-        image: product.images[0] || '/placeholder.jpg',
+        image: product.images[0],
         stock: product.stock,
       })
     );
@@ -128,7 +128,7 @@ const ProductDetailPage = () => {
               className="aspect-square rounded-2xl overflow-hidden glass-card"
             >
               <img
-                src={product.images[selectedImage] || '/placeholder.jpg'}
+                src={product.images[selectedImage]}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />

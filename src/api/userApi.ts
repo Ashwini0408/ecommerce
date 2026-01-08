@@ -1,5 +1,5 @@
 import axiosInstance from "./axios";
-import type { PaginatedResponse } from "../types";
+import type { Appointment, PaginatedResponse } from "../types";
 
 export type User = {
   id: number;
@@ -30,6 +30,36 @@ export const userApi = {
     );
     return response.data;
   },
+  // ✅ ACTIVATE USER
+  activateUser: async (id: number): Promise<User> => {
+    const response = await axiosInstance.patch<User>(`/users/${id}/activate`);
+    return response.data;
+  },
+
+  // ✅ DEACTIVATE USER
+  deactivateUser: async (id: number): Promise<User> => {
+    const response = await axiosInstance.patch<User>(`/users/${id}/deactivate`);
+    return response.data;
+  },
+
+  // ✅ DELETE USER
+  deleteUser: async (id: number): Promise<{ message: string }> => {
+    const response = await axiosInstance.delete<{ message: string }>(`/users/${id}`);
+    return response.data;
+  },
+  getAppointmentsByUserId: async (
+    userId: number,
+    page = 0,
+    pageSize = 5
+  ): Promise<PaginatedResponse<Appointment>> => {
+    const response = await axiosInstance.get<
+      PaginatedResponse<Appointment>
+    >(`/appointments/user/${userId}`, {
+      params: { page, pageSize },
+    });
+    return response.data;
+  }
+  
 };
 
 export default userApi;

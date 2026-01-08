@@ -93,7 +93,7 @@ const CheckoutPage = () => {
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx',
         amount: Math.round(finalTotal * 100), // Convert to paise
-        currency: 'USD',
+        currency: 'INR',
         name: 'STYLISTE',
         description: `Order #${order.id}`,
         order_id: '', // You would get this from your backend Razorpay order creation

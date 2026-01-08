@@ -294,6 +294,8 @@ import {
   FiCalendar,
   FiTrendingUp,
   FiShoppingCart,
+  FiXCircle,        // ❌ Cancelled
+  FiCornerDownLeft // ↩ Returned
 } from 'react-icons/fi';
 
 import Navbar from '../../components/layout/Navbar';
@@ -310,31 +312,61 @@ import toast from 'react-hot-toast';
 import AdminAppointment from './AdminAppointment';
 // import { FiCalendar } from "react-icons/fi";
 
+const getStatusClasses = (status: string) => {
+  switch (status) {
+    case 'PENDING':
+      return 'bg-yellow-500/20 text-yellow-400';
+    case 'CONFIRMED':
+      return 'bg-blue-500/20 text-blue-400';
+    case 'COMPLETED':
+      return 'bg-green-500/20 text-green-400';
+    case 'CANCELLED':
+      return 'bg-red-500/20 text-red-400';
+    default:
+      return 'bg-gray-500/20 text-gray-400';
+  }
+};
 
 const AdminOverview = () => {
   const [orderStats, setOrderStats] = useState<OrderStatistics | null>(null);
   const [appointmentStats, setAppointmentStats] = useState<AppointmentStatistics | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [recentAppointments, setRecentAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStatistics();
   }, []);
 
-  const fetchStatistics = async () => {
-    setLoading(true);
-    try {
-      const [orders, appointments] = await Promise.all([
-        orderApi.getOrderStatistics(),
-        appointmentApi.getAppointmentStatistics(),
-      ]);
-      setOrderStats(orders);
-      setAppointmentStats(appointments);
-    } catch (error) {
-      toast.error('Failed to fetch statistics');
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchStatistics = async () => {
+  setLoading(true);
+  try {
+    const [
+      orderStatsRes,
+      appointmentStatsRes,
+      ordersRes,
+      appointmentsRes,
+    ] = await Promise.all([
+      orderApi.getOrderStatistics(),
+      appointmentApi.getAppointmentStatistics(),
+
+      // ✅ RECENT 3 (latest)
+      orderApi.getAllOrders(0, 3),
+      appointmentApi.getAllAppointments(0, 3),
+    ]);
+
+    setOrderStats(orderStatsRes);
+    setAppointmentStats(appointmentStatsRes);
+
+    setRecentOrders(ordersRes?.content || []);
+    setRecentAppointments(appointmentsRes?.content || []);
+  } catch (err) {
+    toast.error('Failed to load dashboard data');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading) {
     return (
@@ -375,6 +407,23 @@ const AdminOverview = () => {
       color: 'text-green-400',
       bgColor: 'bg-green-500/20',
     },
+    // ✅ NEW — Cancelled Orders
+  {
+    title: 'Cancelled Orders',
+    value: orderStats?.cancelledOrders || 0,
+    icon: FiXCircle,
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/20',
+  },
+
+  // ✅ NEW — Returned Orders
+  {
+    title: 'Processing(Active) orders',
+    value: orderStats?.processingOrders || 0,
+    icon: FiCornerDownLeft,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/20',
+  },
     {
       title: 'Total Appointments',
       value: appointmentStats?.totalAppointments || 0,
@@ -434,22 +483,89 @@ const AdminOverview = () => {
         })}
       </div>
 
-      {/* Recent */}
-      <div className="glass-card rounded-2xl p-6">
-        <h2 className="text-2xl font-bold text-white mb-6">Recent Activity</h2>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center space-x-4 p-4 glass-card rounded-xl">
-              <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-white font-semibold">New order received</p>
-                <p className="text-sm text-dark-400">Order #100{i} - $149.99</p>
-              </div>
-              <span className="text-xs text-dark-500">{i}h ago</span>
+{/* Recent Orders & Appointments */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  {/* ================= RECENT ORDERS ================= */}
+  <div className="glass-card rounded-2xl p-6">
+    <h2 className="text-2xl font-bold text-white mb-6">Recent Orders</h2>
+
+    <div className="space-y-4">
+      {recentOrders.length === 0 ? (
+        <p className="text-dark-400 text-sm text-center">No recent orders</p>
+      ) : (
+        recentOrders.map((order) => (
+          <div
+            key={order.id}
+            className="flex items-center justify-between p-4 glass-card rounded-xl"
+          >
+            <div>
+              <p className="text-white font-semibold">
+                Order #{order.orderNumber ?? order.id}
+              </p>
+              <p className="text-sm text-dark-400">
+                ₹{order.totalAmount} • {order.status}
+              </p>
             </div>
-          ))}
+
+            <Link
+              to="/admin/orders"
+              className="text-primary-400 text-sm font-medium hover:underline"
+            >
+              View
+            </Link>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+
+{/* ================= RECENT APPOINTMENTS ================= */}
+<div className="glass-card rounded-2xl p-6">
+  <h2 className="text-2xl font-bold text-white mb-6">
+    Recent Appointments
+  </h2>
+
+  <div className="space-y-4">
+    {recentAppointments.length === 0 ? (
+      <p className="text-dark-400 text-sm text-center">
+        No recent appointments
+      </p>
+    ) : (
+      recentAppointments.map((appt) => (
+        <div
+          key={appt.id}
+          className="flex items-center justify-between p-4 glass-card rounded-xl"
+        >
+          {/* LEFT INFO */}
+          <div>
+            <p className="text-white font-semibold">
+              {appt.name}
+            </p>
+
+            <p className="text-sm text-dark-400">
+              {appt.serviceType.replace(/_/g, ' ')}
+            </p>
+
+            <p className="text-xs text-dark-500">
+              {appt.appointmentDate} at {appt.appointmentTime?.slice(0, 5)}
+            </p>
+          </div>
+
+          {/* STATUS BADGE (RIGHT END) */}
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(appt.status)}`}
+          >
+            {appt.status}
+          </span>
         </div>
-      </div>
+      ))
+    )}
+  </div>
+</div>
+</div>
+
+
        <div className="glass-card rounded-2xl p-6">
   <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
 

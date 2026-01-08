@@ -1057,14 +1057,25 @@ const AdminUsers = () => {
     );
   }, [users, search]);
 
-  // Status toggle (UI only)
-  const handleStatusChange = (id: number, isActive: boolean) => {
+const handleStatusChange = async (user: User) => {
+  try {
+    const updatedUser = user.isActive
+      ? await userApi.deactivateUser(user.id)
+      : await userApi.activateUser(user.id);
+
     setUsers((prev) =>
       prev.map((u) =>
-        u.id === id ? { ...u, isActive } : u
+        u.id === updatedUser.id ? updatedUser : u
       )
     );
-  };
+
+    toast.success(
+      updatedUser.isActive ? "User activated" : "User deactivated"
+    );
+  } catch (err) {
+    toast.error("Failed to update user status");
+  }
+};
 
   // Orders modal
   const openOrdersModal = async (user: User) => {
@@ -1082,25 +1093,27 @@ const AdminUsers = () => {
     }
   };
 
-  // Appointments modal
-  const openAppointmentsModal = async (user: User) => {
-    setSelectedUser(user);
-    setShowAppointmentsModal(true);
-    setAppointmentsLoading(true);
+const openAppointmentsModal = async (user: User) => {
+  setSelectedUser(user);
+  setShowAppointmentsModal(true);
+  setAppointmentsLoading(true);
 
-    try {
-      const res = await appointmentApi.getAppointmentsByUserId(
-        user.id,
-        0,
-        50
-      );
-      setUserAppointments(res.content);
-    } catch {
-      toast.error("Failed to load appointments");
-    } finally {
-      setAppointmentsLoading(false);
-    }
-  };
+  try {
+    // ✅ CORRECT API METHOD NAME
+    const res = await appointmentApi.getUserAppointments(
+      user.id,
+      0,
+      50
+    );
+
+    setUserAppointments(res.content);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to load appointments");
+  } finally {
+    setAppointmentsLoading(false);
+  }
+};
 
   return (
     <div className="space-y-6">
@@ -1179,12 +1192,7 @@ const AdminUsers = () => {
                   <td className="py-4 px-3">
                     <div className="flex justify-center items-center gap-4">
                       <button
-                        onClick={() =>
-                          handleStatusChange(
-                            user.id,
-                            !user.isActive
-                          )
-                        }
+                      onClick={() => handleStatusChange(user)}
                         className={`relative inline-flex h-6 w-11 rounded-full
                           ${
                             user.isActive
@@ -1247,13 +1255,28 @@ const AdminUsers = () => {
                         onClick={() => openAppointmentsModal(user)}
                       />
 
-                      <FiTrash
-                        title="Delete"
-                        className="text-red-400 cursor-pointer"
-                        onClick={() =>
-                          window.confirm("Delete user?")
-                        }
-                      />
+                    <FiTrash
+  title="Delete"
+  className="text-red-400 cursor-pointer"
+  onClick={async () => {
+    if (!window.confirm(`Delete ${user.name}?`)) return;
+
+    try {
+      const res = await userApi.deleteUser(user.id);
+
+      toast.success(res.message || "User deleted");
+
+      // Remove user from table
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ||
+        "Cannot delete user. Deactivate instead."
+      );
+    }
+  }}
+/>
+
                     </div>
                   </td>
                 </tr>
