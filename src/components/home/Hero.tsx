@@ -356,18 +356,205 @@
 // };
 
 
-import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { Link } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+// import { useState, useEffect, useRef } from "react";
+// import { motion, AnimatePresence } from "framer-motion";
+// import type { Variants } from "framer-motion";
 
+// import { Link } from "react-router-dom";
+// import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+
+// import hero1 from "../../assets/hero-1.jpg";
+// import hero2 from "../../assets/hero-2.jpg";
+// import hero3 from "../../assets/hero-3.png";
+
+// const slides = [
+//   {
+//     image: hero1,
+//     subtitle: "Premium Custom Tailoring",
+//     title: "Elegance Crafted",
+//     titleHighlight: "Just For You",
+//     description:
+//       "Experience bespoke fashion with personalized measurements and doorstep service in Thane & Mulund areas.",
+//   },
+//   {
+//     image: hero2,
+//     subtitle: "Transform Your Wardrobe",
+//     title: "Saree to Western",
+//     titleHighlight: "Magic in 48 Hours",
+//     description:
+//       "Give your cherished sarees a new life. We transform old sarees into stunning western & Indo-western dresses.",
+//   },
+//   {
+//     image: hero3,
+//     subtitle: "Fashion Designing",
+//     title: "Every Woman",
+//     titleHighlight: "Deserves Confidence",
+//     description:
+//       "Our expert team helps every woman feel confident in fashionable clothing designed to complement her unique body type.",
+//   },
+// ];
+
+// export const Hero = () => {
+//   const [current, setCurrent] = useState(0);
+//   const [direction, setDirection] = useState(1);
+//   const timerRef = useRef<number | null>(null);
+
+// useEffect(() => {
+//   timerRef.current = window.setInterval(() => {
+//     setDirection(1);
+//     setCurrent((p) => (p + 1) % slides.length);
+//   }, 6000);
+
+//   return () => {
+//     if (timerRef.current !== null) {
+//       clearInterval(timerRef.current);
+//       timerRef.current = null;
+//     }
+//   };
+// }, []);
+
+//   const imageVariants: Variants = {
+//     enter: (d) => ({ x: d > 0 ? "100%" : "-100%" }),
+//     center: { x: 0 },
+//     exit: (d) => ({ x: d > 0 ? "-100%" : "100%" }),
+//   };
+
+//   const textVariants: Variants = {
+//     enter: { opacity: 0, x: -60 },
+//     center: { opacity: 1, x: 0 },
+//     exit: { opacity: 0, x: 60 },
+//   };
+
+//   const next = () => {
+//     setDirection(1);
+//     setCurrent((p) => (p + 1) % slides.length);
+//   };
+
+//   const prev = () => {
+//     setDirection(-1);
+//     setCurrent((p) => (p - 1 + slides.length) % slides.length);
+//   };
+
+//   return (
+//     <section className="relative w-full min-h-screen overflow-hidden pt-24 md:pt-28 pb-32">
+//       {/* IMAGE */}
+//       <AnimatePresence initial={false} custom={direction}>
+//         <motion.img
+//           key={current}
+//           src={slides[current].image}
+//           alt={slides[current].title}
+//           className="absolute inset-0 w-screen h-screen object-cover object-top"
+//           custom={direction}
+//           variants={imageVariants}
+//           initial="enter"
+//           animate="center"
+//           exit="exit"
+//           transition={{ duration: 1.1, ease: "easeInOut" }}
+//           draggable={false}
+//         />
+//       </AnimatePresence>
+
+//       {/* LEFT GRADIENT FOR TEXT READABILITY */}
+//       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
+
+//       {/* OPTIONAL SOFT BOTTOM FADE */}
+//       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+
+//       {/* CONTENT */}
+//       <div className="relative z-10 h-full flex items-start">
+//         <div className="w-full px-8 md:px-16 lg:px-24">
+//           <AnimatePresence mode="wait">
+//             <motion.div
+//               key={current}
+//               variants={textVariants}
+//               initial="enter"
+//               animate="center"
+//               exit="exit"
+//               transition={{ duration: 0.6 }}
+//               className="max-w-xl text-left"
+//             >
+//               <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-full mb-6 border border-white/30">
+//                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+//                 <span className="text-sm tracking-[0.25em] uppercase text-white">
+//                   {slides[current].subtitle}
+//                 </span>
+//               </div>
+
+//               <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl 
+//                mb-5 text-white leading-[1.08]">
+//                 {slides[current].title}
+//                 <br />
+//                 <span className="italic text-accent">
+//                   {slides[current].titleHighlight}
+//                 </span>
+//               </h1>
+
+//               <p className="text-white/80 text-base md:text-m mb-8">
+//                 {slides[current].description}
+//               </p>
+
+//               <div className="flex gap-4">
+//                <Link
+//   to="/appointment"
+//   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl 
+//              bg-[#9CAF88] text-white font-medium 
+//              hover:bg-[#8FA17A] transition-colors"
+// >
+
+//                   Book Appointment
+//                   <ArrowRight className="w-4 h-4" />
+//                 </Link>
+
+//                 <Link
+//                   to="/services"
+//                   className="inline-flex items-center px-8 py-4 rounded-xl border border-white/40 text-white hover:bg-white/10"
+//                 >
+//                   Explore Services
+//                 </Link>
+//               </div>
+//             </motion.div>
+//           </AnimatePresence>
+//         </div>
+//       </div>
+
+//       {/* ARROWS */}
+//       {/* <button
+//         onClick={prev}
+//         className="absolute left-4 lg:left-10 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-20"
+//       >
+//         <ChevronLeft className="w-6 h-6" />
+//       </button>
+
+//       <button
+//         onClick={next}
+//         className="absolute right-4 lg:right-10 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-20"
+//       >
+//         <ChevronRight className="w-6 h-6" />
+//       </button> */}
+//     </section>
+//   );
+// };
+
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+
+/* ---------- DESKTOP IMAGES ---------- */
 import hero1 from "../../assets/hero-1.jpg";
 import hero2 from "../../assets/hero-2.jpg";
 import hero3 from "../../assets/hero-3.png";
 
+/* ---------- MOBILE IMAGES ---------- */
+import heroM1 from "../../assets/hero M-1.jpg";
+import heroM2 from "../../assets/hero M-2.jpg";
+import heroM3 from "../../assets/hero M-3.jpg";
+
 const slides = [
   {
-    image: hero1,
+    desktopImage: hero1,
+    mobileImage: heroM1,
     subtitle: "Premium Custom Tailoring",
     title: "Elegance Crafted",
     titleHighlight: "Just For You",
@@ -375,7 +562,8 @@ const slides = [
       "Experience bespoke fashion with personalized measurements and doorstep service in Thane & Mulund areas.",
   },
   {
-    image: hero2,
+    desktopImage: hero2,
+    mobileImage: heroM2,
     subtitle: "Transform Your Wardrobe",
     title: "Saree to Western",
     titleHighlight: "Magic in 48 Hours",
@@ -383,7 +571,8 @@ const slides = [
       "Give your cherished sarees a new life. We transform old sarees into stunning western & Indo-western dresses.",
   },
   {
-    image: hero3,
+    desktopImage: hero3,
+    mobileImage: heroM3,
     subtitle: "Fashion Designing",
     title: "Every Woman",
     titleHighlight: "Deserves Confidence",
@@ -397,67 +586,39 @@ export const Hero = () => {
   const [direction, setDirection] = useState(1);
   const timerRef = useRef<number | null>(null);
 
-  /* ---------- AUTO SLIDER (PAUSE ON HOVER) ---------- */
-  const start = () => {
+  /* ---------- AUTO SLIDER ---------- */
+  useEffect(() => {
     timerRef.current = window.setInterval(() => {
       setDirection(1);
       setCurrent((p) => (p + 1) % slides.length);
     }, 6000);
-  };
 
-  const stop = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    start();
-    return stop;
+    return () => {
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, []);
 
-  const next = () => {
-    setDirection(1);
-    setCurrent((p) => (p + 1) % slides.length);
-  };
-
-  const prev = () => {
-    setDirection(-1);
-    setCurrent((p) => (p - 1 + slides.length) % slides.length);
-  };
-
-  /* ---------- VARIANTS (TS SAFE) ---------- */
+  /* ---------- ANIMATIONS ---------- */
   const imageVariants: Variants = {
-    enter: (dir: number) => ({
-      x: dir > 0 ? "100%" : "-100%",
-      scale: 1.1,
-    }),
-    center: {
-      x: 0,
-      scale: 1,
-    },
-    exit: (dir: number) => ({
-      x: dir > 0 ? "-100%" : "100%",
-      scale: 1.1,
-    }),
+    enter: (d: number) => ({ x: d > 0 ? "100%" : "-100%" }),
+    center: { x: 0 },
+    exit: (d: number) => ({ x: d > 0 ? "-100%" : "100%" }),
   };
 
   const textVariants: Variants = {
-    enter: { x: -60, opacity: 0 },
-    center: { x: 0, opacity: 1 },
-    exit: { x: 60, opacity: 0 },
+    enter: { opacity: 0, x: -40 },
+    center: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 40 },
   };
 
   return (
-    <section
-      className="relative h-screen w-screen overflow-hidden bg-black"
-      onMouseEnter={stop}
-      onMouseLeave={start}
-    >
-      {/* ---------- IMAGE SLIDES ---------- */}
+    <section className="relative w-full h-[100svh] overflow-hidden">
+      {/* ---------- IMAGE ---------- */}
       <AnimatePresence initial={false} custom={direction}>
-        <motion.div
+        <motion.picture
           key={current}
           custom={direction}
           variants={imageVariants}
@@ -465,24 +626,37 @@ export const Hero = () => {
           animate="center"
           exit="exit"
           transition={{ duration: 1.1, ease: "easeInOut" }}
-          className="absolute inset-0"
+          className="absolute inset-0 w-full h-full"
         >
-          <motion.img
-            src={slides[current].image}
-            alt={slides[current].title}
-            className="absolute inset-0 w-full h-full object-cover"
-            animate={{ y: [0, -20, 0] }}
-            transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+          <source
+            media="(max-width: 640px)"
+            srcSet={slides[current].mobileImage}
           />
-
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-        </motion.div>
+          <img
+            src={slides[current].desktopImage}
+            alt={slides[current].title}
+            loading={current === 0 ? "eager" : "lazy"}
+            decoding="async"
+            className="w-full h-full object-cover object-top"
+            draggable={false}
+          />
+        </motion.picture>
       </AnimatePresence>
 
+      {/* ---------- GRADIENTS ---------- */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+
       {/* ---------- CONTENT ---------- */}
-      <div className="relative z-10 h-full flex items-center">
-        <div className="container mx-auto px-6">
+      <div className="relative z-10 h-full flex items-center sm:items-start">
+        <div
+          className="
+            w-full
+            px-4 sm:px-8 md:px-16 lg:px-24
+            text-center sm:text-left
+            mt-10 sm:mt-24
+          "
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={current}
@@ -490,17 +664,18 @@ export const Hero = () => {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.6 }}
-              className="max-w-xl"
+              className="max-w-xl mx-auto sm:mx-0"
             >
-              <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-full mb-6 border border-white/30">
+              {/* Subtitle */}
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-full mb-4 border border-white/30">
                 <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                <span className="text-sm tracking-[0.25em] uppercase text-white">
+                <span className="text-xs sm:text-sm tracking-[0.2em] uppercase text-white">
                   {slides[current].subtitle}
                 </span>
               </div>
 
-              <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl mb-6 text-white leading-[1.05]">
+              {/* Heading */}
+              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 text-white leading-tight">
                 {slides[current].title}
                 <br />
                 <span className="italic text-accent">
@@ -508,45 +683,48 @@ export const Hero = () => {
                 </span>
               </h1>
 
-              <p className="text-white/80 text-lg md:text-xl mb-10">
+              {/* Description (desktop only) */}
+              <p className="hidden sm:block text-white/80 text-base md:text-lg mb-6">
                 {slides[current].description}
               </p>
 
-              <div className="flex gap-4">
-                <Link
-                  to="/appointment"
-                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
-                >
+              {/* Buttons */}
+              <div className="flex flex-col items-center sm:flex-row sm:items-start gap-2 sm:gap-4">
+               <Link
+  to="/appointment"
+  className="inline-flex items-center justify-center gap-1.5
+             px-3 py-1.5 text-[10px]
+             w-[160px] sm:w-auto
+             sm:px-5 sm:py-3 sm:text-sm
+             rounded-md
+             bg-[#9CAF88] text-white font-medium
+             hover:bg-[#8FA17A]
+             transition-colors"
+>
+
                   Book Appointment
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
-                <Link
-                  to="/services"
-                  className="inline-flex items-center px-8 py-4 rounded-xl border border-white/40 text-white hover:bg-white/10"
-                >
-                  Explore Services
-                </Link>
+               <Link
+  to="/services"
+  className="hidden sm:inline-flex sm:w-auto items-center justify-center
+             px-4 py-2.5 text-xs
+             sm:px-5 sm:py-3 sm:text-sm
+             rounded-lg
+             border border-white/40
+             text-white
+             hover:bg-white/10
+             transition"
+>
+  Explore Services
+</Link>
+
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
-
-      {/* ---------- ARROWS ---------- */}
-      <button
-        onClick={prev}
-        className="absolute left-4 lg:left-10 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-20"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-
-      <button
-        onClick={next}
-        className="absolute right-4 lg:right-10 top-1/2 -translate-y-1/2 text-white/80 hover:text-white z-20"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
     </section>
   );
 };

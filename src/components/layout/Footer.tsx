@@ -146,88 +146,123 @@
 
 
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Twitter } from "lucide-react";
+import { Instagram, Facebook, Phone, Mail, MapPin, Clock } from "lucide-react";
 
 const footerLinks = {
-  shop: [
-    { name: "Women", href: "/shop?category=women" },
-    { name: "Men", href: "/shop?category=men" },
-    { name: "Accessories", href: "/shop?category=accessories" },
-    { name: "New Arrivals", href: "/shop?filter=new" },
-    { name: "Sale", href: "/shop?filter=sale" },
+  services: [
+    { name: "Bespoke Tailoring", href: "/appointment" },
+    { name: "Designer Dresses", href: "/shop" },
+    { name: "Upscaling Sarees", href: "/appointment" },
+    { name: "Bridal Wear", href: "/shop" },
+    { name: "Alterations", href: "/appointment" },
   ],
   company: [
     { name: "About Us", href: "/about" },
-    { name: "Careers", href: "/careers" },
-    { name: "Press", href: "/press" },
+    { name: "Our Process", href: "/about" },
     { name: "Sustainability", href: "/sustainability" },
   ],
   support: [
     { name: "Contact Us", href: "/contact" },
     { name: "Shipping", href: "/shipping" },
     { name: "Returns", href: "/returns" },
-    { name: "Size Guide", href: "/sizeGuide" },
+    { name: "Size Guide", href: "/size-guide" },
     { name: "Book Appointment", href: "/appointment" },
+  ],
+  legal: [
+    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Refund Policy", href: "/refund-policy" },
+    { name: "Terms & Conditions", href: "/terms" },
   ],
 };
 
 export const Footer = () => {
   return (
-    <footer className="bg-gray-900 border-t border-border text-white">
+    <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-6 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block">
-              <h2 className="font-serif text-4xl tracking-[0.2em] mb-6 text-sage">
+              <h2 className="font-serif text-4xl tracking-[0.2em] mb-6">
                 STYLISTE
               </h2>
             </Link>
 
-            <p className="text-white/80 max-w-sm mb-8 text-sm leading-relaxed">
-              Curated luxury fashion for the modern individual. Where timeless elegance meets contemporary design.
+            <p className="text-muted-foreground max-w-sm mb-6 text-sm leading-relaxed">
+              Your trusted destination for premium custom fashion. We specialise
+              in upscaling old sarees, all types of ladies garments, bridal wear,
+              and theme-based outfits with perfect fitting and timely delivery.
             </p>
 
+            {/* Contact Info */}
+            <div className="space-y-3 mb-6">
+              <a
+                href="tel:+917020601937"
+                className="flex items-center gap-2 text-muted-foreground hover:text-sage transition-colors text-sm"
+              >
+                <Phone className="w-4 h-4" strokeWidth={1.5} />
+                +91 7020601937
+              </a>
+
+              <a
+                href="mailto:info@styliste-couturier.com"
+                className="flex items-center gap-2 text-muted-foreground hover:text-sage transition-colors text-sm"
+              >
+                <Mail className="w-4 h-4" strokeWidth={1.5} />
+                info@styliste-couturier.com
+              </a>
+
+              <div className="flex items-start gap-2 text-muted-foreground text-sm">
+                <MapPin
+                  className="w-4 h-4 flex-shrink-0 mt-0.5"
+                  strokeWidth={1.5}
+                />
+                <span>
+                  F-44, 1st Floor, Raymond Realty TenX Vibes, Next to Suniti Devi
+                  Singhania School, Pokharan Rd. No. 2, Thane West - 400606
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <Clock className="w-4 h-4" strokeWidth={1.5} />
+                Tue–Sun: 11 AM – 8 PM
+              </div>
+            </div>
+
+            {/* Social */}
             <div className="flex items-center gap-2">
               <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-3 border border-border hover:border-sage hover:text-sage transition-all"
+                aria-label="Instagram"
               >
-                <Instagram className="w-4 h-4 text-white" strokeWidth={1.5} />
+                <Instagram className="w-4 h-4" strokeWidth={1.5} />
               </a>
-
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-3 border border-border hover:border-sage hover:text-sage transition-all"
+                aria-label="Facebook"
               >
-                <Facebook className="w-4 h-4 text-white" strokeWidth={1.5} />
-              </a>
-
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 border border-border hover:border-sage hover:text-sage transition-all"
-              >
-                <Twitter className="w-4 h-4 text-white" strokeWidth={1.5} />
+                <Facebook className="w-4 h-4" strokeWidth={1.5} />
               </a>
             </div>
           </div>
 
-          {/* Links */}
+          {/* Services */}
           <div>
-            <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">Shop</h3>
+            <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
+              Services
+            </h3>
             <ul className="space-y-4">
-              {footerLinks.shop.map((link) => (
+              {footerLinks.services.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-white hover:text-sage transition-colors text-sm tracking-wide"
+                    className="text-muted-foreground hover:text-sage transition-colors text-sm tracking-wide"
                   >
                     {link.name}
                   </Link>
@@ -236,14 +271,17 @@ export const Footer = () => {
             </ul>
           </div>
 
+          {/* Company */}
           <div>
-            <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">Company</h3>
+            <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
+              Company
+            </h3>
             <ul className="space-y-4">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-white hover:text-sage transition-colors text-sm tracking-wide"
+                    className="text-muted-foreground hover:text-sage transition-colors text-sm tracking-wide"
                   >
                     {link.name}
                   </Link>
@@ -252,14 +290,36 @@ export const Footer = () => {
             </ul>
           </div>
 
+          {/* Support */}
           <div>
-            <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">Support</h3>
+            <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
+              Support
+            </h3>
             <ul className="space-y-4">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.href}
-                    className="text-white hover:text-sage transition-colors text-sm tracking-wide"
+                    className="text-muted-foreground hover:text-sage transition-colors text-sm tracking-wide"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
+              Legal
+            </h3>
+            <ul className="space-y-4">
+              {footerLinks.legal.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.href}
+                    className="text-muted-foreground hover:text-sage transition-colors text-sm tracking-wide"
                   >
                     {link.name}
                   </Link>
@@ -271,21 +331,20 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="mt-20 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-white/80 text-xs tracking-wider">
-            © {new Date().getFullYear()} STYLISTE. All rights reserved.
+          <p className="text-muted-foreground text-xs tracking-wider">
+            © {new Date().getFullYear()} STYLISTE COUTURIER. All rights reserved.
           </p>
 
           <div className="flex items-center gap-8">
             <Link
               to="/privacy"
-              className="text-white hover:text-sage transition-colors text-xs tracking-wider"
+              className="text-muted-foreground hover:text-foreground transition-colors text-xs tracking-wider"
             >
               Privacy Policy
             </Link>
-
             <Link
               to="/terms"
-              className="text-white hover:text-sage transition-colors text-xs tracking-wider"
+              className="text-muted-foreground hover:text-foreground transition-colors text-xs tracking-wider"
             >
               Terms of Service
             </Link>

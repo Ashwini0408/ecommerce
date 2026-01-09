@@ -1,6 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,6 +15,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --sage: 152 28% 55%;
+  --secondary: 42 23% 96%;
 }
 
 a {

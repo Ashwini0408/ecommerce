@@ -34,6 +34,7 @@ export default {
                     950: '#020617',
                 },
                 sage: "hsl(var(--sage))",
+                secondary: "hsl(var(--secondary))",
       },
 
        fontFamily: {
