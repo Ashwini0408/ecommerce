@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Clock, ArrowRight } from "lucide-react";
-import { toast } from "react-hot-toast";
-import { i } from "framer-motion/client";
+import { toast } from "sonner";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 
@@ -26,11 +25,15 @@ const Contact = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const inputClass =
+    "w-full bg-[#1f2214] border border-[#2c2f1d] text-[#e6e4d8] placeholder:text-[#b7b39a] focus:border-[#9fa36b] focus:ring-1 focus:ring-[#9fa36b]/40 outline-none rounded-md transition-all";
+
   return (
     <div className="bg-background text-foreground">
-        <Navbar />
-      {/* Header */}
+
+      {/* ================= HEADER ================= */}
       <section className="py-20 md:py-32 border-b border-border">
+        <Navbar />
         <div className="container mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -38,11 +41,12 @@ const Contact = () => {
             className="flex items-center justify-center gap-4 mb-4"
           >
             <div className="w-8 h-px bg-sage" />
-            <p className="text-sage font-sans tracking-[0.3em] text-xs uppercase">
+            <p className="text-sage tracking-[0.3em] text-xs uppercase">
               Get in Touch
             </p>
             <div className="w-8 h-px bg-sage" />
           </motion.div>
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -51,169 +55,182 @@ const Contact = () => {
           >
             Contact Us
           </motion.h1>
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="text-muted-foreground max-w-xl mx-auto leading-relaxed"
           >
-            We'd love to hear from you. Whether you have a question about our collections or need styling advice, our team is here to help.
+            We'd love to hear from you. Whether you have a question about our
+            services or need styling advice, our team is here to help.
           </motion.p>
         </div>
       </section>
 
+      {/* ================= CONTENT ================= */}
       <section className="py-20 md:py-28">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
-            {/* Contact Form */}
+
+            {/* ========== CONTACT FORM ========== */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
             >
               <h2 className="font-serif text-3xl mb-8">Send a Message</h2>
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="name" className="text-xs font-sans tracking-[0.15em] uppercase mb-3 block">
+                    <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
                       Name
                     </label>
                     <input
-                      id="name"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Your name"
                       required
-                      className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
+                      className={`${inputClass} h-14 px-5`}
                     />
                   </div>
+
                   <div>
-                    <label htmlFor="email" className="text-xs font-sans tracking-[0.15em] uppercase mb-3 block">
+                    <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
                       Email
                     </label>
                     <input
-                      id="email"
-                      name="email"
                       type="email"
+                      name="email"
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="your@email.com"
                       required
-                      className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
+                      className={`${inputClass} h-14 px-5`}
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label htmlFor="subject" className="text-xs font-sans tracking-[0.15em] uppercase mb-3 block">
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
                     Subject
                   </label>
                   <input
-                    id="subject"
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
                     placeholder="How can we help?"
                     required
-                   className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
+                    className={`${inputClass} h-14 px-5`}
                   />
                 </div>
+
                 <div>
-                  <label htmlFor="message" className="text-xs font-sans tracking-[0.15em] uppercase mb-3 block">
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
                     Message
                   </label>
                   <textarea
-                    id="message"
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    placeholder="Tell us more..."
                     rows={6}
+                    placeholder="Tell us more..."
                     required
-                    className="h-14 px-5 bg-[#1E232E] border border-[#2F3644] text-white placeholder:text-gray-400 focus:border-sage outline-none"
+                    className={`${inputClass} px-5 py-4 resize-none`}
                   />
                 </div>
-                <button
-  type="submit"
-  className="px-6 h-12 bg-sage text-black flex items-center gap-2 border border-transparent hover:bg-sage/90 transition group"
->
-  Send Message
-  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" strokeWidth={1.5} />
-</button>
 
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-sage text-primary-foreground hover:bg-sage/90 transition-all rounded-md group"
+                >
+                  Send Message
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </button>
               </form>
             </motion.div>
 
-            {/* Contact Info */}
+            {/* ========== CONTACT INFO ========== */}
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <h2 className="font-serif text-3xl mb-8 text-sage">Visit Our Boutique</h2>
+              <h2 className="font-serif text-3xl mb-8">Visit Our Boutique</h2>
+
               <p className="text-muted-foreground mb-10 leading-relaxed">
-                Experience STYLISTE in person at our flagship store. Our style consultants are available to provide personalized shopping assistance.
+                Experience STYLISTE in person at our boutique. Our style
+                consultants are available to provide personalized styling
+                assistance and doorstep service.
               </p>
 
               <div className="space-y-8">
                 <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 border border-border flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-sage" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-2">Address</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      123 Fashion Avenue
-                      <br />
-                      New York, NY 10001
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 border border-border flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-5 h-5 text-sage" strokeWidth={1.5} />
+                  <div className="w-14 h-14 border border-border flex items-center justify-center">
+                    <Phone className="w-5 h-5 text-sage" />
                   </div>
                   <div>
                     <h3 className="font-medium mb-2">Phone</h3>
-                    <p className="text-muted-foreground text-sm">+1 (555) 123-4567</p>
+                    <a
+                      href="tel:+917020601937"
+                      className="text-muted-foreground text-sm hover:text-sage transition-colors"
+                    >
+                      +91 7020601937
+                    </a>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 border border-border flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-5 h-5 text-sage" strokeWidth={1.5} />
+                  <div className="w-14 h-14 border border-border flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-sage" />
                   </div>
                   <div>
                     <h3 className="font-medium mb-2">Email</h3>
-                    <p className="text-muted-foreground text-sm">hello@styliste.com</p>
+                    <a
+                      href="mailto:info@styliste-couturier.com"
+                      className="text-muted-foreground text-sm hover:text-sage transition-colors"
+                    >
+                      info@styliste-couturier.com
+                    </a>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-5">
-                  <div className="w-14 h-14 border border-border flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-5 h-5 text-sage" strokeWidth={1.5} />
+                  <div className="w-14 h-14 border border-border flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-sage" />
                   </div>
-                  <div>
-                    <h3 className="font-medium mb-2">Hours</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      Monday - Saturday: 10am - 8pm
-                      <br />
-                      Sunday: 11am - 6pm
-                    </p>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    F-44, 1st Floor, Raymond Realty TenX Vibes,
+                    <br />
+                    Pokharan Rd. No. 2, Thane West - 400606
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-5">
+                  <div className="w-14 h-14 border border-border flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-sage" />
                   </div>
+                  <p className="text-muted-foreground text-sm">
+                    Tuesday – Sunday: 11 AM – 8 PM
+                    <br />
+                    Monday: Closed
+                  </p>
                 </div>
               </div>
 
-              {/* Map Placeholder */}
-              <div className="mt-10 aspect-video bg-secondary overflow-hidden">
-                <img
-                  src="https://images.unsplash.com/photo-1524813686514-a57563d77965?w=800&q=80"
-                  alt="Store location"
-                  className="w-full h-full object-cover opacity-60"
+              {/* Map */}
+              <div className="mt-10 aspect-video bg-secondary overflow-hidden rounded-md">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767.5!2d72.97!3d19.22!5e0!3m2!1sen!2sin"
+                  className="w-full h-full opacity-80"
+                  loading="lazy"
+                  title="STYLISTE Location"
                 />
               </div>
             </motion.div>
+
           </div>
         </div>
       </section>

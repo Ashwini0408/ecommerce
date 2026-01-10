@@ -168,11 +168,11 @@ const footerLinks = {
     { name: "Size Guide", href: "/size-guide" },
     { name: "Book Appointment", href: "/appointment" },
   ],
-  legal: [
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Refund Policy", href: "/refund-policy" },
-    { name: "Terms & Conditions", href: "/terms" },
-  ],
+ legal: [
+  { name: "Privacy Policy", href: "/privacy-policy" },
+  { name: "Refund Policy", href: "/refund-policy" },
+  { name: "Terms & Conditions", href: "/terms-of-service" },
+],
 };
 
 export const Footer = () => {
@@ -337,13 +337,13 @@ export const Footer = () => {
 
           <div className="flex items-center gap-8">
             <Link
-              to="/privacy"
+              to="/privacy-policy"
               className="text-muted-foreground hover:text-foreground transition-colors text-xs tracking-wider"
             >
               Privacy Policy
             </Link>
             <Link
-              to="/terms"
+              to="/terms-of-service"
               className="text-muted-foreground hover:text-foreground transition-colors text-xs tracking-wider"
             >
               Terms of Service

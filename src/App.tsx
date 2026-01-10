@@ -99,6 +99,9 @@ import Contact from './pages/public/ContactUs';
 import Appointment from './pages/public/AppointmentBooking';
 import SizeGuide from './pages/public/SizeGuide';
 import services from './pages/public/Services';
+import PrivacyPolicy from './pages/public/PrivacyPolicy';
+import TermsOfService from './pages/public/TermsAndConditions';
+import RefundPolicy from './pages/public/RefundPolicy';
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
@@ -153,6 +156,9 @@ function App() {
         <Route path="/appointment" element={<Appointment />} />
         <Route path="/sizeGuide" element={<SizeGuide />} />
         <Route path="/services" element={services()} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
 
         {/* Protected User Routes */}
         <Route
