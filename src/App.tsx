@@ -102,6 +102,7 @@ import services from './pages/public/Services';
 import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import TermsOfService from './pages/public/TermsAndConditions';
 import RefundPolicy from './pages/public/RefundPolicy';
+import Testimonial from './pages/public/Testimonial';
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
@@ -159,6 +160,7 @@ function App() {
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/testimonials" element={<Testimonial />} />
 
         {/* Protected User Routes */}
         <Route

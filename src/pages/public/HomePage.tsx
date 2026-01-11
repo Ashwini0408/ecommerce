@@ -2,21 +2,39 @@ import Navbar from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Hero } from '../../components/home/Hero';
 // import { Categories } from '../../components/home/Categories';
-import { FeaturedProducts } from "../../components/home/FeaturedProducts";
+// import { FeaturedProducts } from "../../components/home/FeaturedProducts";
 import { Newsletter } from "../../components/home/Newsletter";
 import { AwardsSection } from '../../components/home/AwardsSection';
+import { AboutIntro } from '../../components/home/AboutIntro';
+import { TestimonialsSection } from '../../components/home/TestimonialsSection';
+import { WhyChooseUs } from '../../components/home/WhyChooseUs';
+import { WhyStyliste } from '../../components/home/WhyStyliste';
+import { FeaturedProducts } from '../../components/home/FeaturedProducts copy';
+import { ServicesSection } from '../../components/home/ServiceSection';
+import { HowItWorksSection } from '../../components/home/HowItWorksSection';
+import { BookAppointmentSection } from '../../components/home/BookAppointmentSection';
+import { StatsSection } from '../../components/home/StatsSection';
+
 
 
 const HomePage = () => {
   return (
     <div className="min-h-screen w-full">
       <Navbar />
-      
       <Hero />
       <AwardsSection />
-      {/* <Categories /> */}
+      <AboutIntro />
+      <StatsSection />
+      {/* <WhyChooseUs /> */}
+      <WhyStyliste />
       <FeaturedProducts />
-      <Newsletter />
+      <ServicesSection />
+      <HowItWorksSection />
+      <TestimonialsSection />
+      <BookAppointmentSection />
+      {/* <Categories /> */}
+      {/* <FeaturedProducts /> */}
+      {/* <Newsletter /> */}
       <Footer />
     </div>
   );

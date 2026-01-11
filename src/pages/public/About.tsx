@@ -213,16 +213,12 @@
 //         </div>
 //       </section>
 
-
-
 //       <Footer />
 //     </div>
 //   );
 // };
 
 // export default About;
-
-
 
 // import { motion } from "framer-motion";
 // import { Link } from "react-router-dom";
@@ -621,7 +617,7 @@
 
 //           </motion.div>
 //         </div>
-        
+
 //       </section>
 //       <Footer />
 //     </div>
@@ -630,126 +626,479 @@
 
 // export default About;
 
-
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Scissors,
+  Home,
+  Shirt,
+  Sparkles,
+  Eye,
+  Target,
+  Users,
+} from "lucide-react";
+import Navbar from "../../components/layout/Navbar";
+import { Footer } from "../../components/layout/Footer";
+// import { FloatingAppointmentButton } from "@/components/FloatingAppointmentButton";
+
+const teamMembers = [
+  {
+    name: "Babita Dahal",
+    role: "Senior Fashion Designer",
+    description:
+      "She has more than 25 years of experience in the fashion and lifestyle industry. She is also a professional Makeup Artist. Worked with multiple Indian brands and invited as faculty in various Fashion Institutes.",
+    image:
+      "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=400&q=80",
+  },
+  {
+    name: "Istyak Ahemad",
+    role: "Cutting Master and Tailor",
+    description:
+      "He has more than 20 years of experience in the ladies' garment industry—a very talented and down-to-earth individual.",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+  },
+  {
+    name: "Yaseen Shaikh",
+    role: "Tailor",
+    description:
+      "Has vast experience in stitching all types of Ladies' Garments.",
+    image:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+  },
+  {
+    name: "Pooja Gupta",
+    role: "Helping Hand of Babita Ma'am",
+    description:
+      "She is a great help in completing small tasks like hand stitching, fall piko, thread work, hand embroidery, and helping Babita ma'am in her work.",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+  },
+];
 
 const About = () => {
   return (
-    <section className="py-24 md:py-32 bg-background text-foreground relative overflow-hidden">
-      {/* Background decorations */}
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-        transition={{ duration: 8, repeat: Infinity }}
-        className="absolute top-20 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
-      />
-      <motion.div
-        animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.2, 0.1] }}
-        transition={{ duration: 10, repeat: Infinity }}
-        className="absolute bottom-20 left-0 w-72 h-72 bg-accent/10 rounded-full blur-3xl"
-      />
-
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Image */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="relative"
-          >
-            <div className="relative overflow-hidden rounded-2xl">
-              <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
-                alt="STYLISTE Boutique"
-                className="w-full h-[500px] object-cover hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 to-transparent" />
-            </div>
-
-            {/* Experience badge */}
+    <main>
+      {/* Hero */}
+      <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
+        <Navbar />
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80"
+            alt="STYLISTE boutique"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
+        </div>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-3xl">
             <motion.div
-              initial={{ scale: 0 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, type: "spring" }}
-              className="absolute -bottom-8 right-6 bg-accent text-accent-foreground px-6 py-4 rounded-xl shadow-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-4 mb-6"
             >
-              <span className="font-serif text-4xl font-bold">7+</span>
-              <p className="text-xs uppercase tracking-wide mt-1">
-                Years Experience
+              <div className="w-8 h-px bg-primary-foreground/60" />
+              <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                About Us
               </p>
             </motion.div>
-          </motion.div>
-
-          {/* Content */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-8 h-px bg-primary" />
-              <p className="text-primary tracking-[0.3em] text-xs uppercase flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                About STYLISTE
-              </p>
-            </div>
-
-            <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl mb-6">
-              Where Tradition Meets
-              <br />
-              <span className="italic text-primary">Modern Elegance</span>
-            </h2>
-
-            <p className="text-muted-foreground text-lg mb-6">
-              Founded by{" "}
-              <strong className="text-foreground">
-                Swanand Madhav Oak
-              </strong>
-              , STYLISTE COUTURIER helps every woman feel confident in garments
-              designed for her unique body type.
-            </p>
-
-            <p className="text-muted-foreground mb-8">
-              We specialise in transforming old sarees into designer western and
-              Indo-western outfits with doorstep pickup and fitting services in
-              Thane & Mulund.
-            </p>
-
-            <div className="grid grid-cols-2 gap-6 mb-10">
-              <div className="bg-muted/50 p-5 rounded-xl border border-border">
-                <h4 className="font-serif text-2xl text-primary mb-1">B2C</h4>
-                <p className="text-sm text-muted-foreground">
-                  Custom garments & alterations
-                </p>
-              </div>
-              <div className="bg-muted/50 p-5 rounded-xl border border-border">
-                <h4 className="font-serif text-2xl text-primary mb-1">B2B</h4>
-                <p className="text-sm text-muted-foreground">
-                  Designer samples & brand work
-                </p>
-              </div>
-            </div>
-
-            {/* BUTTON — NO external component */}
-            <Link
-              to="/about"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-all text-sm tracking-wide group"
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
             >
-              Read More About Us
-              <ArrowRight
-                className="w-4 h-4 transition-transform group-hover:translate-x-2"
-                strokeWidth={1.5}
+              Revolutionising
+              <br />
+              <span className="italic text-accent">Women's</span>
+              <br />
+              Fashion
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-primary-foreground/80 text-lg leading-relaxed"
+            >
+              An innovative ladies' garments brand that aims to revolutionise
+              the way women shop for clothing in India.
+            </motion.p>
+          </div>
+        </div>
+      </section>
+
+      {/* Vision & Goals */}
+      <section className="py-28 md:py-40 bg-background text-foreground">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
+            {/* Vision */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="group p-8 md:p-12 border border-border bg-card hover:border-sage/50 hover:shadow-sage transition-all duration-500"
+            >
+              <div className="w-16 h-16 mb-8 border border-sage/30 flex items-center justify-center group-hover:bg-sage group-hover:border-sage transition-all duration-500">
+                <Eye
+                  className="w-7 h-7 text-sage group-hover:text-primary-foreground transition-colors duration-500"
+                  strokeWidth={1}
+                />
+              </div>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-8 h-px bg-sage" />
+                <p className="text-sage font-sans tracking-[0.3em] text-xs uppercase">
+                  Our Vision
+                </p>
+              </div>
+              <h2 className="font-serif text-3xl md:text-4xl mb-6">
+                Empowering Every Woman
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Our expert team is dedicated to helping every woman, regardless
+                of age, feel confident in fashionable clothing thoughtfully
+                designed to compliment her unique body type.
+              </p>
+            </motion.div>
+
+            {/* Goals */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.15 }}
+              className="group p-8 md:p-12 border border-border bg-card hover:border-rose/50 hover:shadow-rose transition-all duration-500"
+            >
+              <div className="w-16 h-16 mb-8 border border-rose/30 flex items-center justify-center group-hover:bg-rose group-hover:border-rose transition-all duration-500">
+                <Target
+                  className="w-7 h-7 text-rose group-hover:text-primary-foreground transition-colors duration-500"
+                  strokeWidth={1}
+                />
+              </div>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-8 h-px bg-rose" />
+                <p className="text-rose font-sans tracking-[0.3em] text-xs uppercase">
+                  Our Goals
+                </p>
+              </div>
+              <h2 className="font-serif text-3xl md:text-4xl mb-6">
+                Expanding Horizons
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                To establish 4–5 boutiques within the next 2–3 years across
+                Thane, Mumbai, and Pune.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mission */}
+      <section className="py-28 md:py-40 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-8 h-px bg-primary-foreground/60" />
+                <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                  Our Story
+                </p>
+              </div>
+              <h2 className="font-serif text-4xl md:text-5xl mb-8 text-primary-foreground">
+                Seamless Fashion Experience
+              </h2>
+              <p className="text-primary-foreground/80 mb-6 leading-relaxed">
+                We provide customers with a seamless online shopping experience,
+                offering a wide range of fashionable and affordable clothing
+                items. Our unique selling proposition is our "Try Before You Buy
+                Online" service, which allows customers to try their selected
+                garments online using our AI Tool.
+              </p>
+              <p className="text-primary-foreground/80 leading-relaxed">
+                Additionally, we offer on-demand doorstep tailoring services in
+                Thane & Mulund area, enabling customers to create custom
+                designs, convert old sarees into designer wear, and request
+                alterations, all from the comfort of their homes.
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="aspect-[4/5] overflow-hidden group"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80"
+                alt="Fashion craftsmanship"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="py-28 md:py-40 bg-background text-foreground">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex items-center justify-center gap-4 mb-4"
+            >
+              <div className="w-8 h-px bg-sage" />
+              <p className="text-sage font-sans tracking-[0.3em] text-xs uppercase">
+                Meet Our Experts
+              </p>
+              <div className="w-8 h-px bg-sage" />
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-4xl md:text-5xl mb-6"
+            >
+              Our Team
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.15 }}
+              className="text-muted-foreground max-w-2xl mx-auto"
+            >
+              A dedicated team of professionals committed to delivering
+              excellence in every stitch.
+            </motion.p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {teamMembers.map((member, index) => (
+              <motion.div
+                key={member.name}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="group"
+              >
+                <div className="aspect-[3/4] overflow-hidden mb-6 relative">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </div>
+                <h3 className="font-serif text-xl mb-1 group-hover:text-sage transition-colors duration-300">
+                  {member.name}
+                </h3>
+                <p className="text-sage text-sm font-sans tracking-wide uppercase mb-3">
+                  {member.role}
+                </p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {member.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="py-28 md:py-40 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex items-center justify-center gap-4 mb-4"
+            >
+              <div className="w-8 h-px bg-primary-foreground/60" />
+              <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                What We Offer
+              </p>
+              <div className="w-8 h-px bg-primary-foreground/60" />
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-4xl md:text-5xl text-primary-foreground"
+            >
+              Your Trusted Fashion Partner
+            </motion.h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                icon: Scissors,
+                title: "Expert Designers",
+                description:
+                  "Our team of expert designers will guide you through the entire design process with the latest style guide.",
+              },
+              {
+                icon: Home,
+                title: "Doorstep Service",
+                description:
+                  "Our tailor will visit your home to confirm measurements and offer a free pick-up facility for fabric and samples.",
+              },
+              {
+                icon: Shirt,
+                title: "All Garment Types",
+                description:
+                  "From classic patterns and Bollywood-inspired designs to the latest fashion trends - we stitch all types of garments.",
+              },
+              {
+                icon: Sparkles,
+                title: "Perfect Finish",
+                description:
+                  "We stitch your garment to perfection - both in quality and finish, delivered hassle-free to your address.",
+              },
+            ].map((service, index) => (
+              <motion.div
+                key={service.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15 }}
+                className="group bg-primary-foreground/10 border border-primary-foreground/20 p-8 hover:bg-primary-foreground/20 transition-all duration-500"
+              >
+                <div className="w-14 h-14 mb-6 border border-primary-foreground/30 flex items-center justify-center group-hover:bg-primary-foreground group-hover:border-primary-foreground transition-all duration-500">
+                  <service.icon
+                    className="w-6 h-6 text-primary-foreground group-hover:text-primary transition-colors duration-500"
+                    strokeWidth={1}
+                  />
+                </div>
+                <h3 className="font-serif text-xl mb-4 text-primary-foreground group-hover:text-accent transition-colors duration-300">
+                  {service.title}
+                </h3>
+                <p className="text-primary-foreground/70 text-sm leading-relaxed">
+                  {service.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How We Work */}
+      <section className="py-28 md:py-40 bg-background text-foreground">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="aspect-[4/5] overflow-hidden order-2 lg:order-1 group"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&q=80"
+                alt="Tailoring process"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="order-1 lg:order-2"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-8 h-px bg-sage" />
+                <p className="text-sage font-sans tracking-[0.3em] text-xs uppercase">
+                  Our Promise
+                </p>
+              </div>
+              <h2 className="font-serif text-4xl md:text-5xl mb-8">
+                Hassle-Free Fashion
+              </h2>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Thanks to our online/doorstep tailoring service, you don't have
+                to worry about finding the right tailor or finding a designer
+                who understands your fashion needs. Our team of expert
+                designers, tailors, and customer representatives will be your
+                trusted partner in achieving a world-class, fashionable,
+                customized wardrobe.
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                Our website is easy to use, with a detailed guide that helps you
+                choose the dress length, neckline, sleeves, hemline, openings,
+                and other specifics of your preference. When you place an order
+                with us, our tailor will visit your home to confirm all
+                measurements and offer a free pick-up facility to collect the
+                fabric and sample from you.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-28 md:py-40 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-6 text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="font-serif text-4xl md:text-6xl mb-8"
+          >
+            Experience STYLISTE
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-primary-foreground/80 max-w-xl mx-auto mb-12 leading-relaxed"
+          >
+            Visit our boutique or book a doorstep consultation with one of our
+            expert designers.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <Link
+              to="/appointment"
+              className="group inline-flex items-center gap-2
+             px-8 py-4 rounded-xl
+             bg-background text-foreground
+             font-medium transition-all
+             hover:bg-background/90"
+            >
+              Book Appointment
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-flex items-center justify-center
+             px-8 py-4 rounded-xl
+             border border-primary-foreground/40
+             text-primary-foreground
+             transition hover:bg-primary-foreground/10"
+            >
+              Contact Us
             </Link>
           </motion.div>
         </div>
-      </div>
-    </section>
+      </section>
+      <Footer />
+      {/* <FloatingAppointmentButton /> */}
+    </main>
   );
 };
+
 export default About;
