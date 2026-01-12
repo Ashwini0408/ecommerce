@@ -1,17 +1,30 @@
 import Navbar from "./Navbar";
+import { FloatingAppointmentButton } from "../../pages/public/FloatingAppointmentButton";
+// import Footer from "./Footer";
+import { Outlet } from "react-router-dom";
+import { Footer } from "./Footer";
+import { WhatsAppButton } from "../../pages/public/WhatsAppButton";
 
 type Props = {
   children: React.ReactNode;
 };
 
-const MainLayout = ({ children }: Props) => {
+const MainLayout = () => {
   return (
     <>
       <Navbar />
-      {/* Offset for fixed navbar (h-20 = 80px) */}
-      <main className="pt-20">{children}</main>
+
+      {/* All pages render here */}
+      <Outlet />
+
+      {/* Floating button on EVERY page */}
+      <FloatingAppointmentButton />
+      <WhatsAppButton />
+
+      <Footer />
     </>
   );
 };
 
 export default MainLayout;
+

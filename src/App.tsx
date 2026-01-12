@@ -81,10 +81,12 @@
 
 
 import { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppDispatch } from './hooks/useAuth';
 import { loadUserFromStorage } from './store/slices/authSlice';
 import { loadCartFromStorage } from './store/slices/cartSlice';
+import { FloatingAppointmentButton } from "./pages/public/FloatingAppointmentButton";
+
 
 // Public Pages
 import HomePage from './pages/public/HomePage';
@@ -108,6 +110,7 @@ import Testimonial from './pages/public/Testimonial';
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { WhatsAppButton } from './pages/public/WhatsAppButton';
 
 
 const NotFound = () => (
@@ -186,6 +189,9 @@ function App() {
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
+       {/* ✅ FLOATING BUTTON — ADD HERE */}
+    <FloatingAppointmentButton />
+    <WhatsAppButton />
     </div>
   );
 }

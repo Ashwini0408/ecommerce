@@ -2,39 +2,59 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
+/* ================= ASSET IMPORTS ================= */
+// ⚠️ Adjust paths if your file structure differs
+import westernFront from "../../assets/western-gown.jpg";
+import westernBack from "../../assets/western-gown-back.jpg";
+
+import lehengaFront from "../../assets/lehnga-front.jpg";
+import lehengaBack from "../../assets/lehnga-back.jpg";
+
+import sareeFront from "../../assets/saree-gown.jpg";
+import sareeBack from "../../assets/saree-gown-back.jpg";
+
+import blouseFront from "../../assets/baluse-front.png";
+import blouseBack from "../../assets/blause-back.jpg";
+
+/* ================= PRODUCT DATA ================= */
 const featuredProducts = [
   {
     id: 1,
     name: "Indo-Western Gown",
     price: "₹12,500",
-    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80",
+    frontImage: westernFront,
+    backImage: westernBack,
   },
   {
     id: 2,
     name: "Bridal Lehenga",
     price: "₹28,000",
-    image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&q=80",
+    frontImage: lehengaFront,
+    backImage: lehengaBack,
   },
   {
     id: 3,
     name: "Saree Conversion Dress",
     price: "₹9,800",
-    image: "https://images.unsplash.com/photo-1617922001439-4a2e6562f6d0?w=600&q=80",
+    frontImage: sareeFront,
+    backImage: sareeBack,
   },
   {
     id: 4,
     name: "Designer Blouse",
     price: "₹4,500",
-    image: "https://images.unsplash.com/photo-1618354691229-88d47f285158?w=600&q=80",
+    frontImage: blouseFront,
+    backImage: blouseBack,
   },
 ];
 
+/* ================= COMPONENT ================= */
 export const FeaturedProducts = () => {
   return (
     <section className="py-28 md:py-40 bg-[hsl(var(--primary))]">
       <div className="container mx-auto px-6">
 
-        {/* HEADER */}
+        {/* ================= HEADER ================= */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
           <div>
             <motion.div
@@ -63,7 +83,7 @@ export const FeaturedProducts = () => {
             </motion.h2>
           </div>
 
-          {/* CTA */}
+          {/* ================= CTA ================= */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -86,7 +106,7 @@ export const FeaturedProducts = () => {
           </motion.div>
         </div>
 
-        {/* PRODUCTS */}
+        {/* ================= PRODUCTS GRID ================= */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {featuredProducts.map((product, index) => (
             <motion.div
@@ -95,17 +115,40 @@ export const FeaturedProducts = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.12 }}
-              whileHover={{ y: -10 }}
+              // whileHover={{ y: -10 }}
               className="group"
             >
-              <div className="relative overflow-hidden rounded-2xl">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-[420px] object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              </div>
+<div className="relative w-full h-[420px] overflow-hidden rounded-2xl">
 
+  {/* BACK IMAGE */}
+  <img
+    src={product.backImage}
+    alt={`${product.name} back`}
+    className="
+      absolute inset-0 w-full h-full object-cover
+      opacity-0 scale-100
+      transition-all duration-[900ms]
+      ease-[cubic-bezier(0.4,0,0.2,1)]
+      group-hover:opacity-100 group-hover:scale-110
+    "
+  />
+
+  {/* FRONT IMAGE */}
+  <img
+    src={product.frontImage}
+    alt={`${product.name} front`}
+    className="
+      absolute inset-0 w-full h-full object-cover
+      opacity-100 scale-100
+      transition-all duration-[900ms]
+      ease-[cubic-bezier(0.4,0,0.2,1)]
+      group-hover:opacity-0 group-hover:scale-110
+    "
+  />
+
+</div>
+
+              {/* PRODUCT INFO */}
               <div className="mt-5">
                 <h3 className="font-serif text-xl text-white mb-1">
                   {product.name}

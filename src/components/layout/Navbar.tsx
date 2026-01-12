@@ -565,7 +565,7 @@
 
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation  } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiShoppingCart,
@@ -585,6 +585,8 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, isAdmin, dispatch } = useAuth();
   const { totalItems } = useAppSelector((state) => state.cart);
+const location = useLocation();
+const isActive = (path: string) => location.pathname === path;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -606,16 +608,14 @@ const Navbar = () => {
   return (
     <>
       {/* ---------------- NAVBAR ---------------- */}
-      <motion.nav
-        initial={{ y: -80 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled
-            ? "bg-gradient-to-r from-[#7F8F72] via-[#8FA17A] to-[#7F8F72] shadow-xl backdrop-blur"
-            : "bg-gradient-to-r from-[#9CAF88] via-[#A8B79A] to-[#9CAF88]"
-        }`}
-      >
+     <nav
+  className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    isScrolled
+      ? "bg-gradient-to-r from-[#7F8F72] via-[#8FA17A] to-[#7F8F72] shadow-xl backdrop-blur"
+      : "bg-gradient-to-r from-[#9CAF88] via-[#A8B79A] to-[#9CAF88]"
+  }`}
+>
+
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* ---------------- LOGO ---------------- */}
@@ -633,20 +633,26 @@ const Navbar = () => {
             <div className="hidden md:flex items-center space-x-8">
               {[
                 { name: "Home", path: "/" },
-                { name: "Products", path: "/products" },
-                { name: "About us", path: "/about" },
+                // { name: "Products", path: "/products" },
+                { name: "About", path: "/about" },
                 { name: "Services", path: "/services" },
                 { name: "Contact us", path: "/contact" },
-                { name: "Blog", path: "/blog" },
+                // { name: "Blog", path: "/blog" },
                 { name: "Testimonials", path: "/testimonials" },
               ].map((item) => (
                 <Link
-                  key={item.name}
-                  to={item.path}
-                  className="relative text-white/80 hover:text-white transition-all duration-300
-                    after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
-                    after:w-0 hover:after:w-full after:transition-all after:duration-300"
-                >
+  key={item.name}
+  to={item.path}
+  className={`relative transition-all duration-300
+    ${
+      isActive(item.path)
+        ? "text-white font-medium after:w-full"
+        : "text-white/80 hover:text-white after:w-0"
+    }
+    after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
+    after:transition-all after:duration-300`}
+>
+
                   {item.name}
                 </Link>
               ))}
@@ -793,7 +799,7 @@ const Navbar = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.nav>
+      </nav>
 
       {/* ---------------- NAVBAR SPACER (IMPORTANT FIX) ---------------- */}
       <div className="h-20" />

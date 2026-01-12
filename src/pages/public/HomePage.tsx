@@ -14,6 +14,7 @@ import { ServicesSection } from '../../components/home/ServiceSection';
 import { HowItWorksSection } from '../../components/home/HowItWorksSection';
 import { BookAppointmentSection } from '../../components/home/BookAppointmentSection';
 import { StatsSection } from '../../components/home/StatsSection';
+import { FAQSection } from '../../components/home/FAQSection';
 
 
 
@@ -31,6 +32,7 @@ const HomePage = () => {
       <ServicesSection />
       <HowItWorksSection />
       <TestimonialsSection />
+      <FAQSection />
       <BookAppointmentSection />
       {/* <Categories /> */}
       {/* <FeaturedProducts /> */}

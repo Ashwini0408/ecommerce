@@ -25,8 +25,8 @@ const Contact = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const inputClass =
-    "w-full bg-[#1f2214] border border-[#2c2f1d] text-[#e6e4d8] placeholder:text-[#b7b39a] focus:border-[#9fa36b] focus:ring-1 focus:ring-[#9fa36b]/40 outline-none rounded-md transition-all";
+ const inputClass =
+  "w-full bg-[#fafafa] border border-[#e5e5e5] text-[#1f1f1f] placeholder:text-[#9ca3af] focus:border-sage focus:ring-1 focus:ring-sage/30 outline-none rounded-md transition-all";
 
   return (
     <div className="bg-background text-foreground">
@@ -84,7 +84,7 @@ const Contact = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
+                    <label className="text-xs uppercase tracking-[0.15em] text-[#1f1f1f] mb-3 block">
                       Name
                     </label>
                     <input
@@ -98,7 +98,7 @@ const Contact = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
+                    <label className="text-xs uppercase tracking-[0.15em] text-[#1f1f1f] mb-3 block">
                       Email
                     </label>
                     <input
@@ -114,7 +114,7 @@ const Contact = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#1f1f1f] mb-3 block">
                     Subject
                   </label>
                   <input
@@ -128,7 +128,7 @@ const Contact = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-[0.15em] text-[#b7b39a] mb-3 block">
+                  <label className="text-xs uppercase tracking-[0.15em] text-[#1f1f1f] mb-3 block">
                     Message
                   </label>
                   <textarea
