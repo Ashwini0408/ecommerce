@@ -43,7 +43,7 @@ const CartPage = () => {
     return (
       <div className="min-h-screen bg-dark-950">
         <Navbar />
-        <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8  mx-auto">
           <div className="glass-card rounded-2xl p-12 text-center">
             <FiShoppingBag className="mx-auto text-dark-600 mb-4" size={64} />
             <h2 className="text-2xl font-bold text-white mb-2">Your cart is empty</h2>
@@ -67,7 +67,7 @@ const CartPage = () => {
     <div className="min-h-screen bg-dark-950">
       <Navbar />
 
-      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

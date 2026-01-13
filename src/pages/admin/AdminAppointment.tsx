@@ -750,6 +750,7 @@ import {
   format,
   startOfWeek,
   addDays,
+  subDays,
   isSameDay,
   addWeeks,
   subWeeks,
@@ -874,13 +875,21 @@ export default function AdminAppointment() {
     return data;
   }, [appointments, search]);
 
-  const navigate = (dir: "prev" | "next") => {
-    setCurrentDate(prev =>
-      viewMode === "month"
-        ? dir === "next" ? addMonths(prev, 1) : subMonths(prev, 1)
-        : dir === "next" ? addWeeks(prev, 1) : subWeeks(prev, 1)
-    );
-  };
+const navigate = (dir: "prev" | "next") => {
+  setCurrentDate(prev => {
+    if (viewMode === "month") {
+      return dir === "next" ? addMonths(prev, 1) : subMonths(prev, 1);
+    }
+
+    if (viewMode === "week") {
+      return dir === "next" ? addWeeks(prev, 1) : subWeeks(prev, 1);
+    }
+
+    // ✅ DAY VIEW — FIX
+    return dir === "next" ? addDays(prev, 1) : subDays(prev, 1);
+  });
+};
+
 
   if (loading)
     return <div className="p-10 text-white text-center">Loading calendar…</div>;

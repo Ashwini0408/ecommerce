@@ -2,26 +2,38 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiPackage, FiUser, FiCalendar, FiMapPin, FiTruck } from 'react-icons/fi';
 import Navbar from '../../components/layout/Navbar';
-import { useAuth } from '../../hooks/useAuth';
 import { orderApi } from '../../api/orderApi';
 import { appointmentApi } from '../../api/appointmentApi';
 import type { Order, Appointment } from '../../types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store/store";
+import {formatINR } from "../../utils/currency";
+
 
 const UserDashboard = () => {
-  const { user } = useAuth();
+    const { user, isAuthenticated, isHydrated } = useSelector(
+      (state: RootState) => state.auth
+    );
+
   const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'appointments'>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
+    useEffect(() => {
+      if (!isHydrated) return;        // ⛔ wait until localStorage is loaded
+      if (!isAuthenticated) return;  // ⛔ user not logged in
+      if (!user) return;             // ⛔ safety guard
 
-  const fetchUserData = async () => {
-    if (!user) return;
+      fetchUserData();               // ✅ API CALLS FIRE HERE
+    }, [isHydrated, isAuthenticated, user]);
+
+
+    const fetchUserData = async () => {
+    if (!user?.id) return;
+
     
     setLoading(true);
     try {
@@ -57,11 +69,15 @@ const UserDashboard = () => {
     { id: 'profile', label: 'Profile', icon: FiUser },
   ];
 
+
+
+ 
+
   return (
     <div className="min-h-screen bg-dark-950">
       <Navbar />
 
-      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-display font-bold text-white mb-2">
@@ -185,8 +201,9 @@ const UserDashboard = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-2xl font-bold gradient-text">
-                              ${order.totalAmount.toFixed(2)}
-                            </p>
+  {formatINR(order.totalAmount)}
+</p>
+
                             {order.trackingNumber && (
                               <p className="text-xs text-dark-500 mt-1">
                                 Tracking: {order.trackingNumber}
@@ -202,8 +219,9 @@ const UserDashboard = () => {
                                 {item.productName} × {item.quantity}
                               </span>
                               <span className="text-white font-semibold">
-                                ${item.totalPrice.toFixed(2)}
-                              </span>
+  {formatINR(item.totalPrice)}
+</span>
+
                             </div>
                           ))}
                           {order.items.length > 3 && (

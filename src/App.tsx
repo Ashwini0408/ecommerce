@@ -81,10 +81,12 @@
 
 
 import { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppDispatch } from './hooks/useAuth';
 import { loadUserFromStorage } from './store/slices/authSlice';
 import { loadCartFromStorage } from './store/slices/cartSlice';
+import { FloatingAppointmentButton } from "./pages/public/FloatingAppointmentButton";
+
 
 // Public Pages
 import HomePage from './pages/public/HomePage';
@@ -98,11 +100,17 @@ import About from './pages/public/About';
 import Contact from './pages/public/ContactUs';
 import Appointment from './pages/public/AppointmentBooking';
 import SizeGuide from './pages/public/SizeGuide';
+import services from './pages/public/Services';
+import PrivacyPolicy from './pages/public/PrivacyPolicy';
+import TermsOfService from './pages/public/TermsAndConditions';
+import RefundPolicy from './pages/public/RefundPolicy';
+import Testimonial from './pages/public/Testimonial';
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { WhatsAppButton } from './pages/public/WhatsAppButton';
 
 
 const NotFound = () => (
@@ -151,6 +159,11 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/appointment" element={<Appointment />} />
         <Route path="/sizeGuide" element={<SizeGuide />} />
+        <Route path="/services" element={services()} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/testimonials" element={<Testimonial />} />
 
         {/* Protected User Routes */}
         <Route
@@ -176,6 +189,9 @@ function App() {
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
+       {/* ✅ FLOATING BUTTON — ADD HERE */}
+    <FloatingAppointmentButton />
+    <WhatsAppButton />
     </div>
   );
 }

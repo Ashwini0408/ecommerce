@@ -8,6 +8,7 @@ import { categoryApi, type Category } from '../../api/categoryApi'; // 👈 Impo
 import type { Product, ProductFilterRequest } from '../../types';
 import toast from 'react-hot-toast';
 import { Footer } from '../../components/layout/Footer';
+import { formatINR } from '../../utils/currency';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -91,7 +92,7 @@ const ProductsPage = () => {
     <div className="min-h-screen bg-dark-950">
       <Navbar />
 
-      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -190,9 +191,10 @@ const ProductsPage = () => {
 
                   {/* Price Range */}
                   <div>
-                    <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                      Price Range: ${priceRange.min} - ${priceRange.max}
-                    </label>
+                   <label className="text-sm font-semibold text-dark-300 mb-2 block">
+  Price Range: {formatINR(priceRange.min)} – {formatINR(priceRange.max)}
+</label>
+
                     <div className="space-y-2">
                       <input
                         type="range"

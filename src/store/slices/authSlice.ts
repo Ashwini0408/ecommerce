@@ -7,16 +7,20 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isHydrated: boolean; // ✅ ADD THIS
   error: string | null;
 }
+
 
 const initialState: AuthState = {
   user: null,
   token: localStorage.getItem('authToken'),
-  isAuthenticated: !!localStorage.getItem('authToken'),
+  isAuthenticated: false,   // ❗ important
   isLoading: false,
+  isHydrated: false,        // ✅ ADD
   error: null,
 };
+
 
 // Async thunks
 export const login = createAsyncThunk<AuthResponse, LoginRequest, { rejectValue: string }>(
@@ -96,13 +100,18 @@ const authSlice = createSlice({
     loadUserFromStorage: (state) => {
       const token = localStorage.getItem('authToken');
       const userStr = localStorage.getItem('user');
-      
+
       if (token && userStr) {
         state.token = token;
         state.user = JSON.parse(userStr);
         state.isAuthenticated = true;
+      } else {
+        state.isAuthenticated = false;
       }
+
+      state.isHydrated = true; // ✅ THIS FIXES YOUR ISSUE
     },
+
   },
   extraReducers: (builder) => {
     // Login

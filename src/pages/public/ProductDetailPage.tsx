@@ -82,8 +82,7 @@ const ProductDetailPage = () => {
         quantity,
         selectedSize,
         selectedColor,
-        // ✅ Fix: Ensure cart gets the full image URL too
-        image: getImageUrl(product.images[0]), 
+        image: product.images[0],
         stock: product.stock,
       })
     );
@@ -99,7 +98,7 @@ const ProductDetailPage = () => {
     return (
       <div className="min-h-screen bg-dark-950">
         <Navbar />
-        <div className="pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="pt-24 px-4 sm:px-6 lg:px-8  mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="glass-card rounded-2xl h-96 shimmer" />
             <div className="space-y-4">
@@ -126,7 +125,7 @@ const ProductDetailPage = () => {
     <div className="min-h-screen bg-dark-950">
       <Navbar />
 
-      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 mx-auto">
         {/* Back Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -148,8 +147,7 @@ const ProductDetailPage = () => {
               className="aspect-square rounded-2xl overflow-hidden glass-card"
             >
               <img
-                // ✅ Fix: Use helper here
-                src={getImageUrl(product.images[selectedImage])}
+                src={product.images[selectedImage]}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />

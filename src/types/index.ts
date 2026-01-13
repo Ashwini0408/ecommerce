@@ -81,6 +81,7 @@ export interface ProductFilterRequest {
 }
 
 export interface PaginatedResponse<T> {
+  filter(arg0: (u: { id: number; name: string; email: string; role: string; status: string; phone?: string; address?: string; createdAt: string; }) => boolean): PaginatedResponse<import("../api/userApi").UserResponse>;
   content: T[];
   totalElements: number;
   totalPages: number;
@@ -150,6 +151,8 @@ export interface OrderStatistics {
   pendingOrders: number;
   shippedOrders: number;
   deliveredOrders: number;
+  cancelledOrders: number;
+  processingOrders: number;
 }
 
 // ==================== APPOINTMENT ====================

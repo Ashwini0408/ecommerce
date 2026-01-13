@@ -280,6 +280,10 @@ const AdminProducts = () => {
                   src={getImageUrl(product.images[0])} 
                   alt={product.name} 
                   className="w-full h-full object-cover"
+<<<<<<< HEAD
+=======
+                  // onError={(e) => (e.target as HTMLImageElement).src = '/placeholder.jpg'}
+>>>>>>> 7ce3ff1cf053ca2079a06534a167c0c7ab8b6709
                 />
                 {!product.isActive && (
                   <div className="absolute inset-0 bg-dark-950/80 flex items-center justify-center">

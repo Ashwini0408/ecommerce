@@ -58,6 +58,7 @@ export const appointmentApi = {
     const response = await axiosInstance.get<AppointmentStatistics>('/appointments/statistics');
     return response.data;
   },
+  
 };
 
 export default appointmentApi;
