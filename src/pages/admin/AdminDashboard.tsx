@@ -305,7 +305,7 @@ import AdminUsers from './AdminUsers';
 import { orderApi } from '../../api/orderApi';
 import { appointmentApi } from '../../api/appointmentApi';
 
-import type { OrderStatistics, AppointmentStatistics } from '../../types';
+import type { OrderStatistics, AppointmentStatistics, Order, Appointment } from '../../types';
 import toast from 'react-hot-toast';
 
 // IMPORTANT — Correct Import

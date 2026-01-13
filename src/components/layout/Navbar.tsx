@@ -608,14 +608,13 @@ const isActive = (path: string) => location.pathname === path;
   return (
     <>
       {/* ---------------- NAVBAR ---------------- */}
-     <nav
+<nav
   className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
     isScrolled
-      ? "bg-gradient-to-r from-[#7F8F72] via-[#8FA17A] to-[#7F8F72] shadow-xl backdrop-blur"
-      : "bg-gradient-to-r from-[#9CAF88] via-[#A8B79A] to-[#9CAF88]"
+      ? "bg-gradient-to-r from-[#5E6E54] via-[#6B7D60] to-[#5E6E54] shadow-xl backdrop-blur"
+      : "bg-gradient-to-r from-[#6B7D60] via-[#7A8D6D] to-[#6B7D60]"
   }`}
 >
-
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* ---------------- LOGO ---------------- */}
@@ -652,7 +651,6 @@ const isActive = (path: string) => location.pathname === path;
     after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
     after:transition-all after:duration-300`}
 >
-
                   {item.name}
                 </Link>
               ))}
