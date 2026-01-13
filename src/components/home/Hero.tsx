@@ -583,13 +583,11 @@ const slides = [
 
 export const Hero = () => {
   const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState(1);
   const timerRef = useRef<number | null>(null);
 
   /* ---------- AUTO SLIDER ---------- */
   useEffect(() => {
     timerRef.current = window.setInterval(() => {
-      setDirection(1);
       setCurrent((p) => (p + 1) % slides.length);
     }, 6000);
 
@@ -601,31 +599,49 @@ export const Hero = () => {
     };
   }, []);
 
-  /* ---------- ANIMATIONS ---------- */
+  /* ---------- PURE FADE IMAGE ANIMATION ---------- */
   const imageVariants: Variants = {
-    enter: (d: number) => ({ x: d > 0 ? "100%" : "-100%" }),
-    center: { x: 0 },
-    exit: (d: number) => ({ x: d > 0 ? "-100%" : "100%" }),
+    enter: {
+      opacity: 0,
+      scale: 1.03, // very subtle depth
+    },
+    center: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        opacity: { duration: 1.4, ease: "easeInOut" },
+        scale: { duration: 2.5, ease: "easeOut" },
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 1.02,
+      transition: {
+        opacity: { duration: 1.4, ease: "easeInOut" },
+      },
+    },
   };
 
   const textVariants: Variants = {
-    enter: { opacity: 0, x: -40 },
-    center: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: 40 },
+    enter: { opacity: 0, y: 20 },
+    center: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: "easeOut" },
+    },
+    exit: { opacity: 0, y: -20 },
   };
 
   return (
     <section className="relative w-full h-[100svh] overflow-hidden">
-      {/* ---------- IMAGE ---------- */}
-      <AnimatePresence initial={false} custom={direction}>
+      {/* ---------- IMAGE (CROSS FADE) ---------- */}
+      <AnimatePresence mode="sync">
         <motion.picture
           key={current}
-          custom={direction}
           variants={imageVariants}
           initial="enter"
           animate="center"
           exit="exit"
-          transition={{ duration: 1.1, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full"
         >
           <source
@@ -683,43 +699,41 @@ export const Hero = () => {
                 </span>
               </h1>
 
-              {/* Description (desktop only) */}
+              {/* Description */}
               <p className="hidden sm:block text-white/80 text-base md:text-lg mb-6">
                 {slides[current].description}
               </p>
 
               {/* Buttons */}
               <div className="flex flex-col items-center sm:flex-row sm:items-start gap-2 sm:gap-4">
-               <Link
-  to="/appointment"
-  className="inline-flex items-center justify-center gap-1.5
-             px-3 py-1.5 text-[10px]
-             w-[160px] sm:w-auto
-             sm:px-5 sm:py-3 sm:text-sm
-             rounded-md
-             bg-[#9CAF88] text-white font-medium
-             hover:bg-[#8FA17A]
-             transition-colors"
->
-
+                <Link
+                  to="/appointment"
+                  className="inline-flex items-center justify-center gap-1.5
+                             px-3 py-1.5 text-[10px]
+                             w-[160px] sm:w-auto
+                             sm:px-5 sm:py-3 sm:text-sm
+                             rounded-md
+                             bg-[#9CAF88] text-white font-medium
+                             hover:bg-[#8FA17A]
+                             transition-colors"
+                >
                   Book Appointment
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
-               <Link
-  to="/services"
-  className="hidden sm:inline-flex sm:w-auto items-center justify-center
-             px-4 py-2.5 text-xs
-             sm:px-5 sm:py-3 sm:text-sm
-             rounded-lg
-             border border-white/40
-             text-white
-             hover:bg-white/10
-             transition"
->
-  Explore Services
-</Link>
-
+                <Link
+                  to="/services"
+                  className="hidden sm:inline-flex sm:w-auto items-center justify-center
+                             px-4 py-2.5 text-xs
+                             sm:px-5 sm:py-3 sm:text-sm
+                             rounded-lg
+                             border border-white/40
+                             text-white
+                             hover:bg-white/10
+                             transition"
+                >
+                  Explore Services
+                </Link>
               </div>
             </motion.div>
           </AnimatePresence>
