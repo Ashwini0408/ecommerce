@@ -150,22 +150,22 @@ import { Instagram, Facebook, Phone, Mail, MapPin, Clock } from "lucide-react";
 
 const footerLinks = {
   services: [
-    { name: "Bespoke Tailoring", href: "/appointment" },
-    { name: "Designer Dresses", href: "/shop" },
-    { name: "Upscaling Sarees", href: "/appointment" },
-    { name: "Bridal Wear", href: "/shop" },
-    { name: "Alterations", href: "/appointment" },
+    { name: "Bespoke Tailoring", href: "/services" },
+    { name: "Designer Dresses", href: "/services" },
+    { name: "Upscaling Sarees", href: "/services" },
+    { name: "Bridal Wear", href: "/services" },
+    { name: "Alterations", href: "/services" },
   ],
   company: [
     { name: "About Us", href: "/about" },
     { name: "Our Process", href: "/about" },
-    { name: "Sustainability", href: "/sustainability" },
+    { name: "Sustainability", href: "/about" },
   ],
   support: [
     { name: "Contact Us", href: "/contact" },
     { name: "Shipping", href: "/shipping" },
     { name: "Returns", href: "/returns" },
-    { name: "Size Guide", href: "/size-guide" },
+    { name: "Size Guide", href: "/sizeGuide" },
     { name: "Book Appointment", href: "/appointment" },
   ],
  legal: [

@@ -782,9 +782,11 @@ const isActive = (path: string) => location.pathname === path;
               <div className="px-4 py-4 space-y-3">
                 {[
                   { name: "Home", path: "/" },
-                  { name: "Products", path: "/products" },
+                  // { name: "Products", path: "/products" },
+                  { name: "Services", path: "/services" },
                   { name: "About us", path: "/about" },
                   { name: "Contact us", path: "/contact" },
+                  { name: "Testimonials", path: "/testimonials" },
                 ].map((item) => (
                   <Link
                     key={item.name}
