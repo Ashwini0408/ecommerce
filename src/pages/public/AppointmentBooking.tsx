@@ -556,7 +556,7 @@ useEffect(() => {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-xs tracking-widest uppercase block mb-2">
+                  <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
                     Full Name *
                   </label>
                   <input
@@ -564,13 +564,21 @@ useEffect(() => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full h-14 px-5 bg-[#1E2225] border border-[#2C3236] text-white placeholder-gray-400 focus:border-[#6E9F7D] outline-none transition"
+                   className="w-full h-14 px-5 
+bg-[#F4EBE6] 
+border border-[#E2D6CF] 
+text-gray-900 
+placeholder-gray-500 
+focus:border-[#6E9F7D] 
+focus:bg-[#F8F1ED]
+outline-none transition rounded-md"
+
                     placeholder="Your name"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs tracking-widest uppercase block mb-2">
+                  <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
                     Email *
                   </label>
                   <input
@@ -579,13 +587,20 @@ useEffect(() => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full h-14 px-5 bg-[#1E2225] border border-[#2C3236] text-white placeholder-gray-400 focus:border-[#6E9F7D] outline-none transition"
-                    placeholder="email@example.com"
+                    className="w-full h-14 px-5 
+bg-[#F4EBE6] 
+border border-[#E2D6CF] 
+text-gray-900 
+placeholder-gray-500 
+focus:border-[#6E9F7D] 
+focus:bg-[#F8F1ED]
+outline-none transition rounded-md"
+
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs tracking-widest uppercase block mb-2">
+                  <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
                     Phone *
                   </label>
                   <input
@@ -593,25 +608,40 @@ useEffect(() => {
                     value={formData.phone}
                     onChange={handleChange}
                     required
-                    className="w-full h-14 px-5 bg-[#1E2225] border border-[#2C3236] text-white placeholder-gray-400 focus:border-[#6E9F7D] outline-none transition"
+                    className="w-full h-14 px-5 
+bg-[#F4EBE6] 
+border border-[#E2D6CF] 
+text-gray-900 
+placeholder-gray-500 
+focus:border-[#6E9F7D] 
+focus:bg-[#F8F1ED]
+outline-none transition rounded-md"
                     placeholder="+91 **********"
                   />
                 </div>
               </div>
 
-              <div className="mt-6">
-                <label className="text-xs tracking-widest uppercase block mb-2">
-                  Additional Notes
-                </label>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full px-5 py-4 bg-[#1E2225] border border-[#2C3236] text-white placeholder-gray-400 focus:border-[#6E9F7D] outline-none transition"
-                  placeholder="Any special requests?"
-                />
-              </div>
+             <div className="mt-6">
+  <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
+    Additional Notes
+  </label>
+  <textarea
+    name="notes"
+    value={formData.notes}
+    onChange={handleChange}
+    rows={4}
+    placeholder="Any special requests or preferences..."
+    className="w-full px-5 py-4 
+    bg-[#F4EBE6] 
+    border border-[#E2D6CF] 
+    text-gray-900 
+    placeholder-gray-500 
+    focus:border-[#6E9F7D] 
+    focus:bg-[#F8F1ED]
+    outline-none transition rounded-md"
+  />
+</div>
+
             </div>
 
             {/* SUBMIT */}
