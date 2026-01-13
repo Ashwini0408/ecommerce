@@ -156,19 +156,19 @@
 
 // export default ProductCard;
 
-
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { FiShoppingCart, FiHeart } from 'react-icons/fi';
-import type { Product } from '../../types';
-import { useAppDispatch } from '../../hooks/useAuth';
-import { addToCart } from '../../store/slices/cartSlice';
-import toast from 'react-hot-toast';
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { FiShoppingCart, FiHeart } from "react-icons/fi";
+import type { Product } from "../../types";
+import { useAppDispatch } from "../../hooks/useAuth";
+import { addToCart } from "../../store/slices/cartSlice";
+import toast from "react-hot-toast";
 
 // --- CONFIGURATION ---
 // In production, this should come from import.meta.env.VITE_API_URL
 // We strip '/api' if your env var includes it, or just define the server root.
-const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
+const SERVER_URL =
+  import.meta.env.VITE_API_IMG_URL || "http://192.168.1.111:8090";
 
 interface ProductCardProps {
   product: Product;
@@ -179,16 +179,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   // --- HELPER: Resolve Image URL ---
   const getImageUrl = (path?: string) => {
-    if (!path) return '/placeholder.jpg';
-    
+    if (!path) return "/placeholder.jpg";
+
     // If it's already a full URL (external image), return it
-    if (path.startsWith('http') || path.startsWith('blob:')) {
+    if (path.startsWith("http") || path.startsWith("blob:")) {
       return path;
     }
-    
+
     // Otherwise, prepend the Backend Server URL
     // Ensure we don't have double slashes
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return `${SERVER_URL}${cleanPath}`;
   };
 
@@ -199,7 +199,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     e.stopPropagation();
 
     if (product.stock === 0) {
-      toast.error('Product is out of stock');
+      toast.error("Product is out of stock");
       return;
     }
 
@@ -214,7 +214,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         stock: product.stock,
       })
     );
-    toast.success('Added to cart!');
+    toast.success("Added to cart!");
   };
 
   const discount = product.salePrice
@@ -234,10 +234,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
             alt={product.name}
             loading="lazy" // Optimization for lists
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            onError={(e) => {
-                // Fallback if image fails to load
-                (e.target as HTMLImageElement).src = '/placeholder.jpg';
-            }}
           />
 
           {/* Overlay Actions */}
@@ -296,7 +292,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
           </h3>
 
           {/* Description */}
-          <p className="text-sm text-dark-400 line-clamp-2">{product.description}</p>
+          <p className="text-sm text-dark-400 line-clamp-2">
+            {product.description}
+          </p>
 
           {/* Price */}
           <div className="flex items-center space-x-2 pt-2">

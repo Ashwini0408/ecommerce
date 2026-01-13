@@ -11,7 +11,7 @@ const About = () => {
     <div className="bg-background text-foreground">
       <Navbar />
       {/* Hero */}
-        <section className="py-20 md:py-32 border-b border-border">
+      <section className="py-20 md:py-32 border-b border-border">
         <div className="container mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -38,7 +38,8 @@ const About = () => {
             transition={{ delay: 0.2 }}
             className="text-muted-foreground max-w-xl mx-auto leading-relaxed"
           >
-            STYLISTE was born from a passion for exceptional craftsmanship and timeless design. We believe that true style transcends trends.
+            STYLISTE was born from a passion for exceptional craftsmanship and
+            timeless design. We believe that true style transcends trends.
           </motion.p>
         </div>
       </section>
@@ -62,10 +63,16 @@ const About = () => {
                 Empowering Individual Style
               </h2>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                At STYLISTE, we believe that fashion is a form of self-expression. Our mission is to provide exceptional pieces that empower individuals to express their unique style with confidence and elegance.
+                At STYLISTE, we believe that fashion is a form of
+                self-expression. Our mission is to provide exceptional pieces
+                that empower individuals to express their unique style with
+                confidence and elegance.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Every piece in our collection is carefully curated for its quality, design, and versatility. We work with artisans and designers who share our commitment to excellence and sustainability.
+                Every piece in our collection is carefully curated for its
+                quality, design, and versatility. We work with artisans and
+                designers who share our commitment to excellence and
+                sustainability.
               </p>
             </motion.div>
             <motion.div
@@ -138,7 +145,9 @@ const About = () => {
                 className="bg-background border border-border p-10"
               >
                 <h3 className="font-serif text-2xl mb-5">{value.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{value.description}</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  {value.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -177,17 +186,20 @@ const About = () => {
               {
                 name: "Alexandra Chen",
                 role: "Creative Director",
-                image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
+                image:
+                  "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&q=80",
               },
               {
                 name: "Marcus Williams",
                 role: "Head Stylist",
-                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+                image:
+                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
               },
               {
                 name: "Sofia Martinez",
                 role: "Personal Shopper",
-                image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
+                image:
+                  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
               },
             ].map((member, index) => (
               <motion.div
@@ -206,7 +218,9 @@ const About = () => {
                   />
                 </div>
                 <h3 className="font-serif text-xl mb-2">{member.name}</h3>
-                <p className="text-muted-foreground text-sm tracking-wide">{member.role}</p>
+                <p className="text-muted-foreground text-sm tracking-wide">
+                  {member.role}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -214,52 +228,52 @@ const About = () => {
       </section>
 
       {/* CTA */}
-   <section className="py-28 md:py-40 bg-[#6E9F7D] text-black">
-  <div className="container mx-auto px-6 text-center">
+      <section className="py-28 md:py-40 bg-[#6E9F7D] text-black">
+        <div className="container mx-auto px-6 text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="font-serif text-4xl md:text-6xl mb-6"
+          >
+            Experience STYLISTE
+          </motion.h2>
 
-    <motion.h2
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="font-serif text-4xl md:text-6xl mb-6"
-    >
-      Experience STYLISTE
-    </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="max-w-2xl mx-auto mb-12 text-black/80 leading-relaxed"
+          >
+            Visit our boutique or schedule a personal styling appointment with
+            one of our experts.
+          </motion.p>
 
-    <motion.p
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.1 }}
-      className="max-w-2xl mx-auto mb-12 text-black/80 leading-relaxed"
-    >
-      Visit our boutique or schedule a personal styling appointment with one of our experts.
-    </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col sm:flex-row justify-center gap-4"
+          >
+            <Link
+              to="/appointment"
+              className="px-8 py-4 bg-black text-white font-medium hover:bg-black/90 transition group"
+            >
+              BOOK APPOINTMENT
+              <ArrowRight className="inline-block w-4 h-4 ml-2 group-hover:translate-x-1 transition" />
+            </Link>
 
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.2 }}
-      className="flex flex-col sm:flex-row justify-center gap-4"
-    >
-      <Link
-        to="/appointment"
-        className="px-8 py-4 bg-black text-white font-medium hover:bg-black/90 transition group"
-      >
-        BOOK APPOINTMENT
-        <ArrowRight className="inline-block w-4 h-4 ml-2 group-hover:translate-x-1 transition" />
-      </Link>
-
-      <Link
-        to="/contact"
-        className="px-8 py-4 border border-black text-black hover:bg-black/10 transition"
-      >
-        CONTACT US
-      </Link>
-    </motion.div>
-  </div>
-</section>
+            <Link
+              to="/contact"
+              className="px-8 py-4 border border-black text-black hover:bg-black/10 transition"
+            >
+              CONTACT US
+            </Link>
+          </motion.div>
+        </div>
+      </section>
 
       <Footer />
     </div>
