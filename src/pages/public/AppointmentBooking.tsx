@@ -310,6 +310,7 @@ export default function AppointmentBooking() {
   const [services, setServices] = useState<string[]>([]);
 const [servicesLoading, setServicesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -383,6 +384,9 @@ const formatServiceName = (service: string) =>
 
       toast.success("Appointment booked successfully!");
       console.log("APPOINTMENT CREATED:", res);
+      toast.success("Appointment booked successfully!");
+setShowSuccessModal(true);
+
 
       // Reset form
       setSelectedService("");
@@ -666,7 +670,55 @@ outline-none transition rounded-md"
             </div>
           </form>
         </div>
+{showSuccessModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.85 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className="relative bg-white rounded-2xl max-w-lg w-full p-10 text-center shadow-2xl overflow-hidden"
+    >
+      {/* CONFETTI DOTS */}
+      <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle,#6E9F7D_1px,transparent_1px)] bg-[length:20px_20px]" />
 
+      {/* CHECK ICON */}
+      <div className="relative z-10 w-24 h-24 mx-auto mb-6 rounded-full border-4 border-green-500 flex items-center justify-center">
+        <svg
+          className="w-12 h-12 text-green-500"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={3}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+      </div>
+
+      {/* TITLE */}
+      <h2 className="relative z-10 text-3xl font-serif font-semibold mb-2 text-gray-900">
+        Appointment Booked Successfully
+      </h2>
+
+      <p className="relative z-10 text-gray-600 mb-8">
+        Thank you for patronizing us today. <br />
+        We value you!
+      </p>
+
+      {/* CTA */}
+      <button
+        onClick={() => setShowSuccessModal(false)}
+        className="relative z-10 px-10 py-3 bg-[#6E9F7D] text-white rounded-md font-medium hover:bg-[#628c71] transition"
+      >
+        Return Home
+      </button>
+    </motion.div>
+  </div>
+)}
         <Footer />
       </section>
     </div>

@@ -45,6 +45,8 @@ const AdminProducts = () => {
     if (path.startsWith('http') || path.startsWith('blob:')) return path; // Already absolute or local blob
     return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
+const [activeAction, setActiveAction] =
+  useState<'CATEGORY' | 'SUBCATEGORY' | 'PRODUCT' | null>(null);
 
   // --- INITIAL DATA FETCH ---
   useEffect(() => {
@@ -108,6 +110,7 @@ const AdminProducts = () => {
     setEditingProduct(null);
     setSelectedFiles([]);
     setPreviewUrls([]);
+    setActiveAction(null);
   };
 
   // --- FILE HANDLERS ---
@@ -251,19 +254,65 @@ const AdminProducts = () => {
       {/* --- HEADER --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Product Management</h2>
-          <p className="text-dark-400 mt-1">{products.length} products total</p>
+          <h2 className="text-2xl font-bold text-dark-900">Product Management</h2>
+<p className="text-dark-600 mt-1">{products.length} products total</p>
         </div>
         <div className="flex space-x-3">
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={openCategoryModal} className="px-4 py-2 glass-card rounded-xl text-white hover:bg-white/10 flex items-center space-x-2">
-            <FiFolder /><span>Add Category</span>
-          </motion.button>
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={openSubCategoryModal} className="px-4 py-2 glass-card rounded-xl text-white hover:bg-white/10 flex items-center space-x-2">
-            <FiGrid /><span>Add Subcategory</span>
-          </motion.button>
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => openProductModal()} className="btn-primary flex items-center space-x-2">
-            <FiPlus /><span>Add Product</span>
-          </motion.button>
+          <motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={() => {
+    setActiveAction('CATEGORY');
+    openCategoryModal();
+  }}
+  className={`px-4 py-2 rounded-xl flex items-center space-x-2 transition-all
+    ${
+      activeAction === 'CATEGORY'
+        ? 'bg-[#8FAE8B] text-white shadow-sm'
+        : 'glass-card text-dark-800 ring-1 ring-[#8FAE8B] hover:bg-primary-50'
+    }
+  `}
+>
+  <FiFolder />
+  <span>Add Category</span>
+</motion.button>
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={() => {
+    setActiveAction('SUBCATEGORY');
+    openSubCategoryModal();
+  }}
+  className={`px-4 py-2 rounded-xl flex items-center space-x-2 transition-all
+    ${
+      activeAction === 'SUBCATEGORY'
+        ? 'bg-[#8FAE8B] text-white shadow-sm'
+        : 'glass-card text-dark-800 ring-1 ring-[#8FAE8B] hover:bg-primary-50'
+    }
+  `}
+>
+  <FiGrid />
+  <span>Add Subcategory</span>
+</motion.button>
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={() => {
+    setActiveAction('PRODUCT');
+    openProductModal();
+  }}
+  className={`px-4 py-2 rounded-xl flex items-center space-x-2 transition-all
+    ${
+      activeAction === 'PRODUCT'
+        ? 'bg-[#8FAE8B] text-white shadow-sm'
+        : 'glass-card text-dark-800 ring-1 ring-[#8FAE8B] hover:bg-primary-50'
+    }
+  `}
+>
+  <FiPlus />
+  <span>Add Product</span>
+</motion.button>
+
         </div>
       </div>
 
@@ -273,7 +322,7 @@ const AdminProducts = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
-            <motion.div key={product.id} whileHover={{ y: -4 }} className="glass-card-hover rounded-2xl overflow-hidden">
+            <motion.div key={product.id} whileHover={{ y: -4 }} className="glass-card-hover rounded-2xl overflow-hidden ring-1 ring-[#8FAE8B]">
               <div className="aspect-square bg-dark-900 relative">
                 {/* ✅ FIX 1: Use getImageUrl for the Main Grid Image */}
                 <img 
@@ -284,24 +333,24 @@ const AdminProducts = () => {
                 />
                 {!product.isActive && (
                   <div className="absolute inset-0 bg-dark-950/80 flex items-center justify-center">
-                    <span className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg">Inactive</span>
+                    <span className="px-4 py-2 bg-red-500 text-dark-900 font-semibold rounded-lg">Inactive</span>
                   </div>
                 )}
               </div>
               <div className="p-4 space-y-3">
-                <h3 className="text-lg font-semibold text-white line-clamp-1">{product.name}</h3>
+                <h3 className="text-lg font-semibold text-dark-900 line-clamp-1">{product.name}</h3>
                 <div className="flex space-x-2 text-xs text-dark-400">
                     <span className="px-2 py-0.5 bg-dark-800 rounded">{product.category}</span>
                     <span className="px-2 py-0.5 bg-dark-800 rounded">{product.subcategory}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xl font-bold gradient-text">${product.price.toFixed(2)}</p>
-                  <span className="px-3 py-1 bg-dark-800 text-dark-300 text-sm rounded-lg">Stock: {product.stock}</span>
+                  <span className="px-3 py-1 bg-primary-50 text-dark-700 text-sm rounded-lg">Stock: {product.stock}</span>
                 </div>
-<div className="flex items-center space-x-2 pt-2 border-t border-white/10">
+<div className="flex items-center space-x-2 pt-2 border-t border-dark-200">
   
   {/* Edit Button */}
-  <button onClick={() => openProductModal(product)} className="flex-1 p-2 hover:bg-white/10 rounded transition-colors" title="Edit">
+  <button onClick={() => openProductModal(product)} className="flex-1 p-2 hover:bg-primary-50 ring-1 ring-[#8FAE8B] rounded transition-colors" title="Edit">
     <FiEdit2 className="mx-auto text-primary-400" />
   </button>
 
@@ -325,7 +374,7 @@ const AdminProducts = () => {
   </button>
 
   {/* Delete Button */}
-  <button onClick={() => handleDelete(product.id)} className="flex-1 p-2 hover:bg-white/10 rounded transition-colors" title="Delete">
+  <button onClick={() => handleDelete(product.id)} className="flex-1 p-2 hover:bg-primary-50 ring-1 ring-[#8FAE8B] rounded transition-colors" title="Delete">
     <FiTrash2 className="mx-auto text-red-400" />
   </button>
 
@@ -342,14 +391,14 @@ const AdminProducts = () => {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal} className="backdrop-overlay" />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="glass-card rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
                 
                 {/* MODAL 1: PRODUCT */}
                 {activeModal === 'PRODUCT' && (
                   <form onSubmit={handleProductSubmit} className="space-y-4">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-white">{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
-                        <button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-white" /></button>
+                        <h2 className="text-2xl font-bold text-dark-900">{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+                        <button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-dark-900" /></button>
                     </div>
 
                     {/* Inputs... */}
@@ -357,14 +406,14 @@ const AdminProducts = () => {
                         <div><label className="label">Product Name *</label><input type="text" name="name" value={productForm.name} onChange={handleProductInputChange} className="input-field" required /></div>
                         <div>
                             <label className="label">Category *</label>
-                            <select name="category" value={productForm.category} onChange={handleProductInputChange} className="input-field bg-dark-900" required>
+                            <select name="category" value={productForm.category} onChange={handleProductInputChange} className="input-field bg-white" required>
                                 <option value="">Select Category</option>
                                 {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="label">Subcategory *</label>
-                            <select name="subcategory" value={productForm.subcategory} onChange={handleProductInputChange} className="input-field bg-dark-900" required disabled={!productForm.category}>
+                            <select name="subcategory" value={productForm.subcategory} onChange={handleProductInputChange} className="input-field bg-white" required disabled={!productForm.category}>
                                 <option value="">Select Subcategory</option>
                                 {availableSubCategories.map(sub => <option key={sub.id} value={sub.name}>{sub.name}</option>)}
                             </select>
@@ -393,14 +442,14 @@ const AdminProducts = () => {
                             {productForm.images.map((img, index) => (
                                <div key={`exist-${index}`} className="relative aspect-square">
                                   <img src={getImageUrl(img)} alt="Existing" className="w-full h-full object-cover rounded-lg border border-primary-500/50" />
-                                  <button type="button" onClick={() => removeImage(index)} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-white"><FiX size={12}/></button>
+                                  <button type="button" onClick={() => removeImage(index)} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-dark-900"><FiX size={12}/></button>
                                </div> 
                             ))}
                             {/* New Previews (Blob URLs don't need getImageUrl) */}
                             {previewUrls.map((url, index) => (
                                 <div key={`new-${index}`} className="relative aspect-square">
                                    <img src={url} alt="New Upload" className="w-full h-full object-cover rounded-lg opacity-80" />
-                                   <button type="button" onClick={() => removeFile(index)} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-white"><FiX size={12}/></button>
+                                   <button type="button" onClick={() => removeFile(index)} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-dark-900"><FiX size={12}/></button>
                                 </div>
                             ))}
                         </div>
@@ -416,7 +465,7 @@ const AdminProducts = () => {
                 {/* MODAL 2: CATEGORY */}
                 {activeModal === 'CATEGORY' && (
                   <form onSubmit={handleCategorySubmit} className="space-y-4">
-                    <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-bold text-white">Add New Category</h2><button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-white" /></button></div>
+                    <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-bold text-dark-900">Add New Category</h2><button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-dark-900" /></button></div>
                     <div><label className="label">Category Name *</label><input type="text" value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} className="input-field" required/></div>
                     <div><label className="label">Description</label><textarea value={categoryForm.description} onChange={e => setCategoryForm({...categoryForm, description: e.target.value})} className="input-field"/></div>
                     <div className="flex gap-3 pt-4"><button type="submit" className="btn-primary flex-1">Create Category</button><button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button></div>
@@ -426,10 +475,10 @@ const AdminProducts = () => {
                 {/* MODAL 3: SUBCATEGORY */}
                 {activeModal === 'SUBCATEGORY' && (
                   <form onSubmit={handleSubCategorySubmit} className="space-y-4">
-                     <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-bold text-white">Add New Subcategory</h2><button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-white" /></button></div>
+                     <div className="flex justify-between items-center mb-6"><h2 className="text-2xl font-bold text-dark-900">Add New Subcategory</h2><button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-dark-900" /></button></div>
                     <div>
                         <label className="label">Parent Category *</label>
-                        <select value={subCatForm.parentCategoryId} onChange={e => setSubCatForm({...subCatForm, parentCategoryId: e.target.value})} className="input-field bg-dark-900" required>
+                        <select value={subCatForm.parentCategoryId} onChange={e => setSubCatForm({...subCatForm, parentCategoryId: e.target.value})} className="input-field bg-white" required>
                             <option value="">Select Parent Category</option>{categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                         </select>
                     </div>
@@ -444,7 +493,7 @@ const AdminProducts = () => {
           </>
         )}
       </AnimatePresence>
-      <style>{`.label { @apply text-sm font-semibold text-dark-300 mb-2 block; }`}</style>
+      <style>{`.label { @apply text-sm font-semibold text-dark-700 mb-2 block; }`}</style>
     </div>
   );
 };

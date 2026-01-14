@@ -632,7 +632,7 @@ const isActive = (path: string) => location.pathname === path;
             <div className="hidden md:flex items-center space-x-8">
               {[
                 { name: "Home", path: "/" },
-                // { name: "Products", path: "/products" },
+                { name: "Products", path: "/products" },
                 { name: "About", path: "/about" },
                 { name: "Services", path: "/services" },
                 { name: "Contact us", path: "/contact" },

@@ -792,13 +792,16 @@ const AppointmentCard = ({ appt }: { appt: Appointment }) => {
 
   return (
     <div className={cn("rounded-md border-l-4 p-2 bg-dark-800 shadow-sm", ui.border)}>
-      <p className="text-[11px] text-gray-400 font-bold">{appt.time}</p>
+      <p className="text-[11px] text-dark-500 font-bol">{appt.time}</p>
 
-      <p className="font-semibold text-white text-sm truncate">{appt.name}</p>
+      <p className="font-semibold text-dark-800 text-sm truncate">
+  {appt.name}
+</p>
 
-      <p className="text-[11px] text-gray-400 truncate">
-        {appt.service}
-      </p>
+<p className="text-[11px] text-dark-600 truncate">
+  {appt.service}
+</p>
+
 
       <span className={cn("text-[10px] px-2 py-0.5 rounded font-semibold mt-1 inline-block", ui.bg, ui.color)}>
         {appt.status.toUpperCase()}
@@ -896,10 +899,10 @@ const navigate = (dir: "prev" | "next") => {
 
 
   return (
-    <div className="bg-dark-900 border border-gray-700 rounded-lg shadow overflow-hidden">
+    <div className="bg-white border border-[#8FAE8B]/40 rounded-2xl shadow overflow-hidden">
 
       {/* HEADER */}
-<div className="flex items-center justify-between p-4 border-b border-gray-700 bg-[#0d1628] rounded-t-lg">
+<div className="flex items-center justify-between p-4 border-b border-[#8FAE8B]/40 bg-[#F6F8F4] rounded-t-2xl">
 
   {/* LEFT SIDE CONTROLS */}
   <div className="flex items-center gap-2">
@@ -908,8 +911,9 @@ const navigate = (dir: "prev" | "next") => {
 {/* PREVIOUS */}
 <button
   onClick={() => navigate("prev")}
-  className="h-9 w-6 flex items-center justify-center border border-gray-600 
-             hover:bg-gray-700 rounded text-white text-3xl leading-none"
+ className="h-9 w-6 flex items-center justify-center border border-[#8FAE8B] 
+           hover:bg-[#8FAE8B]/10 rounded text-dark-800 text-3xl leading-none"
+
 >
   ‹
 </button>
@@ -917,8 +921,8 @@ const navigate = (dir: "prev" | "next") => {
 {/* NEXT */}
 <button
   onClick={() => navigate("next")}
-  className="h-9 w-6 flex items-center justify-center border border-gray-600 
-             hover:bg-gray-700 rounded text-white text-3xl leading-none"
+  className="h-9 w-6 flex items-center justify-center border border-[#8FAE8B] 
+           hover:bg-[#8FAE8B]/10 rounded text-dark-800 text-3xl leading-none"
 >
   ›
 </button>
@@ -926,13 +930,14 @@ const navigate = (dir: "prev" | "next") => {
     {/* TODAY */}
     <button
   onClick={() => setCurrentDate(new Date())}
-  className="h-9 px-4 flex items-center justify-center border border-gray-600 text-white hover:bg-gray-700 rounded"
+  className="h-9 px-4 flex items-center justify-center border border-[#8FAE8B] 
+           hover:bg-[#8FAE8B]/10 rounded text-dark-800 text-xl leading-none"
 >
   TODAY
 </button>
 
     {/* DATE TITLE */}
-    <h2 className="text-white ml-4 text-lg font-semibold">
+    <h2 className="text-dark-800 ml-4 text-lg font-semibold">
       {viewMode === "week"
         ? `${format(weekStart,"MMM d")} - ${format(addDays(weekStart,6),"d, yyyy")}`
         : viewMode === "month"
@@ -942,7 +947,8 @@ const navigate = (dir: "prev" | "next") => {
   </div>
 
   {/* MIDDLE SEARCH */}
-  <div className="flex items-center bg-[#0b1423] border border-gray-600 rounded px-3 w-[300px]">
+  <div className="flex items-center bg-white border border-[#8FAE8B] text-dark-800
+ rounded px-3 w-[300px]">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       className="w-9 h-9 text-gray-400 mr-2"
@@ -971,8 +977,9 @@ const navigate = (dir: "prev" | "next") => {
         className={`
           px-4 py-1 text-sm font-medium
           ${viewMode === mode
-            ? "bg-blue-400 text-black"
-            : "text-gray-300 hover:bg-gray-700"}
+  ? "bg-[#8FAE8B] text-white"
+  : "text-dark-700 hover:bg-[#8FAE8B]/10"
+}
         `}
       >
         {mode}
@@ -985,19 +992,19 @@ const navigate = (dir: "prev" | "next") => {
       {viewMode === "month" && (
         <div className="grid grid-cols-7">
           {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>(
-            <div key={d} className="p-2 text-center text-gray-400 border-b bg-dark-800 text-xs">
+            <div className="p-2 text-center text-dark-600 border-b border-[#8FAE8B]/30 bg-[#F6F8F4] text-xs font-semibold">
               {d}
             </div>
           ))}
 
           {paddedMonth.map((day,i)=>{
-            if(!day) return <div key={i} className="border border-gray-700 h-[140px]" />;
+            if(!day) return <div key={i} className="border border-[#8FAE8B]/30 h-[140px]" />;
 
             const list = filtered.filter(a=>isSameDay(a.date, day));
 
             return (
-              <div key={i} className="border border-gray-700 p-2 h-[140px] overflow-auto">
-                <p className="text-xs text-white mb-1 font-bold">{format(day,"d")}</p>
+              <div key={i} className="border border-[#8FAE8B]/30 p-2 h-[140px] overflow-auto">
+                <p className="text-xs text-dark-800 mb-1 font-bold">{format(day,"d")}</p>
 
                 {list.map(a=>(
                   <AppointmentCard key={a.id} appt={a}/>
@@ -1066,7 +1073,7 @@ const navigate = (dir: "prev" | "next") => {
             );
 
             return (
-              <div key={slot} className="border border-gray-700 rounded p-3 mb-2">
+              <div key={slot} className="border border-[#8FAE8B]/30 rounded p-3 mb-2">
                 <p className="text-xs text-gray-400 mb-2">{slot}</p>
 
                 {list.length === 0 && (

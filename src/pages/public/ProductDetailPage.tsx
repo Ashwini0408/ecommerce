@@ -9,7 +9,7 @@ import type { Product } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
-
+const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
