@@ -345,7 +345,7 @@ if (isLoading) {
           >
             <Link to="/">
               <h1 className="text-2xl font-serif gradient-text mb-1">
-                STYLISTE
+                Styliste Couturier
               </h1>
             </Link>
             <p className="text-muted-foreground">

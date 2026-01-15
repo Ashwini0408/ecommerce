@@ -158,8 +158,8 @@ const footerLinks = {
   ],
   company: [
     { name: "About Us", href: "/about" },
-    { name: "Our Process", href: "/about" },
-    { name: "Sustainability", href: "/about" },
+    { name: "Our Process", href: "/services" },
+    { name: "Sustainability", href: "/sustainability" },
   ],
   support: [
     { name: "Contact Us", href: "/contact" },
@@ -184,7 +184,7 @@ export const Footer = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block">
               <h2 className="font-serif text-4xl tracking-[0.2em] mb-6">
-                STYLISTE
+                Styliste Couturier
               </h2>
             </Link>
 

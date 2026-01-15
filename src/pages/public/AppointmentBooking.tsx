@@ -323,6 +323,10 @@ const [servicesLoading, setServicesLoading] = useState(false);
     const time = new Date(`1970-01-01 ${timeStr}`);
     return time.toTimeString().split(" ")[0];
   };
+
+  const storedUser = localStorage.getItem("user");
+const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
+
 // backend "HH:mm:ss" → "10:00 AM"
 const convertTo12Hour = (time24: string) => {
   const [h, m] = time24.split(":").map(Number);
@@ -374,12 +378,19 @@ const formatServiceName = (service: string) =>
     try {
       setLoading(true);
 
-      const payload = {
-        appointmentDate: selectedDate,
-        appointmentTime: convertTo24Hour(selectedTime),
-        serviceType: selectedService,
-        notes: formData.notes || "",
-      };
+    const payload = {
+  appointmentDate: selectedDate,
+  appointmentTime: convertTo24Hour(selectedTime),
+  serviceType: selectedService,
+
+  // 👇 ALWAYS SEND USER INFO
+  customerName: formData.name,
+  customerEmail: formData.email,
+  customerPhone: formData.phone,
+
+  notes: formData.notes || "",
+};
+
       const res = await bookingApi.createAppointment(payload);
 
       toast.success("Appointment booked successfully!");
@@ -426,6 +437,17 @@ useEffect(() => {
 
   loadBookedSlots();
 }, [selectedDate]);
+useEffect(() => {
+  if (loggedInUser) {
+    setFormData({
+      name: loggedInUser.name || "",
+      email: loggedInUser.email || "",
+      phone: loggedInUser.phone || "",
+      notes: "",
+    });
+  }
+}, []);
+
 useEffect(() => {
   const loadServices = async () => {
     try {

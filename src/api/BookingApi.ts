@@ -8,7 +8,7 @@ export interface CreateAppointmentRequest {
 }
 
 export interface AppointmentResponse {
-  id: number;
+  id: number | null;
   userId: number;
   appointmentDate: string;
   appointmentTime: string;

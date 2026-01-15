@@ -486,7 +486,7 @@ const Services = () => {
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80"
-            alt="STYLISTE services"
+            alt="Styliste Couturier services"
             className="w-full h-full object-cover opacity-10"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
@@ -605,7 +605,7 @@ const Services = () => {
               transition={{ delay: 0.1 }}
               className="font-serif text-4xl md:text-5xl text-primary-foreground"
             >
-              The STYLISTE Difference
+              The Styliste Couturier Difference
             </motion.h2>
           </div>
 

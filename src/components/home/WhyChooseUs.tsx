@@ -181,7 +181,7 @@ export const WhyChooseUs = () => {
                 className="h-px bg-primary"
               />
               <p className="text-primary font-sans tracking-[0.3em] text-xs uppercase">
-                Why STYLISTE
+                Why Styliste Couturier
               </p>
               <motion.div
                 initial={{ width: 0 }}

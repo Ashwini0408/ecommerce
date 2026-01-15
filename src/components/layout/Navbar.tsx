@@ -621,7 +621,7 @@ const isActive = (path: string) => location.pathname === path;
             <Link to="/" className="flex items-center">
               <motion.img
                 src={logo}
-                alt="Styliste Logo"
+                alt="Styliste Couturier Logo"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="h-12 w-auto object-contain"

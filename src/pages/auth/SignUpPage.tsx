@@ -1116,7 +1116,7 @@ if (isLoading) {
           <motion.div variants={itemVariants} className="text-center mb-4">
             <Link to="/">
               <h1 className="text-2xl font-serif gradient-text mb-1">
-                STYLISTE
+                Styliste Couturier
               </h1>
             </Link>
             <p className="text-sm text-muted-foreground">

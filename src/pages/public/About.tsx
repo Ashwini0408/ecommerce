@@ -686,7 +686,7 @@ const About = () => {
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80"
-            alt="STYLISTE boutique"
+            alt="Styliste Couturier boutique"
             className="w-full h-full object-cover opacity-10"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
@@ -1052,7 +1052,7 @@ const About = () => {
             viewport={{ once: true }}
             className="font-serif text-4xl md:text-6xl mb-8"
           >
-            Experience STYLISTE
+            Experience Styliste Couturier
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

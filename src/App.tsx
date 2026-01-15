@@ -105,12 +105,18 @@ import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import TermsOfService from './pages/public/TermsAndConditions';
 import RefundPolicy from './pages/public/RefundPolicy';
 import Testimonial from './pages/public/Testimonial';
+// import sustainability from './pages/public/SustainabilityComingSoon';
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { WhatsAppButton } from './pages/public/WhatsAppButton';
+import SustainabilityComingSoon from './pages/public/SustainabilityComingSoon';
+import ComingSoon from './pages/public/ShippingCommingSoon';
+import ShippingCommingSoon from './pages/public/ShippingCommingSoon';
+import ReturnCommingSoon from './pages/public/ReturnCommingSoon';
+
 
 
 const NotFound = () => (
@@ -140,11 +146,10 @@ function App() {
   }, [dispatch]);
 
   return (
+    
     <div className="min-h-screen bg-dark-950 text-dark-50">
-
       {/* Scroll To Top Component */}
       <ScrollToTop />
-
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
@@ -164,6 +169,10 @@ function App() {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
         <Route path="/testimonials" element={<Testimonial />} />
+        <Route path="/sustainability" element={<SustainabilityComingSoon />} />
+        <Route path="/shipping" element={<ShippingCommingSoon />} />
+        <Route path="/returns" element={<ReturnCommingSoon />} />
+        
 
         {/* Protected User Routes */}
         <Route
@@ -193,6 +202,7 @@ function App() {
     <FloatingAppointmentButton />
     <WhatsAppButton />
     </div>
+      
   );
 }
 
