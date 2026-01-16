@@ -367,54 +367,68 @@ const formatServiceName = (service: string) =>
   };
 
   // ---------------- SUBMIT → API CALL ----------------
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+const handleSubmit = async (e: any) => {
+  e.preventDefault();
 
-    if (!selectedService || !selectedDate || !selectedTime) {
-      toast.error("Please complete all required fields");
-      return;
+  if (!selectedService || !selectedDate || !selectedTime) {
+    toast.error("Please complete all required fields");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const baseData = {
+      appointmentDate: selectedDate,
+      appointmentTime: convertTo24Hour(selectedTime),
+      serviceType: selectedService,
+      notes: formData.notes || "",
+    };
+
+    let response;
+
+    if (loggedInUser) {
+      // ✅ LOGGED-IN USER
+      response = await bookingApi.createAppointment(baseData);
+    } else {
+      // ✅ GUEST USER
+      response = await bookingApi.createGuestAppointment({
+        ...baseData,
+        guestName: formData.name,
+        guestEmail: formData.email,
+        guestPhone: formData.phone,
+      });
     }
 
-    try {
-      setLoading(true);
+    toast.success("Appointment booked successfully!");
+    console.log("APPOINTMENT CREATED:", response);
+    setShowSuccessModal(true);
 
-    const payload = {
-  appointmentDate: selectedDate,
-  appointmentTime: convertTo24Hour(selectedTime),
-  serviceType: selectedService,
+    // reset
+    setSelectedService("");
+    setSelectedDate("");
+    setSelectedTime("");
+    setFormData({ name: "", email: "", phone: "", notes: "" });
 
-  // 👇 ALWAYS SEND USER INFO
-  customerName: formData.name,
-  customerEmail: formData.email,
-  customerPhone: formData.phone,
-
-  notes: formData.notes || "",
+  } catch (error: any) {
+    console.error(error);
+    toast.error(
+      error?.response?.data?.message || "Failed to book appointment"
+    );
+  } finally {
+    setLoading(false);
+  }
 };
 
-      const res = await bookingApi.createAppointment(payload);
-
-      toast.success("Appointment booked successfully!");
-      console.log("APPOINTMENT CREATED:", res);
-      toast.success("Appointment booked successfully!");
-setShowSuccessModal(true);
-
-
-      // Reset form
-      setSelectedService("");
-      setSelectedDate("");
-      setSelectedTime("");
-      setFormData({ name: "", email: "", phone: "", notes: "" });
-    } catch (error: any) {
-      console.log(error);
-      toast.error(
-        error?.response?.data?.message || "Failed to book appointment"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 useEffect(() => {
   if (!selectedDate) {
+    setBookedSlots([]);
+    return;
+  }
+
+  // 🚫 IMPORTANT: Do NOT call API for guest users
+  if (!loggedInUser) {
+    console.warn("Guest user – skipping booked slots API");
     setBookedSlots([]);
     return;
   }
@@ -424,7 +438,7 @@ useEffect(() => {
       const appointments =
         await bookingApi.getAppointmentsByDate(selectedDate);
 
-      const slots = appointments.map((a) =>
+      const slots = appointments.map((a: { appointmentTime: string; }) =>
         convertTo12Hour(a.appointmentTime)
       );
 
@@ -436,7 +450,9 @@ useEffect(() => {
   };
 
   loadBookedSlots();
-}, [selectedDate]);
+}, [selectedDate, loggedInUser]);
+
+
 useEffect(() => {
   if (loggedInUser) {
     setFormData({
@@ -746,3 +762,7 @@ outline-none transition rounded-md"
     </div>
   );
 }
+
+
+
+

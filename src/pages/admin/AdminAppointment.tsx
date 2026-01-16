@@ -787,25 +787,69 @@ const statusUI: any = {
   cancelled: { color: "text-red-400", bg: "bg-red-400/20", border: "border-red-500" },
 };
 
-const AppointmentCard = ({ appt }: { appt: Appointment }) => {
+const AppointmentCard = ({
+  appt,
+  onApprove,
+  onReject,
+}: {
+  appt: Appointment;
+  onApprove: (id: number) => void;
+  onReject: (id: number) => void;
+}) => {
   const ui = statusUI[appt.status] || statusUI.pending;
 
   return (
-    <div className={cn("rounded-md border-l-4 p-2 bg-dark-800 shadow-sm", ui.border)}>
-      <p className="text-[11px] text-dark-500 font-bol">{appt.time}</p>
+    <div
+      className={cn(
+        "rounded-md border-l-4 p-2 bg-dark-800 shadow-sm flex justify-between items-start gap-2",
+        ui.border
+      )}
+    >
+      {/* LEFT INFO */}
+      <div className="min-w-0">
+        <p className="text-[11px] text-dark-500 font-bold">{appt.time}</p>
 
-      <p className="font-semibold text-dark-800 text-sm truncate">
-  {appt.name}
-</p>
+        <p className="font-semibold text-dark-800 text-sm truncate">
+          {appt.name}
+        </p>
 
-<p className="text-[11px] text-dark-600 truncate">
-  {appt.service}
-</p>
+        <p className="text-[11px] text-dark-600 truncate">
+          {appt.service}
+        </p>
 
+        <span
+          className={cn(
+            "text-[10px] px-2 py-0.5 rounded font-semibold mt-1 inline-block",
+            ui.bg,
+            ui.color
+          )}
+        >
+          {appt.status.toUpperCase()}
+        </span>
+      </div>
 
-      <span className={cn("text-[10px] px-2 py-0.5 rounded font-semibold mt-1 inline-block", ui.bg, ui.color)}>
-        {appt.status.toUpperCase()}
-      </span>
+      {/* RIGHT ACTIONS (ONLY FOR PENDING) */}
+      {appt.status === "pending" && (
+        <div className="flex flex-col gap-2 pt-1">
+          {/* APPROVE */}
+          <button
+            onClick={() => onApprove(appt.id)}
+            className="text-green-500 hover:text-green-600 text-sm"
+            title="Approve"
+          >
+            ✓
+          </button>
+
+          {/* REJECT */}
+          <button
+            onClick={() => onReject(appt.id)}
+            className="text-red-500 hover:text-red-600 text-sm"
+            title="Reject"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -847,6 +891,41 @@ export default function AdminAppointment() {
       setLoading(false);
     }
   };
+const handleApprove = async (id: number) => {
+  try {
+    const updated = await appointmentApi.approveAppointment(id);
+
+    setAppointments(prev =>
+      prev.map(a =>
+        a.id === id
+          ? { ...a, status: updated.status.toLowerCase() }
+          : a
+      )
+    );
+
+    toast.success("Appointment confirmed");
+  } catch {
+    toast.error("Failed to confirm appointment");
+  }
+};
+
+const handleReject = async (id: number) => {
+  try {
+    const updated = await appointmentApi.rejectAppointment(id);
+
+    setAppointments(prev =>
+      prev.map(a =>
+        a.id === id
+          ? { ...a, status: updated.status.toLowerCase() }
+          : a
+      )
+    );
+
+    toast.success("Appointment rejected");
+  } catch {
+    toast.error("Failed to reject appointment");
+  }
+};
 
   useEffect(() => { loadAppointments(); }, [page]);
 
@@ -1007,7 +1086,13 @@ const navigate = (dir: "prev" | "next") => {
                 <p className="text-xs text-dark-800 mb-1 font-bold">{format(day,"d")}</p>
 
                 {list.map(a=>(
-                  <AppointmentCard key={a.id} appt={a}/>
+                  <AppointmentCard
+  key={a.id}
+  appt={a}
+  onApprove={handleApprove}
+  onReject={handleReject}
+/>
+
                 ))}
               </div>
             );
@@ -1049,7 +1134,12 @@ const navigate = (dir: "prev" | "next") => {
           className="p-2 border-r border-gray-700 h-[140px] overflow-y-auto space-y-2"
         >
           {list.map(a => (
-            <AppointmentCard key={a.id} appt={a}/>
+            <AppointmentCard
+  key={a.id}
+  appt={a}
+  onApprove={handleApprove}
+  onReject={handleReject}
+/>
           ))}
         </div>
       );
@@ -1081,7 +1171,13 @@ const navigate = (dir: "prev" | "next") => {
                 )}
 
                 {list.map(a=>(
-                  <AppointmentCard key={a.id} appt={a}/>
+                  <AppointmentCard
+  key={a.id}
+  appt={a}
+  onApprove={handleApprove}
+  onReject={handleReject}
+/>
+
                 ))}
               </div>
             );

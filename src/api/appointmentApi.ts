@@ -35,6 +35,17 @@ export const appointmentApi = {
     });
     return response.data;
   },
+// ✅ Approve appointment (Admin)
+approveAppointment: async (id: number): Promise<Appointment> => {
+  const response = await axiosInstance.put<Appointment>(`/appointments/${id}/approve`);
+  return response.data;
+},
+
+// ❌ Reject appointment (Admin)
+rejectAppointment: async (id: number): Promise<Appointment> => {
+  const response = await axiosInstance.put<Appointment>(`/appointments/${id}/reject`);
+  return response.data;
+},
 
   // Get appointments by date (Admin only)
   getAppointmentsByDate: async (date: string): Promise<Appointment[]> => {

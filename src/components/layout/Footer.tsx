@@ -181,12 +181,16 @@ export const Footer = () => {
       <div className="container mx-auto px-6 py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
           {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link to="/" className="inline-block">
-              <h2 className="font-serif text-4xl tracking-[0.2em] mb-6">
-                Styliste Couturier
-              </h2>
-            </Link>
+         <div className="lg:col-span-2">
+  <Link to="/" className="inline-flex items-center gap-4 mb-6">
+    {/* LOGO */}
+    <img
+      src="./src/assets/logo.png"
+      alt="Styliste Couturier Logo"
+      className="w-20 h-12 object-contain"
+    />
+  </Link>
+
 
             <p className="text-muted-foreground max-w-sm mb-6 text-sm leading-relaxed">
               Your trusted destination for premium custom fashion. We specialise

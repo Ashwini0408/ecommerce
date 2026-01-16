@@ -638,6 +638,7 @@ import {
   Target,
   Users,
 } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 // import { FloatingAppointmentButton } from "@/components/FloatingAppointmentButton";
@@ -681,6 +682,13 @@ const About = () => {
   return (
     <main>
       {/* Hero */}
+      <Helmet>
+        <title>About Styliste Couturier | Premium Designer Boutique in Thane</title>
+        <meta
+          name="description"
+          content="Styliste Couturier is a Thane-based fashion boutique offering bespoke women’s wear, bridal tailoring, and personalized styling services."
+        />
+      </Helmet>
       <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
         <div className="absolute inset-0">

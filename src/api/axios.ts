@@ -59,25 +59,25 @@ axiosInstance.interceptors.response.use(
       console.error(`[API Error] ${status}`, data);
       
       // Handle 401 Unauthorized - Token expired or invalid
-     if (status === 401) {
-  const isAppointmentApi =
-    error.config?.url?.includes('/appointments');
+    if (status === 401) {
+  const url = error.config?.url || "";
 
-  console.warn('Unauthorized access');
+  const isPublicApi =
+    url.includes("/appointments") ||
+    url.includes("/products") ||
+    url.includes("/cart");
 
-  // ❌ DO NOT redirect for appointment booking (guest allowed)
-  if (!isAppointmentApi) {
-    console.warn('Clearing auth & redirecting to login');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+  // 🚫 DO NOT clear auth for public APIs
+  if (!isPublicApi) {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
 
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
     }
-  } else {
-    console.warn('Guest appointment request – skipping login redirect');
   }
 }
+
 
       // Handle 403 Forbidden
       if (status === 403) {
