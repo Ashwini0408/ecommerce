@@ -317,7 +317,7 @@ const [servicesLoading, setServicesLoading] = useState(false);
     phone: "",
     notes: "",
   });
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   // Convert AM/PM → backend format HH:mm:ss
   const convertTo24Hour = (timeStr: string) => {
     const time = new Date(`1970-01-01 ${timeStr}`);
@@ -422,35 +422,28 @@ const handleSubmit = async (e: any) => {
 
 useEffect(() => {
   if (!selectedDate) {
-    setBookedSlots([]);
+    setAvailableSlots([]);
     return;
   }
 
-  // 🚫 IMPORTANT: Do NOT call API for guest users
-  if (!loggedInUser) {
-    console.warn("Guest user – skipping booked slots API");
-    setBookedSlots([]);
-    return;
-  }
-
-  const loadBookedSlots = async () => {
+  const loadAvailableSlots = async () => {
     try {
-      const appointments =
-        await bookingApi.getAppointmentsByDate(selectedDate);
+      const slots24 =
+        await bookingApi.getAvailableSlots(selectedDate);
 
-      const slots = appointments.map((a: { appointmentTime: string; }) =>
-        convertTo12Hour(a.appointmentTime)
-      );
+      // convert backend 24h → frontend AM/PM
+      const slots12 = slots24.map(convertTo12Hour);
 
-      setBookedSlots(slots);
+      setAvailableSlots(slots12);
     } catch (err) {
-      console.error("Failed to fetch booked slots", err);
-      setBookedSlots([]);
+      console.error("Failed to load available slots", err);
+      setAvailableSlots([]);
     }
   };
 
-  loadBookedSlots();
-}, [selectedDate, loggedInUser]);
+  loadAvailableSlots();
+}, [selectedDate]);
+
 
 
 useEffect(() => {
@@ -567,29 +560,30 @@ useEffect(() => {
             {/* TIME */}
             <div>
               <h2 className="font-serif text-2xl mb-8">Select Time</h2>
-
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-                {timeSlots
-  .filter((time) => !bookedSlots.includes(time)) // 👈 HIDE booked
-  .map((time) => (
-    <button
-      key={time}
-      type="button"
-      onClick={() => setSelectedTime(time)}
-      className={`px-3 py-3 border text-xs tracking-wide
-        ${
-          selectedTime === time
-            ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
-            : "hover:border-black/40"
-        }
-      `}
-    >
-      {time}
-    </button>
-  ))}
-
-
-              </div>
+<div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+  {availableSlots.length === 0 ? (
+    <p className="col-span-full text-sm text-gray-500">
+      No slots available for this date
+    </p>
+  ) : (
+    availableSlots.map((time) => (
+      <button
+        key={time}
+        type="button"
+        onClick={() => setSelectedTime(time)}
+        className={`px-3 py-3 border text-xs tracking-wide transition
+          ${
+            selectedTime === time
+              ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+              : "hover:border-black/40"
+          }
+        `}
+      >
+        {time}
+      </button>
+    ))
+  )}
+</div>
             </div>
 
             {/* USER INFO */}

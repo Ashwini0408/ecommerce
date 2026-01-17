@@ -89,6 +89,13 @@ export const BookingApi = {
     const response = await axiosInstance.get(`/appointments/date/${date}`);
     return response.data;
   },
+getAvailableSlots: async (date: string): Promise<string[]> => {
+  const response = await axiosInstance.get(
+    `/appointments/available-slots`,
+    { params: { date } }
+  );
+  return response.data; // ["10:00","12:00","15:00"]
+},
 
   getAppointmentTypes: async (): Promise<string[]> => {
     const response = await axiosInstance.get("/appointments/types");
@@ -97,4 +104,9 @@ export const BookingApi = {
 };
 
 export default BookingApi;
+
+
+
+
+
 
