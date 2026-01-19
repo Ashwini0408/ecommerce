@@ -86,7 +86,7 @@ import { useAppDispatch } from './hooks/useAuth';
 import { loadUserFromStorage } from './store/slices/authSlice';
 import { loadCartFromStorage } from './store/slices/cartSlice';
 import { FloatingAppointmentButton } from "./pages/public/FloatingAppointmentButton";
-
+import { useAppSelector } from "./hooks/useAuth";
 
 // Public Pages
 import HomePage from './pages/public/HomePage';
@@ -138,7 +138,8 @@ function ScrollToTop() {
 
 function App() {
   const dispatch = useAppDispatch();
-
+const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === "ADMIN";
   // Load user and cart from localStorage on app mount
   useEffect(() => {
     dispatch(loadUserFromStorage());
@@ -185,22 +186,27 @@ function App() {
         />
 
         {/* Protected Admin Routes */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
+       <Route
+  path="/admin/*"
+  element={
+    <ProtectedRoute requireAdmin>
+      <AdminDashboard />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Fallback */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
-       {/* ✅ FLOATING BUTTON — ADD HERE */}
+      {/* Floating buttons only for non-admin */}
+{(!isAuthenticated || !isAdmin) && (
+  <>
     <FloatingAppointmentButton />
     <WhatsAppButton />
+  </>
+)}
+
     </div>
       
   );

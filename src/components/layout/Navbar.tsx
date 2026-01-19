@@ -597,6 +597,19 @@ const isActive = (path: string) => location.pathname === path;
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+useEffect(() => {
+  // 🔒 Prevent mobile menu glitch on refresh / resize
+  const handleResize = () => {
+    if (window.innerWidth >= 768) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  handleResize(); // 👈 run once on mount
+
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -629,79 +642,90 @@ const isActive = (path: string) => location.pathname === path;
             </Link>
 
             {/* ---------------- DESKTOP NAV ---------------- */}
-            <div className="hidden md:flex items-center space-x-8">
-              {[
-                { name: "Home", path: "/" },
-                { name: "Products", path: "/products" },
-                { name: "About", path: "/about" },
-                { name: "Services", path: "/services" },
-                { name: "Contact us", path: "/contact" },
-                // { name: "Blog", path: "/blog" },
-                { name: "Testimonials", path: "/testimonials" },
-              ].map((item) => (
-                <Link
-  key={item.name}
-  to={item.path}
-  className={`relative transition-all duration-300
-    ${
-      isActive(item.path)
-        ? "text-white font-medium after:w-full"
-        : "text-white/80 hover:text-white after:w-0"
-    }
-    after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
-    after:transition-all after:duration-300`}
->
-                  {item.name}
-                </Link>
-              ))}
+            {/* <div className="hidden md:flex items-center space-x-8"> */}
+              <div className="hidden md:flex items-center space-x-8">
+  {/* PUBLIC PAGES — ONLY FOR NON-ADMIN */}
+  {!isAdmin &&
+    [
+      { name: "Home", path: "/" },
+      { name: "Products", path: "/products" },
+      { name: "About", path: "/about" },
+      { name: "Services", path: "/services" },
+      { name: "Contact us", path: "/contact" },
+      { name: "Testimonials", path: "/testimonials" },
+    ].map((item) => (
+      <Link
+        key={item.name}
+        to={item.path}
+        className={`relative transition-all duration-300
+          ${
+            isActive(item.path)
+              ? "text-white font-medium after:w-full"
+              : "text-white/80 hover:text-white after:w-0"
+          }
+          after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
+          after:transition-all after:duration-300`}
+      >
+        {item.name}
+      </Link>
+    ))}
 
-              {isAuthenticated && !isAdmin && (
-                <Link
-                  to="/dashboard"
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  Dashboard
-                </Link>
-              )}
+  {/* USER DASHBOARD */}
+  {isAuthenticated && !isAdmin && (
+    <Link
+      to="/dashboard"
+      className="text-white/80 hover:text-white transition-colors"
+    >
+      Dashboard
+    </Link>
+  )}
 
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  Admin
-                </Link>
-              )}
-            </div>
+  {/* ADMIN DASHBOARD */}
+  {isAdmin && (
+    <Link
+      to="/admin"
+      className="text-white font-semibold"
+    >
+      Dashboard
+    </Link>
+  )}
+</div>
+
 
             {/* ---------------- RIGHT ACTIONS ---------------- */}
             <div className="hidden md:flex items-center space-x-4">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => navigate("/products")}
-                className="p-2 text-white/80 hover:text-white"
-              >
-                <FiSearch size={22} />
-              </motion.button>
+              {!isAdmin && (
+  <motion.button
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    onClick={() => navigate("/products")}
+    className="p-2 text-white/80 hover:text-white"
+  >
+    <FiSearch size={22} />
+  </motion.button>
+)}
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => navigate("/cart")}
-                className="relative p-2 text-white/80 hover:text-white"
-              >
-                <FiShoppingCart size={22} />
-                {totalItems > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
-                  >
-                    {totalItems}
-                  </motion.span>
-                )}
-              </motion.button>
+
+             {!isAdmin && (
+  <motion.button
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    onClick={() => navigate("/cart")}
+    className="relative p-2 text-white/80 hover:text-white"
+  >
+    <FiShoppingCart size={22} />
+    {totalItems > 0 && (
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="absolute -top-1 -right-1 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
+      >
+        {totalItems}
+      </motion.span>
+    )}
+  </motion.button>
+)}
+
 
               {isAuthenticated ? (
                 <div className="relative">
@@ -715,7 +739,7 @@ const isActive = (path: string) => location.pathname === path;
                     <span className="text-sm font-medium">{user?.name}</span>
                   </motion.button>
 
-                  <AnimatePresence>
+                  <AnimatePresence initial={false}>
                     {isUserMenuOpen && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
@@ -769,36 +793,65 @@ const isActive = (path: string) => location.pathname === path;
         </div>
 
         {/* ---------------- MOBILE MENU ---------------- */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-gradient-to-b from-[#9CAF88] to-[#7F8F72]"
+ {/* ---------------- MOBILE MENU ---------------- */}
+<AnimatePresence initial={false}>
+  {isMenuOpen && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="md:hidden bg-gradient-to-b from-[#9CAF88] to-[#7F8F72]"
+    >
+      {/* 🔒 MOBILE ONLY CONTENT */}
+      <div className="px-4 py-4 space-y-3 md:hidden">
+
+        {/* ========== ADMIN MOBILE VIEW ONLY ========== */}
+        {isAdmin && (
+          <>
+            <Link
+              to="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsMenuOpen(false)}
+              className="block py-2 text-white font-semibold"
             >
-              <div className="px-4 py-4 space-y-3">
-                {[
-                  { name: "Home", path: "/" },
-                  // { name: "Products", path: "/products" },
-                  { name: "Services", path: "/services" },
-                  { name: "About us", path: "/about" },
-                  { name: "Contact us", path: "/contact" },
-                  { name: "Testimonials", path: "/testimonials" },
-                ].map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block py-2 text-white/80 hover:text-white"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              Home
+            </Link>
+
+            <Link
+              to="/admin"
+              onClick={() => setIsMenuOpen(false)}
+              className="block py-2 text-white font-semibold"
+            >
+              Dashboard
+            </Link>
+          </>
+        )}
+
+        {/* ========== NON-ADMIN MOBILE VIEW ========== */}
+        {!isAdmin &&
+          [
+            { name: "Home", path: "/" },
+            { name: "Services", path: "/services" },
+            { name: "About us", path: "/about" },
+            { name: "Contact us", path: "/contact" },
+            { name: "Testimonials", path: "/testimonials" },
+          ].map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              onClick={() => setIsMenuOpen(false)}
+              className="block py-2 text-white/80 hover:text-white"
+            >
+              {item.name}
+            </Link>
+          ))}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
       </nav>
 
       {/* ---------------- NAVBAR SPACER (IMPORTANT FIX) ---------------- */}

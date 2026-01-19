@@ -121,15 +121,25 @@ const AdminOrders = () => {
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-dark-900">Order #{order.id}</h3>
-                    <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                    <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.paymentStatus)}`}>
-                      {order.paymentStatus}
-                    </span>
-                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+  <h3 className="text-lg font-semibold text-dark-900">
+    Order #{order.id}
+  </h3>
+
+  {/* Order Status */}
+  <span
+    className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.status)}`}
+  >
+    Order: {order.status}
+  </span>
+
+  {/* Payment Status */}
+  <span
+    className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.paymentStatus)}`}
+  >
+    Payment: {order.paymentStatus}
+  </span>
+</div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-dark-600">
                     <p>📅 {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</p>
@@ -227,9 +237,12 @@ const AdminOrders = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-dark-400 mb-1">Total Amount</p>
-                      <p className="text-dark-900 font-semibold">${selectedOrder.totalAmount.toFixed(2)}</p>
-                    </div>
+  <p className="text-sm text-dark-400 mb-1">Total Amount</p>
+  <p className="text-dark-900 font-semibold">
+    {formatINR(selectedOrder.totalAmount)}
+  </p>
+</div>
+
                   </div>
 
                   {/* Shipping Address */}
@@ -245,33 +258,55 @@ const AdminOrders = () => {
                     <p className="text-sm text-dark-400 mb-2">Order Items</p>
                     <div className="space-y-3">
                       {selectedOrder.items.map((item) => (
-                        <div key={item.id} className="glass-card p-4 rounded-xl flex items-center justify-between">
-                          <div>
-                            <p className="text-dark-900 font-semibold">{item.productName}</p>
-                            <p className="text-sm text-dark-400">
-                              Qty: {item.quantity} × ${item.unitPrice.toFixed(2)}
-                            </p>
-                            {(item.selectedSize || item.selectedColor) && (
-                              <div className="flex gap-2 mt-1">
-                                {item.selectedSize && (
-                                  <span className="text-xs px-2 py-1 bg-dark-800 rounded">
-                                    {item.selectedSize}
-                                  </span>
-                                )}
-                                {item.selectedColor && (
-                                  <span className="text-xs px-2 py-1 bg-dark-800 rounded">
-                                    {item.selectedColor}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-dark-900 font-semibold">
-  {formatINR(item.totalPrice)}
-</span>
+  <div
+    key={item.id}
+    className="glass-card p-4 rounded-xl flex gap-4 items-center"
+  >
+    {/* 🖼 Product Image */}
+    <div className="w-16 h-16 rounded-lg overflow-hidden ring-1 ring-[#8FAE8B] flex-shrink-0">
+      <img
+       src={(item as any)?.productImage || '/placeholder.jpg'}
+        alt={item.productName}
+        className="w-full h-full object-cover"
+      />
+    </div>
 
-                        </div>
-                      ))}
+    {/* 📦 Product Info */}
+    <div className="flex-1">
+      <p className="text-dark-900 font-semibold">
+        {item.productName}
+      </p>
+
+      <p className="text-sm text-dark-500">
+        Qty: {item.quantity} × {formatINR(item.unitPrice)}
+      </p>
+
+      {/* Size & Colour */}
+      {(item.selectedSize || item.selectedColor) && (
+        <div className="flex gap-2 mt-2">
+          {item.selectedSize && (
+            <span className="text-xs px-2 py-1 bg-dark-800 rounded">
+              Size: {item.selectedSize}
+            </span>
+          )}
+          {item.selectedColor && (
+            <span className="text-xs px-2 py-1 bg-dark-800 rounded">
+              Colour: {item.selectedColor}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* 💰 Price */}
+    <div className="text-right">
+      <p className="text-dark-900 font-semibold">
+        {formatINR(item.totalPrice)}
+      </p>
+    </div>
+  </div>
+))}
+
                     </div>
                   </div>
 

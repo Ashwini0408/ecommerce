@@ -20,6 +20,10 @@ const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  // 🔧 VIDEO FILE HANDLING
+const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
+const [videoPreviewUrls, setVideoPreviewUrls] = useState<string[]>([]);
+
 
   //File Handling
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -34,10 +38,13 @@ const AdminProducts = () => {
     name: '', description: '', price: 0, salePrice: 0, stock: 0,
     category: '', subcategory: '', images: [], videos: [], attributes: [],
   });
+// 🔧 SIZE & COLOR
+const [sizesInput, setSizesInput] = useState('');
+const [colorsInput, setColorsInput] = useState('');
 
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
   const [subCatForm, setSubCatForm] = useState({ parentCategoryId: '', name: '', description: '' });
-
+  
   // --- HELPER: RESOLVE IMAGE URL ---
   // This logic ensures we load images from the correct server
   const getImageUrl = (path?: string) => {
@@ -52,6 +59,20 @@ const [activeAction, setActiveAction] =
   useEffect(() => {
     fetchData();
   }, []);
+// 🔧 VIDEO FILE CHANGE
+const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (e.target.files && e.target.files.length > 0) {
+    const files = Array.from(e.target.files);
+    setSelectedVideos(prev => [...prev, ...files]);
+    const previews = files.map(file => URL.createObjectURL(file));
+    setVideoPreviewUrls(prev => [...prev, ...previews]);
+  }
+};
+
+const removeVideo = (index: number) => {
+  setSelectedVideos(prev => prev.filter((_, i) => i !== index));
+  setVideoPreviewUrls(prev => prev.filter((_, i) => i !== index));
+};
 
   const fetchData = async () => {
     setLoading(true);
@@ -85,12 +106,22 @@ const [activeAction, setActiveAction] =
         videos: product.videos || [],
         attributes: product.attributes,
       });
+      // ✅ ADD THESE TWO LINES HERE
+  setSizesInput(
+    product.attributes?.find((a: any) => a.key === 'size')?.value || ''
+  );
+  setColorsInput(
+    product.attributes?.find((a: any) => a.key === 'color')?.value || ''
+  );
     } else {
       setEditingProduct(null);
       setProductForm({
         name: '', description: '', price: 0, salePrice: 0, stock: 0,
         category: '', subcategory: '', images: [], videos: [], attributes: [],
       });
+      setSizesInput('');
+  setColorsInput('');
+
     }
     setActiveModal('PRODUCT');
   };
@@ -111,6 +142,10 @@ const [activeAction, setActiveAction] =
     setSelectedFiles([]);
     setPreviewUrls([]);
     setActiveAction(null);
+    setSelectedVideos([]);
+setVideoPreviewUrls([]);
+setSizesInput('');
+  setColorsInput('');
   };
 
   // --- FILE HANDLERS ---
@@ -142,7 +177,11 @@ const [activeAction, setActiveAction] =
       selectedFiles.forEach((file) => {
         formData.append('imageFiles', file);
       });
-
+// 🔧 VIDEO FILES
+selectedVideos.forEach((video) => {
+  formData.append('videoFiles', video);
+});
+ 
       if (editingProduct) {
         // NOTE: Update logic needs backend support for Multipart PUT. 
         // For now, we just update text data if no files selected, 
@@ -419,6 +458,37 @@ const [activeAction, setActiveAction] =
                             </select>
                         </div>
                         <div><label className="label">Stock *</label><input type="number" name="stock" value={productForm.stock} onChange={handleProductInputChange} className="input-field" required min="0"/></div>
+                        {/* ================= SIZE & COLOUR ================= */}
+{/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> */}
+  <div>
+    <label className="label">Sizes</label>
+    <input
+      type="text"
+      value={sizesInput}
+      onChange={(e) => setSizesInput(e.target.value)}
+      placeholder="S, M, L, XL"
+      className="input-field"
+    />
+    <p className="text-xs text-dark-400 mt-1">
+      Enter sizes separated by commas
+    </p>
+  </div>
+
+  <div>
+    <label className="label">Colours</label>
+    <input
+      type="text"
+      value={colorsInput}
+      onChange={(e) => setColorsInput(e.target.value)}
+      placeholder="Red, Black, Blue"
+      className="input-field"
+    />
+    <p className="text-xs text-dark-400 mt-1">
+      Enter colours separated by commas
+    </p>
+  </div>
+
+
                         <div><label className="label">Price *</label><input type="number" name="price" value={productForm.price} onChange={handleProductInputChange} className="input-field" required min="0" step="0.01"/></div>
                         <div><label className="label">Sale Price</label><input type="number" name="salePrice" value={productForm.salePrice} onChange={handleProductInputChange} className="input-field" min="0" step="0.01"/></div>
                     </div>
@@ -454,6 +524,50 @@ const [activeAction, setActiveAction] =
                             ))}
                         </div>
                     </div>
+{/* ================= VIDEOS ================= */}
+<div>
+  <label className="label">Product Videos</label>
+
+  <div className="flex items-center justify-center w-full mb-4">
+    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dark-700 border-dashed rounded-lg cursor-pointer bg-dark-800 hover:bg-dark-700">
+      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <FiPlay className="w-8 h-8 mb-2 text-dark-400" />
+        <p className="text-sm text-dark-400">
+          <span className="font-semibold">Click or drag videos</span>
+        </p>
+      </div>
+      <input
+        type="file"
+        className="hidden"
+        multiple
+        accept="video/*"
+        onChange={handleVideoChange}
+      />
+    </label>
+  </div>
+
+  <div className="grid grid-cols-4 gap-2">
+    {videoPreviewUrls.map((url, index) => (
+      <div
+        key={index}
+        className="relative aspect-square bg-dark-900 rounded-lg overflow-hidden"
+      >
+        <video
+          src={url}
+          className="w-full h-full object-cover"
+          muted
+        />
+        <button
+          type="button"
+          onClick={() => removeVideo(index)}
+          className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-dark-900"
+        >
+          <FiX size={12} />
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
 
                     <div className="flex gap-3 pt-4">
                         <button type="submit" className="btn-primary flex-1">{editingProduct ? 'Update' : 'Create'}</button>

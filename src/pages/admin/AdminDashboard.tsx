@@ -488,43 +488,85 @@ const fetchStatistics = async () => {
 
   {/* ================= RECENT ORDERS ================= */}
   <div className="glass-card rounded-2xl p-6">
-    <h2 className="text-2xl font-bold text-dark-900 mb-6">Recent Orders</h2>
+  {/* Header */}
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-bold text-dark-900">
+      Recent Orders
+    </h2>
 
-    <div className="space-y-4">
-      {recentOrders.length === 0 ? (
-        <p className="text-dark-600 text-sm text-center">No recent orders</p>
-      ) : (
-        recentOrders.map((order) => (
-          <div
-            key={order.id}
-           className="flex items-center justify-between p-4 glass-card rounded-xl border border-dark-200"
-          >
-            <div>
-              <p className="text-dark-900 font-semibold">
-                Order #{order.orderNumber ?? order.id}
-              </p>
-              <p className="text-sm text-dark-600">
-                ₹{order.totalAmount} • {order.status}
-              </p>
-            </div>
-
-            <Link
-              to="/admin/orders"
-              className="text-primary-400 text-sm font-medium hover:underline"
-            >
-              View
-            </Link>
-          </div>
-        ))
-      )}
-    </div>
+    <Link
+      to="/admin/orders"
+      className="text-sm font-medium text-primary-500 hover:underline"
+    >
+      View All
+    </Link>
   </div>
+
+  {/* Orders */}
+  <div className="space-y-4">
+    {recentOrders.length === 0 ? (
+      <p className="text-dark-600 text-sm text-center">
+        No recent orders
+      </p>
+    ) : (
+      recentOrders.map((order) => (
+        <div
+          key={order.id}
+          className="flex items-center justify-between p-4 glass-card rounded-xl border border-dark-200"
+        >
+          {/* Left */}
+<div>
+  <p className="text-dark-900 font-semibold">
+    Order #{order.orderNumber ?? order.id}
+  </p>
+
+  <p className="text-sm text-dark-600">
+    ₹{order.totalAmount}
+  </p>
+
+  {/* Products */}
+  <div className="mt-1 space-y-0.5">
+    {order.items?.map((item: any) => (
+      <p
+        key={item.id}
+        className="text-xs text-dark-500"
+      >
+        {item.productName} × {item.quantity}
+      </p>
+    ))}
+  </div>
+</div>
+          {/* Status Badge */}
+          <span
+            className={`px-3 py-1 text-xs font-semibold rounded-full
+                        border border-white/10
+                        backdrop-blur-sm
+                        whitespace-nowrap
+                        ${getStatusClasses(order.status)}`}
+          >
+            {order.status}
+          </span>
+        </div>
+      ))
+    )}
+  </div>
+</div>
+
 
 {/* ================= RECENT APPOINTMENTS ================= */}
 <div className="glass-card rounded-2xl p-6">
-  <h2 className="text-2xl font-bold text-dark-900 mb-6">
-    Recent Appointments
-  </h2>
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-bold text-dark-900">
+      Recent Appointments
+    </h2>
+
+    <Link
+      to="/admin/orders"
+      className="text-sm font-medium text-primary-500 hover:underline"
+    >
+      View All
+    </Link>
+  </div>
 
   <div className="space-y-4">
     {recentAppointments.length === 0 ? (

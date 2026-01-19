@@ -293,11 +293,6 @@ const LoginPage = () => {
     password: '',
   });
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -308,12 +303,19 @@ const LoginPage = () => {
     }
 
     try {
-      await dispatch(login(formData)).unwrap();
+      const res = await dispatch(login(formData)).unwrap();
+
       toast.success('Login successful!');
-      navigate('/');
+
+      if (res.role === 'ADMIN') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err: any) {
       toast.error(err || 'Login failed');
     }
+
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
