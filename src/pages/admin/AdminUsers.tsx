@@ -1007,9 +1007,9 @@ import toast from "react-hot-toast";
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [totalPages, setTotalPages] = useState(0);
+  // const [page, setPage] = useState(0);
+  // const [rowsPerPage, setRowsPerPage] = useState(5);
+  // const [totalPages, setTotalPages] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
 
   const [loading, setLoading] = useState(true);
@@ -1035,9 +1035,9 @@ const AdminUsers = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const res = await userApi.getCustomers(page, rowsPerPage);
+        const res = await userApi.getCustomers(0, 5);
         setUsers(res.content);
-        setTotalPages(res.totalPages);
+        // setTotalPages(res.totalPages);
         setTotalUsers(res.totalElements);
       } catch {
         setError("Failed to load users");
@@ -1046,7 +1046,7 @@ const AdminUsers = () => {
       }
     };
     fetchUsers();
-  }, [page, rowsPerPage]);
+  }, []);
 
   // Search
   const filteredUsers = useMemo(() => {

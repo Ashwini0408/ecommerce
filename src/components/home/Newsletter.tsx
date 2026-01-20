@@ -66,22 +66,22 @@
 
 
 
-import { useState } from "react";
+import { /* useState */ } from "react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const Newsletter = () => {
-  const [email, setEmail] = useState("");
+  // const [email, setEmail] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      toast.success("Welcome to the STYLISTE circle");
-      setEmail("");
-    }
-  };
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (email) {
+  //     toast.success("Welcome to the STYLISTE circle");
+  //     setEmail("");
+  //   }
+  // };
 
   return (
     <>

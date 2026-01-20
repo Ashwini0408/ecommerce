@@ -56,77 +56,77 @@ const CheckoutPage = () => {
     return true;
   };
 
-  const handleRazorpayPayment = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please login to continue');
-      navigate('/login');
-      return;
-    }
-
-    if (items.length === 0) {
-      toast.error('Your cart is empty');
-      navigate('/cart');
-      return;
-    }
-
-    if (!validateForm()) return;
-
-    setLoading(true);
-
-    try {
-      // Create order in backend
-      const shippingAddress = `${formData.addressLine1}, ${formData.addressLine2 ? formData.addressLine2 + ', ' : ''}${formData.city}, ${formData.state} ${formData.postalCode}, ${formData.country}`;
-
-      const orderData = {
-        items: items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          selectedSize: item.selectedSize,
-          selectedColor: item.selectedColor,
-        })),
-        shippingAddress,
-      };
-
-      const order = await orderApi.createOrder(orderData);
-
-      // Initialize Razorpay
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx',
-        amount: Math.round(finalTotal * 100), // Convert to paise
-        currency: 'INR',
-        name: 'STYLISTE',
-        description: `Order #${order.id}`,
-        order_id: '', // You would get this from your backend Razorpay order creation
-        handler: async function (response: any) {
-          // Payment successful
-          toast.success('Payment successful! Order placed.');
-          dispatch(clearCart());
-          navigate(`/dashboard?orderSuccess=${order.id}`);
-        },
-        prefill: {
-          name: user?.name || '',
-          email: user?.email || '',
-          contact: formData.phone,
-        },
-        theme: {
-          color: '#0ea5e9',
-        },
-        modal: {
-          ondismiss: function () {
-            setLoading(false);
-            toast.error('Payment cancelled');
-          },
-        },
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to process payment');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleRazorpayPayment = async () => {
+  //   if (!isAuthenticated) {
+  //     toast.error('Please login to continue');
+  //     navigate('/login');
+  //     return;
+  //   }
+  //
+  //   if (items.length === 0) {
+  //     toast.error('Your cart is empty');
+  //     navigate('/cart');
+  //     return;
+  //   }
+  //
+  //   if (!validateForm()) return;
+  //
+  //   setLoading(true);
+  //
+  //   try {
+  //     // Create order in backend
+  //     const shippingAddress = `${formData.addressLine1}, ${formData.addressLine2 ? formData.addressLine2 + ', ' : ''}${formData.city}, ${formData.state} ${formData.postalCode}, ${formData.country}`;
+  //
+  //     const orderData = {
+  //       items: items.map((item) => ({
+  //         productId: item.productId,
+  //         quantity: item.quantity,
+  //         selectedSize: item.selectedSize,
+  //         selectedColor: item.selectedColor,
+  //       })),
+  //       shippingAddress,
+  //     };
+  //
+  //     const order = await orderApi.createOrder(orderData);
+  //
+  //     // Initialize Razorpay
+  //     const options = {
+  //       key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx',
+  //       amount: Math.round(finalTotal * 100), // Convert to paise
+  //       currency: 'INR',
+  //       name: 'STYLISTE',
+  //       description: `Order #${order.id}`,
+  //       order_id: '', // You would get this from your backend Razorpay order creation
+  //       handler: async function (/* response: any */) {
+  //         // Payment successful
+  //         toast.success('Payment successful! Order placed.');
+  //         dispatch(clearCart());
+  //         navigate(`/dashboard?orderSuccess=${order.id}`);
+  //       },
+  //       prefill: {
+  //         name: user?.name || '',
+  //         email: user?.email || '',
+  //         contact: formData.phone,
+  //       },
+  //       theme: {
+  //         color: '#0ea5e9',
+  //       },
+  //       modal: {
+  //         ondismiss: function () {
+  //           setLoading(false);
+  //           toast.error('Payment cancelled');
+  //         },
+  //       },
+  //     };
+  //
+  //     const razorpay = new window.Razorpay(options);
+  //     razorpay.open();
+  //   } catch (error: any) {
+  //     toast.error(error.message || 'Failed to process payment');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handlePlaceOrder = async () => {
     // For demo purposes, simulate successful order without Razorpay

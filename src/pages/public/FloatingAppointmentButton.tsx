@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Calendar, Sparkles } from "lucide-react";
+import { Calendar /* , Sparkles */ } from "lucide-react";
 
 export const FloatingAppointmentButton = () => {
   return (

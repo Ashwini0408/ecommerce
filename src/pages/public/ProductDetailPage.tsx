@@ -13,21 +13,13 @@ import toast from 'react-hot-toast';
 // ----------------------------------------------------------------------
 // 1. HELPER: Fix Image URLs
 // ----------------------------------------------------------------------
-const API_BASE_URL = 'http://192.168.1.111:8090'; // Your Spring Boot URL
+const SERVER_URL = import.meta.env.VITE_API_IMG_URL ;
+  const getImageUrl = (path?: string) => {
+    if (!path) return '/placeholder.jpg';
+    if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('https://')) return path; // Already absolute or local blob
+    return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
 
-const getImageUrl = (path: string) => {
-  if (!path) return '/placeholder.jpg';
-  
-  // If it's already a full web URL (e.g. https://amazon.s3...), leave it alone
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-  
-  // Otherwise, prepend the backend URL
-  // Ensure path starts with /
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE_URL}${cleanPath}`;
-};
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -147,7 +139,7 @@ const ProductDetailPage = () => {
               className="aspect-square rounded-2xl overflow-hidden glass-card"
             >
               <img
-                src={product.images[selectedImage]}
+                src={getImageUrl(product.images[selectedImage])}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />

@@ -2,16 +2,12 @@ import Navbar from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Hero } from '../../components/home/Hero';
 // import { Categories } from '../../components/home/Categories';
-<<<<<<< HEAD
-import { FeaturedProducts } from "../../components/home/FeaturedProducts";
-// import { Newsletter } from "../../components/home/Newsletter";
-=======
 // import { FeaturedProducts } from "../../components/home/FeaturedProducts";
-import { Newsletter } from "../../components/home/Newsletter";
+// import { Newsletter } from "../../components/home/Newsletter";
 import { AwardsSection } from '../../components/home/AwardsSection';
 import { AboutIntro } from '../../components/home/AboutIntro';
 import { TestimonialsSection } from '../../components/home/TestimonialsSection';
-import { WhyChooseUs } from '../../components/home/WhyChooseUs';
+// import { WhyChooseUs } from '../../components/home/WhyChooseUs';
 import { WhyStyliste } from '../../components/home/WhyStyliste';
 import { FeaturedProducts } from '../../components/home/FeaturedProducts copy';
 import { ServicesSection } from '../../components/home/ServiceSection';
@@ -20,7 +16,6 @@ import { BookAppointmentSection } from '../../components/home/BookAppointmentSec
 import { StatsSection } from '../../components/home/StatsSection';
 import { FAQSection } from '../../components/home/FAQSection';
 
->>>>>>> 7ce3ff1cf053ca2079a06534a167c0c7ab8b6709
 
 
 const HomePage = () => {
@@ -34,8 +29,6 @@ const HomePage = () => {
       {/* <WhyChooseUs /> */}
       <WhyStyliste />
       <FeaturedProducts />
-<<<<<<< HEAD
-=======
       <ServicesSection />
       <HowItWorksSection />
       <TestimonialsSection />
@@ -43,7 +36,6 @@ const HomePage = () => {
       <BookAppointmentSection />
       {/* <Categories /> */}
       {/* <FeaturedProducts /> */}
->>>>>>> 7ce3ff1cf053ca2079a06534a167c0c7ab8b6709
       {/* <Newsletter /> */}
       <Footer />
     </div>

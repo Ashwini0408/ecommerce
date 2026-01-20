@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, error, dispatch } = useAuth();
+  const { isAuthenticated, isLoading, /* error, */ dispatch } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",

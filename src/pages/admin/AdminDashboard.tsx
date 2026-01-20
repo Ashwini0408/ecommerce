@@ -305,7 +305,7 @@ import AdminUsers from './AdminUsers';
 import { orderApi } from '../../api/orderApi';
 import { appointmentApi } from '../../api/appointmentApi';
 
-import type { OrderStatistics, AppointmentStatistics } from '../../types';
+import type { OrderStatistics, AppointmentStatistics, Order, Appointment } from '../../types';
 import toast from 'react-hot-toast';
 
 // IMPORTANT — Correct Import
@@ -501,7 +501,7 @@ const fetchStatistics = async () => {
           >
             <div>
               <p className="text-white font-semibold">
-                Order #{order.orderNumber ?? order.id}
+                Order #{order.id}
               </p>
               <p className="text-sm text-dark-400">
                 ₹{order.totalAmount} • {order.status}
@@ -540,13 +540,11 @@ const fetchStatistics = async () => {
           {/* LEFT INFO */}
           <div>
             <p className="text-white font-semibold">
-              {appt.name}
+              Appointment #{appt.id}
             </p>
-
             <p className="text-sm text-dark-400">
-              {appt.serviceType.replace(/_/g, ' ')}
+              {appt.serviceType?.replace(/_/g, ' ')} • {appt.status}
             </p>
-
             <p className="text-xs text-dark-500">
               {appt.appointmentDate} at {appt.appointmentTime?.slice(0, 5)}
             </p>

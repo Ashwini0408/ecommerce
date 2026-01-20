@@ -282,8 +282,8 @@
 
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Calendar, Clock, User, Sparkles, ArrowRight } from "lucide-react";
+// import { motion } from "framer-motion";
+import { /* Calendar, */ Clock, /* User, */ Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";

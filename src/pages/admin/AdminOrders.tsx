@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPackage, FiTruck, FiCheck, FiX, FiEye } from 'react-icons/fi';
+import { FiPackage, FiTruck, /* FiCheck, */ FiX, FiEye } from 'react-icons/fi';
 import { orderApi } from '../../api/orderApi';
 import type { Order } from '../../types';
 import { format } from 'date-fns';
