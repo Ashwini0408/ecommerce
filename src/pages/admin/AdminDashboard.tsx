@@ -494,34 +494,12 @@ const fetchStatistics = async () => {
       Recent Orders
     </h2>
 
-    <div className="space-y-4">
-      {recentOrders.length === 0 ? (
-        <p className="text-dark-400 text-sm text-center">No recent orders</p>
-      ) : (
-        recentOrders.map((order) => (
-          <div
-            key={order.id}
-            className="flex items-center justify-between p-4 glass-card rounded-xl"
-          >
-            <div>
-              <p className="text-white font-semibold">
-                Order #{order.id}
-              </p>
-              <p className="text-sm text-dark-400">
-                ₹{order.totalAmount} • {order.status}
-              </p>
-            </div>
-
-            <Link
-              to="/admin/orders"
-              className="text-primary-400 text-sm font-medium hover:underline"
-            >
-              View
-            </Link>
-          </div>
-        ))
-      )}
-    </div>
+    <Link
+      to="/admin/orders"
+      className="text-sm font-medium text-primary-500 hover:underline"
+    >
+      View All
+    </Link>
   </div>
 
   {/* Orders */}
@@ -603,11 +581,12 @@ const fetchStatistics = async () => {
         >
           {/* LEFT INFO */}
           <div>
-            <p className="text-white font-semibold">
-              Appointment #{appt.id}
+            <p className="text-dark-900 font-semibold">
+              {appt.name}
             </p>
-            <p className="text-sm text-dark-400">
-              {appt.serviceType?.replace(/_/g, ' ')} • {appt.status}
+
+            <p className="text-sm text-dark-600">
+              {appt.serviceType.replace(/_/g, ' ')}
             </p>
             <p className="text-xs text-dark-500">
               {appt.appointmentDate} at {appt.appointmentTime?.slice(0, 5)}

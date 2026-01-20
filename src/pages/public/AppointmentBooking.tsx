@@ -291,6 +291,7 @@ import { Footer } from "../../components/layout/Footer";
 
 import bookingApi from "../../api/BookingApi";
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 // ---------------- SERVICE UI DATA ----------------
 
 const timeSlots = [
