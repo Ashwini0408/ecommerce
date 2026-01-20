@@ -589,9 +589,9 @@
 // export default Testimonials;
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import {
-  ArrowRight,
+  // ArrowRight,
   Star,
   Quote,
   Volume2,

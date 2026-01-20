@@ -145,9 +145,12 @@
 
 
 
+// 
+
+
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Phone, Mail, MapPin, Clock } from "lucide-react";
-
+import logo from "../../assets/logo.png"
 const footerLinks = {
   services: [
     { name: "Bespoke Tailoring", href: "/services" },
@@ -174,7 +177,7 @@ const footerLinks = {
   { name: "Terms & Conditions", href: "/terms-of-service" },
 ],
 };
-
+ 
 export const Footer = () => {
   return (
     <footer className="bg-card border-t border-border">
@@ -185,19 +188,19 @@ export const Footer = () => {
   <Link to="/" className="inline-flex items-center gap-4 mb-6">
     {/* LOGO */}
     <img
-      src="./src/assets/logo.png"
+      src={logo}
       alt="Styliste Couturier Logo"
-      className="w-20 h-12 object-contain"
+      className="w-22 h-14 object-contain"
     />
   </Link>
-
-
+ 
+ 
             <p className="text-muted-foreground max-w-sm mb-6 text-sm leading-relaxed">
               Your trusted destination for premium custom fashion. We specialise
               in upscaling old sarees, all types of ladies garments, bridal wear,
               and theme-based outfits with perfect fitting and timely delivery.
             </p>
-
+ 
             {/* Contact Info */}
             <div className="space-y-3 mb-6">
               <a
@@ -207,7 +210,7 @@ export const Footer = () => {
                 <Phone className="w-4 h-4" strokeWidth={1.5} />
                 +91 7020601937
               </a>
-
+ 
               <a
                 href="mailto:info@styliste-couturier.com"
                 className="flex items-center gap-2 text-muted-foreground hover:text-sage transition-colors text-sm"
@@ -215,7 +218,7 @@ export const Footer = () => {
                 <Mail className="w-4 h-4" strokeWidth={1.5} />
                 info@styliste-couturier.com
               </a>
-
+ 
               <div className="flex items-start gap-2 text-muted-foreground text-sm">
                 <MapPin
                   className="w-4 h-4 flex-shrink-0 mt-0.5"
@@ -226,13 +229,13 @@ export const Footer = () => {
                   Singhania School, Pokharan Rd. No. 2, Thane West - 400606
                 </span>
               </div>
-
+ 
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Clock className="w-4 h-4" strokeWidth={1.5} />
                 Tue–Sun: 11 AM – 8 PM
               </div>
             </div>
-
+ 
             {/* Social */}
             <div className="flex items-center gap-2">
               <a
@@ -255,7 +258,7 @@ export const Footer = () => {
               </a>
             </div>
           </div>
-
+ 
           {/* Services */}
           <div>
             <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
@@ -274,7 +277,7 @@ export const Footer = () => {
               ))}
             </ul>
           </div>
-
+ 
           {/* Company */}
           <div>
             <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
@@ -293,7 +296,7 @@ export const Footer = () => {
               ))}
             </ul>
           </div>
-
+ 
           {/* Support */}
           <div>
             <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
@@ -312,7 +315,7 @@ export const Footer = () => {
               ))}
             </ul>
           </div>
-
+ 
           {/* Legal */}
           <div>
             <h3 className="font-serif text-xl mb-6 tracking-wide text-sage">
@@ -332,13 +335,13 @@ export const Footer = () => {
             </ul>
           </div>
         </div>
-
+ 
         {/* Bottom Bar */}
         <div className="mt-20 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-xs tracking-wider">
             © {new Date().getFullYear()} STYLISTE COUTURIER. All rights reserved.
           </p>
-
+ 
           <div className="flex items-center gap-8">
             <Link
               to="/privacy-policy"
@@ -358,3 +361,4 @@ export const Footer = () => {
     </footer>
   );
 };
+ 

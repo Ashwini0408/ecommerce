@@ -2720,6 +2720,1122 @@
 // export default AdminProducts;
 
 
+// import { useState, useEffect, useMemo } from 'react';
+// import { motion, AnimatePresence } from 'framer-motion';
+// import { FiPlus, FiEdit2, FiTrash2, FiX, FiImage, FiFolder, FiGrid, FiPause, FiPlay, FiEye, FiSearch } from 'react-icons/fi';
+// import { productApi } from '../../api/productApi';
+// import { categoryApi, type Category } from '../../api/categoryApi';
+// import type { Product, CreateProductRequest, ProductAttribute } from '../../types';
+// import toast from 'react-hot-toast';
+
+// // --- CONFIGURATION ---
+// const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
+
+// // Define the modes for our modal system
+// type ModalType = 'NONE' | 'PRODUCT' | 'CATEGORY' | 'SUBCATEGORY';
+// type AdminTab = 'CATEGORY' | 'SUBCATEGORY' | 'PRODUCT';
+
+// const AdminProducts = () => {
+//   // --- DATA STATE ---
+//   const [products, setProducts] = useState<Product[] | null>(null);
+//   const [categories, setCategories] = useState<Category[] | null>(null);
+//   const [loading, setLoading] = useState(true);
+//   const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
+//   const [videoPreviewUrls, setVideoPreviewUrls] = useState<string[]>([]);
+//   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+//   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+//   // --- MODAL STATE ---
+//   const [activeModal, setActiveModal] = useState<ModalType>('NONE');
+//   const [activeTab, setActiveTab] = useState<AdminTab>('PRODUCT');
+//   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+//   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+//   const [editingSubCategory, setEditingSubCategory] = useState<any>(null);
+
+//   // --- FORMS STATE ---
+//   const [productForm, setProductForm] = useState<CreateProductRequest>({
+//     name: '', description: '', price: 0, salePrice: 0, stock: 0,
+//     category: '', subcategory: '', images: [], videos: [], attributes: [],
+//   });
+
+//   const [sizesInput, setSizesInput] = useState('');
+//   const [colorsInput, setColorsInput] = useState('');
+//   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
+//   const [subCatForm, setSubCatForm] = useState({ parentCategoryId: '', name: '', description: '' });
+
+//   // --- COLUMN FILTERS ---
+//   const [columnFilters, setColumnFilters] = useState({
+//     item: '',
+//     subcategory: '',
+//     category: '',
+//     status: ''
+//   });
+
+//   // --- PAGINATION ---
+//   const [page, setPage] = useState(1);
+//   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+//   // --- HELPER: RESOLVE IMAGE URL ---
+//   const getImageUrl = (path?: string) => {
+//     if (!path) return '/placeholder.jpg';
+//     if (path.startsWith('http') || path.startsWith('blob:')) return path;
+//     return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+//   };
+
+//   // --- INITIAL DATA FETCH ---
+//   useEffect(() => {
+//     fetchData();
+//   }, []);
+
+//   const fetchData = async () => {
+//     setLoading(true);
+//     try {
+//       const [prodRes, catRes] = await Promise.all([
+//         productApi.getAllProducts(0, 1000),
+//         categoryApi.getAllCategories()
+//       ]);
+//       // Ensure products is always an array
+//       setProducts(Array.isArray(prodRes.content) ? prodRes.content : 
+//                   Array.isArray(prodRes) ? prodRes : []);
+//       setCategories(Array.isArray(catRes) ? catRes : []);
+//     } catch (error: any) {
+//       console.error('Error fetching data:', error);
+//       toast.error('Failed to load data');
+//       setProducts([]); // Set to empty array on error
+//       setCategories([]);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // --- AVAILABLE SUBCATEGORIES ---
+//   const availableSubCategories = useMemo(() => {
+//     if (!productForm.category || !categories || !Array.isArray(categories)) return [];
+//     const category = categories.find(c => c.name === productForm.category);
+//     return category?.subCategories || [];
+//   }, [categories, productForm.category]);
+
+//   // --- FILTERED DATA ---
+//   const filteredCategories = useMemo(() => {
+//     if (!categories || !Array.isArray(categories)) return [];
+//     return categories
+//       .filter(cat =>
+//         cat.name.toLowerCase().includes(columnFilters.item.toLowerCase()) ||
+//         cat.description?.toLowerCase().includes(columnFilters.item.toLowerCase())
+//       )
+//       .sort((a, b) => b.id - a.id); // Newest first
+//   }, [categories, columnFilters.item]);
+
+//   const subCategoryRows = useMemo(() => {
+//     if (!categories || !Array.isArray(categories)) return [];
+//     return categories.flatMap(cat =>
+//       (cat.subCategories || []).map(sub => ({
+//         ...sub,
+//         parentName: cat.name,
+//         parentId: cat.id
+//       }))
+//     ).sort((a, b) => b.id - a.id); // Newest first
+//   }, [categories]);
+
+//   const filteredSubCategories = useMemo(() => {
+//     if (!subCategoryRows || !Array.isArray(subCategoryRows)) return [];
+//     return subCategoryRows.filter(sub =>
+//       sub.name.toLowerCase().includes(columnFilters.item.toLowerCase()) ||
+//       (sub.parentName || '').toLowerCase().includes(columnFilters.item.toLowerCase())
+//     );
+//   }, [subCategoryRows, columnFilters.item]);
+
+//   const filteredProducts = useMemo(() => {
+//     // Add null/undefined check here
+//     if (!products || !Array.isArray(products)) return [];
+    
+//     return products
+//       .filter(prod => {
+//         const matchesItem = (prod.name || '').toLowerCase().includes(columnFilters.item.toLowerCase());
+//         const matchesSubcategory = (prod.subcategory || '').toLowerCase().includes(columnFilters.subcategory.toLowerCase());
+//         const matchesCategory = (prod.category || '').toLowerCase().includes(columnFilters.category.toLowerCase());
+//         const matchesStatus = 
+//           columnFilters.status === '' || 
+//           (columnFilters.status === 'ACTIVE' && prod.isActive) || 
+//           (columnFilters.status === 'INACTIVE' && !prod.isActive);
+        
+//         return matchesItem && matchesSubcategory && matchesCategory && matchesStatus;
+//       })
+//       .sort((a, b) => b.id - a.id); // Newest first
+//   }, [products, columnFilters]);
+
+//   // --- PAGINATION CALCULATIONS ---
+//   const paginatedCategories = useMemo(() => {
+//     if (!filteredCategories || !Array.isArray(filteredCategories)) return [];
+//     return filteredCategories.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+//   }, [filteredCategories, page, rowsPerPage]);
+
+//   const paginatedSubCategories = useMemo(() => {
+//     if (!filteredSubCategories || !Array.isArray(filteredSubCategories)) return [];
+//     return filteredSubCategories.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+//   }, [filteredSubCategories, page, rowsPerPage]);
+
+//   const paginatedProducts = useMemo(() => {
+//     if (!filteredProducts || !Array.isArray(filteredProducts)) return [];
+//     return filteredProducts.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+//   }, [filteredProducts, page, rowsPerPage]);
+
+//   const totalPages = useMemo(() => {
+//     const itemCount = 
+//       activeTab === 'CATEGORY' ? (filteredCategories?.length || 0) :
+//       activeTab === 'SUBCATEGORY' ? (filteredSubCategories?.length || 0) :
+//       (filteredProducts?.length || 0);
+    
+//     return Math.ceil(itemCount / rowsPerPage);
+//   }, [activeTab, filteredCategories, filteredSubCategories, filteredProducts, rowsPerPage]);
+
+//   // --- MODAL HANDLERS ---
+//   const openProductModal = (product?: Product) => {
+//     if (product) {
+//       setEditingProduct(product);
+//       setProductForm({
+//         name: product.name || '',
+//         description: product.description || '',
+//         price: product.price || 0,
+//         salePrice: product.salePrice || 0,
+//         stock: product.stock || 0,
+//         category: product.category || '',
+//         subcategory: product.subcategory || '',
+//         images: product.images || [],
+//         videos: product.videos || [],
+//         attributes: product.attributes || [],
+//       });
+//       setSizesInput(product.attributes?.find((a: ProductAttribute) => a.key === 'size')?.value || '');
+//       setColorsInput(product.attributes?.find((a: ProductAttribute) => a.key === 'color')?.value || '');
+//     } else {
+//       setEditingProduct(null);
+//       setProductForm({
+//         name: '', description: '', price: 0, salePrice: 0, stock: 0,
+//         category: '', subcategory: '', images: [], videos: [], attributes: [],
+//       });
+//       setSizesInput('');
+//       setColorsInput('');
+//     }
+//     setActiveModal('PRODUCT');
+//   };
+
+//   const openCategoryModal = (category?: Category) => {
+//     if (category) {
+//       setEditingCategory(category);
+//       setCategoryForm({ name: category.name || '', description: category.description || '' });
+//     } else {
+//       setEditingCategory(null);
+//       setCategoryForm({ name: '', description: '' });
+//     }
+//     setActiveModal('CATEGORY');
+//   };
+
+//   const openSubCategoryModal = (subCategory?: any) => {
+//     if (subCategory) {
+//       setEditingSubCategory(subCategory);
+//       setSubCatForm({
+//         parentCategoryId: subCategory.parentId?.toString() || '',
+//         name: subCategory.name || '',
+//         description: subCategory.description || ''
+//       });
+//     } else {
+//       setEditingSubCategory(null);
+//       setSubCatForm({ parentCategoryId: '', name: '', description: '' });
+//     }
+//     setActiveModal('SUBCATEGORY');
+//   };
+
+//   const closeModal = () => {
+//     setActiveModal('NONE');
+//     setEditingProduct(null);
+//     setEditingCategory(null);
+//     setEditingSubCategory(null);
+//     setSelectedFiles([]);
+//     setPreviewUrls([]);
+//     setSelectedVideos([]);
+//     setVideoPreviewUrls([]);
+//   };
+
+//   // --- FILE HANDLERS ---
+//   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     if (e.target.files && e.target.files.length > 0) {
+//       const newFiles = Array.from(e.target.files);
+//       setSelectedFiles(prev => [...prev, ...newFiles]);
+//       const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+//       setPreviewUrls(prev => [...prev, ...newPreviews]);
+//     }
+//   };
+
+//   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     if (e.target.files && e.target.files.length > 0) {
+//       const files = Array.from(e.target.files);
+//       setSelectedVideos(prev => [...prev, ...files]);
+//       const previews = files.map(file => URL.createObjectURL(file));
+//       setVideoPreviewUrls(prev => [...prev, ...previews]);
+//     }
+//   };
+
+//   const removeFile = (index: number) => {
+//     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+//     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+//   };
+
+//   const removeVideo = (index: number) => {
+//     setSelectedVideos(prev => prev.filter((_, i) => i !== index));
+//     setVideoPreviewUrls(prev => prev.filter((_, i) => i !== index));
+//   };
+
+//   // --- FORM SUBMIT HANDLERS ---
+//   const handleProductSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     try {
+//       const formData = new FormData();
+      
+//       const updatedAttributes: ProductAttribute[] = [];
+//       if (sizesInput.trim()) {
+//         updatedAttributes.push({ key: 'size', value: sizesInput, type: 'TEXT' });
+//       }
+//       if (colorsInput.trim()) {
+//         updatedAttributes.push({ key: 'color', value: colorsInput, type: 'TEXT' });
+//       }
+      
+//       const productData = {
+//         ...productForm,
+//         attributes: updatedAttributes
+//       };
+      
+//       const productBlob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
+//       formData.append('product', productBlob);
+      
+//       selectedFiles.forEach((file) => formData.append('imageFiles', file));
+//       selectedVideos.forEach((video) => formData.append('videoFiles', video));
+
+//       if (editingProduct) {
+//         await productApi.updateProduct(editingProduct.id, productData);
+//         toast.success('Product updated');
+//       } else {
+//         await productApi.createProduct(formData);
+//         toast.success('Product created!');
+//       }
+
+//       closeModal();
+//       fetchData();
+//     } catch (error: any) {
+//       console.error("Submission Error:", error);
+//       toast.error('Failed to save product.');
+//     }
+//   };
+
+//   const handleCategorySubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (!categoryForm.name) return toast.error("Name is required");
+    
+//     try {
+//       if (editingCategory) {
+//         setCategories(prev => prev ? prev.map(c => 
+//           c.id === editingCategory.id 
+//             ? { ...c, name: categoryForm.name, description: categoryForm.description }
+//             : c
+//         ) : []);
+//         toast.success(`Category '${categoryForm.name}' updated (locally)`);
+//       } else {
+//         const newCat = await categoryApi.createCategory(categoryForm.name, categoryForm.description);
+//         setCategories(prev => prev ? [...prev, newCat] : [newCat]);
+//         toast.success(`Category '${newCat.name}' created`);
+//       }
+//       closeModal();
+//     } catch (error: any) {
+//       console.error('Category API Error:', error);
+//       toast.error(error.response?.data?.message || 'Failed to save category');
+//     }
+//   };
+
+//   const handleSubCategorySubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (!subCatForm.parentCategoryId || !subCatForm.name) return toast.error("All fields required");
+    
+//     try {
+//       const parentId = Number(subCatForm.parentCategoryId);
+      
+//       if (editingSubCategory) {
+//         setCategories(prev => prev ? prev.map(c => 
+//           c.id === parentId 
+//             ? { 
+//                 ...c, 
+//                 subCategories: (c.subCategories || []).map(sc => 
+//                   sc.id === editingSubCategory.id 
+//                     ? { ...sc, name: subCatForm.name, description: subCatForm.description }
+//                     : sc
+//                 ) 
+//               } 
+//             : c
+//         ) : []);
+//         toast.success(`Subcategory '${subCatForm.name}' updated (locally)`);
+//       } else {
+//         const newSub = await categoryApi.createSubCategory(parentId, subCatForm.name, subCatForm.description);
+//         const updatedCats = categories ? categories.map(c => 
+//           c.id === parentId 
+//             ? { ...c, subCategories: [...(c.subCategories || []), newSub] } 
+//             : c
+//         ) : [];
+//         setCategories(updatedCats);
+//         toast.success(`Subcategory '${newSub.name}' added`);
+//       }
+//       closeModal();
+//     } catch (error: any) {
+//       console.error('Subcategory API Error:', error);
+//       toast.error(error.response?.data?.message || 'Failed to save subcategory');
+//     }
+//   };
+
+//   // --- DELETE HANDLERS ---
+//   const handleDeleteProduct = async (id: number) => {
+//     if (!confirm('Delete this product?')) return;
+//     try {
+//       await productApi.deleteProduct(id);
+//       toast.success('Product deleted');
+//       fetchData();
+//     } catch (error) { 
+//       console.error('Delete product error:', error);
+//       toast.error('Failed to delete product'); 
+//     }
+//   };
+
+//   const handleDeleteCategory = async (id: number) => {
+//     if (!confirm('Delete this category? This will also delete all subcategories.')) return;
+//     try {
+//       setCategories(prev => prev ? prev.filter(c => c.id !== id) : []);
+//       toast.success('Category deleted (locally)');
+//     } catch (error) { 
+//       console.error('Delete category error:', error);
+//       toast.error('Failed to delete category'); 
+//     }
+//   };
+
+//   const handleDeleteSubCategory = async (id: number) => {
+//     if (!confirm('Delete this subcategory?')) return;
+//     try {
+//       setCategories(prev => prev ? prev.map(c => ({
+//         ...c,
+//         subCategories: (c.subCategories || []).filter(sc => sc.id !== id)
+//       })) : []);
+//       toast.success('Subcategory deleted (locally)');
+//     } catch (error) { 
+//       console.error('Delete subcategory error:', error);
+//       toast.error('Failed to delete subcategory'); 
+//     }
+//   };
+
+//   // --- TOGGLE STATUS ---
+//   const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+//     try {
+//       if (currentStatus) {
+//         await productApi.deactivateProduct(id);
+//         toast.success('Product Deactivated ⏸');
+//       } else {
+//         await productApi.activateProduct(id);
+//         toast.success('Product Activated ▶');
+//       }
+//       fetchData();
+//     } catch (error) {
+//       console.error('Toggle status error:', error);
+//       toast.error('Failed to update status');
+//     }
+//   };
+
+//   // --- INPUT HANDLERS ---
+//   const handleProductInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+//     const { name, value } = e.target;
+//     if (name === 'category') {
+//       setProductForm(prev => ({ ...prev, category: value, subcategory: '' }));
+//     } else {
+//       setProductForm(prev => ({
+//         ...prev,
+//         [name]: ['price', 'salePrice', 'stock'].includes(name) ? Number(value) : value,
+//       }));
+//     }
+//   };
+
+//   // --- COLUMN FILTER HANDLER ---
+//   const handleColumnFilterChange = (column: string, value: string) => {
+//     setColumnFilters(prev => ({
+//       ...prev,
+//       [column]: value
+//     }));
+//     setPage(1); // Reset to first page when filtering
+//   };
+
+//   // --- ROWS PER PAGE OPTIONS ---
+//   const rowsPerPageOptions = [5, 10, 20, 50, 100];
+
+//   return (
+//     <div className="space-y-6">
+//       {/* --- HEADER --- */}
+//       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+//         <div>
+//           <h2 className="text-2xl font-bold text-dark-900">
+//             {activeTab === 'PRODUCT' ? 'Product Management' : 
+//              activeTab === 'CATEGORY' ? 'Product Category' : 
+//              'Product Type'}
+//           </h2>
+//           <p className="text-dark-600 mt-1">
+//             {activeTab === 'PRODUCT' && `${filteredProducts?.length || 0} products total`}
+//             {activeTab === 'CATEGORY' && `${filteredCategories?.length || 0} categories total`}
+//             {activeTab === 'SUBCATEGORY' && `${filteredSubCategories?.length || 0} subcategories total`}
+//           </p>
+//         </div>
+        
+//         {/* ACTION BUTTONS */}
+//         <div className="flex space-x-3">
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             onClick={() => openCategoryModal()}
+//             className="px-4 py-2 rounded-xl flex items-center space-x-2 glass-card text-dark-800 ring-1 ring-[#8FAE8B] hover:bg-primary-50"
+//           >
+//             <FiFolder />
+//             <span>Add Category</span>
+//           </motion.button>
+          
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             onClick={() => openSubCategoryModal()}
+//             className="px-4 py-2 rounded-xl flex items-center space-x-2 glass-card text-dark-800 ring-1 ring-[#8FAE8B] hover:bg-primary-50"
+//           >
+//             <FiGrid />
+//             <span>Add Subcategory</span>
+//           </motion.button>
+          
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             onClick={() => openProductModal()}
+//             className="px-4 py-2 rounded-xl flex items-center space-x-2 glass-card text-dark-800 ring-1 ring-[#8FAE8B] hover:bg-primary-50"
+//           >
+//             <FiPlus />
+//             <span>Add Product</span>
+//           </motion.button>
+//         </div>
+//       </div>
+
+//       {/* --- TAB NAVIGATION --- */}
+//       <div className="flex border-b border-dark-200">
+//         <button
+//           className={`px-4 py-2 font-medium ${activeTab === 'PRODUCT' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-dark-600'}`}
+//           onClick={() => setActiveTab('PRODUCT')}
+//         >
+//           Products
+//         </button>
+//         <button
+//           className={`px-4 py-2 font-medium ${activeTab === 'CATEGORY' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-dark-600'}`}
+//           onClick={() => setActiveTab('CATEGORY')}
+//         >
+//           Categories
+//         </button>
+//         <button
+//           className={`px-4 py-2 font-medium ${activeTab === 'SUBCATEGORY' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-dark-600'}`}
+//           onClick={() => setActiveTab('SUBCATEGORY')}
+//         >
+//           Subcategories
+//         </button>
+//       </div>
+
+//       {/* --- SEARCH BAR FOR CATEGORIES/SUBCATEGORIES --- */}
+//       {(activeTab === 'CATEGORY' || activeTab === 'SUBCATEGORY') && (
+//         <div className="bg-white p-4 rounded-lg shadow">
+//           <div className="flex items-center space-x-2">
+//             <FiSearch className="text-dark-400" />
+//             <input
+//               type="text"
+//               placeholder={`Search ${activeTab === 'CATEGORY' ? 'categories' : 'subcategories'}...`}
+//               className="flex-1 p-2 border-none focus:outline-none"
+//               value={columnFilters.item}
+//               onChange={(e) => handleColumnFilterChange('item', e.target.value)}
+//             />
+//             {columnFilters.item && (
+//               <button
+//                 onClick={() => handleColumnFilterChange('item', '')}
+//                 className="text-dark-400 hover:text-dark-700"
+//               >
+//                 <FiX />
+//               </button>
+//             )}
+//           </div>
+//         </div>
+//       )}
+
+//       {/* --- DATA TABLES --- */}
+//       {loading ? (
+//         <div className="text-center py-8">Loading...</div>
+//       ) : (
+//         <>
+//           {/* CATEGORY TABLE */}
+//           {activeTab === 'CATEGORY' && (
+//             <div className="bg-white rounded-lg shadow overflow-hidden">
+//               <table className="min-w-full divide-y divide-dark-200">
+//                 <thead className="bg-dark-50">
+//                   <tr>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Sr. No.</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Category Name</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Description</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Actions</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="bg-white divide-y divide-dark-200">
+//                   {paginatedCategories && paginatedCategories.length > 0 ? (
+//                     paginatedCategories.map((category, index) => (
+//                       <tr key={category.id} className="hover:bg-dark-50">
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           {(page - 1) * rowsPerPage + index + 1}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-900">
+//                           {category.name}
+//                         </td>
+//                         <td className="px-6 py-4 text-sm text-dark-900">
+//                           {category.description || '-'}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+//                           <div className="flex space-x-2">
+//                             <button
+//                               onClick={() => openCategoryModal(category)}
+//                               className="p-1 text-primary-600 hover:text-primary-900 hover:bg-primary-50 rounded"
+//                               title="Edit"
+//                             >
+//                               <FiEdit2 size={16} />
+//                             </button>
+//                             <button
+//                               onClick={() => handleDeleteCategory(category.id)}
+//                               className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
+//                               title="Delete"
+//                             >
+//                               <FiTrash2 size={16} />
+//                             </button>
+//                           </div>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   ) : (
+//                     <tr>
+//                       <td colSpan={4} className="px-6 py-12 text-center text-dark-500">
+//                         No categories found
+//                       </td>
+//                     </tr>
+//                   )}
+//                 </tbody>
+//               </table>
+//             </div>
+//           )}
+
+//           {/* SUBCATEGORY TABLE */}
+//           {activeTab === 'SUBCATEGORY' && (
+//             <div className="bg-white rounded-lg shadow overflow-hidden">
+//               <table className="min-w-full divide-y divide-dark-200">
+//                 <thead className="bg-dark-50">
+//                   <tr>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Sr. No.</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Subcategory Name</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Category</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Description</th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Actions</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="bg-white divide-y divide-dark-200">
+//                   {paginatedSubCategories && paginatedSubCategories.length > 0 ? (
+//                     paginatedSubCategories.map((sub, index) => (
+//                       <tr key={sub.id} className="hover:bg-dark-50">
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           {(page - 1) * rowsPerPage + index + 1}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-900">
+//                           {sub.name}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           {sub.parentName}
+//                         </td>
+//                         <td className="px-6 py-4 text-sm text-dark-900">
+//                           {sub.description || '-'}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+//                           <div className="flex space-x-2">
+//                             <button
+//                               onClick={() => openSubCategoryModal(sub)}
+//                               className="p-1 text-primary-600 hover:text-primary-900 hover:bg-primary-50 rounded"
+//                               title="Edit"
+//                             >
+//                               <FiEdit2 size={16} />
+//                             </button>
+//                             <button
+//                               onClick={() => handleDeleteSubCategory(sub.id)}
+//                               className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
+//                               title="Delete"
+//                             >
+//                               <FiTrash2 size={16} />
+//                             </button>
+//                           </div>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   ) : (
+//                     <tr>
+//                       <td colSpan={5} className="px-6 py-12 text-center text-dark-500">
+//                         No subcategories found
+//                       </td>
+//                     </tr>
+//                   )}
+//                 </tbody>
+//               </table>
+//             </div>
+//           )}
+
+//           {/* PRODUCT TABLE WITH COLUMN FILTERS */}
+//           {activeTab === 'PRODUCT' && (
+//             <div className="bg-white rounded-lg shadow overflow-hidden">
+//               <table className="min-w-full divide-y divide-dark-200">
+//                 <thead className="bg-dark-50">
+//                   <tr>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>Item</span>
+//                         <input
+//                           type="text"
+//                           placeholder="Search Item"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+//                           value={columnFilters.item}
+//                           onChange={(e) => handleColumnFilterChange('item', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>Subcategory</span>
+//                         <input
+//                           type="text"
+//                           placeholder="Search Subcategory"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+//                           value={columnFilters.subcategory}
+//                           onChange={(e) => handleColumnFilterChange('subcategory', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>Category</span>
+//                         <input
+//                           type="text"
+//                           placeholder="Search Category"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+//                           value={columnFilters.category}
+//                           onChange={(e) => handleColumnFilterChange('category', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>Status</span>
+//                         <select
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+//                           value={columnFilters.status}
+//                           onChange={(e) => handleColumnFilterChange('status', e.target.value)}
+//                         >
+//                           <option value="">All</option>
+//                           <option value="ACTIVE">Active</option>
+//                           <option value="INACTIVE">Inactive</option>
+//                         </select>
+//                       </div>
+//                     </th>
+//                     <th className="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       Actions
+//                     </th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="bg-white divide-y divide-dark-200">
+//                   {paginatedProducts && paginatedProducts.length > 0 ? (
+//                     paginatedProducts.map((product, index) => (
+//                       <tr key={product.id} className="hover:bg-dark-50">
+//                         <td className="px-6 py-4 whitespace-nowrap">
+//                           <div className="flex items-center">
+//                             <div className="h-10 w-10 flex-shrink-0 mr-3">
+//                               <img
+//                                 src={getImageUrl(product.images?.[0])}
+//                                 alt={product.name}
+//                                 className="h-10 w-10 rounded object-cover"
+//                               />
+//                             </div>
+//                             <div className="text-sm font-medium text-dark-900">
+//                               {product.name}
+//                             </div>
+//                           </div>
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           {product.subcategory}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           {product.category}
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap">
+//                           <span className={`px-2 py-1 text-xs rounded-full ${product.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+//                             {product.isActive ? 'ACTIVE' : 'INACTIVE'}
+//                           </span>
+//                         </td>
+//                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+//                           <div className="flex space-x-1">
+//                             <button
+//                               onClick={() => openProductModal(product)}
+//                               className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded"
+//                               title="View"
+//                             >
+//                               <FiEye size={16} />
+//                             </button>
+//                             <button
+//                               onClick={() => openProductModal(product)}
+//                               className="p-1 text-primary-600 hover:text-primary-900 hover:bg-primary-50 rounded"
+//                               title="Edit"
+//                             >
+//                               <FiEdit2 size={16} />
+//                             </button>
+//                             <button
+//                               onClick={() => handleToggleStatus(product.id, product.isActive)}
+//                               className={`p-1 rounded hover:bg-opacity-20 ${product.isActive ? "text-orange-600 hover:text-orange-900 hover:bg-orange-500" : "text-green-600 hover:text-green-900 hover:bg-green-500"}`}
+//                               title={product.isActive ? "Deactivate" : "Activate"}
+//                             >
+//                               {product.isActive ? <FiPause size={16} /> : <FiPlay size={16} />}
+//                             </button>
+//                             <button
+//                               onClick={() => handleDeleteProduct(product.id)}
+//                               className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
+//                               title="Delete"
+//                             >
+//                               <FiTrash2 size={16} />
+//                             </button>
+//                           </div>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   ) : (
+//                     <tr>
+//                       <td colSpan={5} className="px-6 py-12 text-center text-dark-500">
+//                         {loading ? 'Loading products...' : 'No products found'}
+//                       </td>
+//                     </tr>
+//                   )}
+//                 </tbody>
+//               </table>
+//             </div>
+//           )}
+
+//           {/* --- PAGINATION & ROWS PER PAGE --- */}
+//           <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-dark-200 sm:px-6">
+//             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+//               <div className="flex items-center space-x-2">
+//                 <span className="text-sm text-dark-700">Rows per page:</span>
+//                 <select
+//                   className="text-sm border border-dark-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+//                   value={rowsPerPage}
+//                   onChange={(e) => {
+//                     setRowsPerPage(Number(e.target.value));
+//                     setPage(1);
+//                   }}
+//                 >
+//                   {rowsPerPageOptions.map(option => (
+//                     <option key={option} value={option}>{option}</option>
+//                   ))}
+//                 </select>
+//               </div>
+//               <div>
+//                 <p className="text-sm text-dark-700">
+//                   Showing <span className="font-medium">{(page - 1) * rowsPerPage + 1}</span> to{' '}
+//                   <span className="font-medium">
+//                     {Math.min(
+//                       page * rowsPerPage,
+//                       activeTab === 'CATEGORY' ? (filteredCategories?.length || 0) :
+//                       activeTab === 'SUBCATEGORY' ? (filteredSubCategories?.length || 0) :
+//                       (filteredProducts?.length || 0)
+//                     )}
+//                   </span>{' '}
+//                   of{' '}
+//                   <span className="font-medium">
+//                     {activeTab === 'CATEGORY' ? (filteredCategories?.length || 0) :
+//                      activeTab === 'SUBCATEGORY' ? (filteredSubCategories?.length || 0) :
+//                      (filteredProducts?.length || 0)}
+//                   </span>{' '}
+//                   results
+//                 </p>
+//               </div>
+//             </div>
+            
+//             <div>
+//               <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+//                 <button
+//                   onClick={() => setPage(prev => Math.max(1, prev - 1))}
+//                   disabled={page === 1}
+//                   className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-dark-300 bg-white text-sm font-medium text-dark-500 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//                 >
+//                   Previous
+//                 </button>
+//                 {[...Array(totalPages)].map((_, i) => (
+//                   <button
+//                     key={i}
+//                     onClick={() => setPage(i + 1)}
+//                     className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+//                       page === i + 1
+//                         ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
+//                         : 'bg-white border-dark-300 text-dark-500 hover:bg-dark-50'
+//                     }`}
+//                   >
+//                     {i + 1}
+//                   </button>
+//                 ))}
+//                 <button
+//                   onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+//                   disabled={page === totalPages}
+//                   className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-dark-300 bg-white text-sm font-medium text-dark-500 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//                 >
+//                   Next
+//                 </button>
+//               </nav>
+//             </div>
+//           </div>
+//         </>
+//       )}
+
+//       {/* --- MODALS --- */}
+//       <AnimatePresence>
+//         {activeModal !== 'NONE' && (
+//           <>
+//             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal} className="backdrop-overlay" />
+//             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//               <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+                
+//                 {/* PRODUCT MODAL */}
+//                 {activeModal === 'PRODUCT' && (
+//                   <form onSubmit={handleProductSubmit} className="space-y-4">
+//                     <div className="flex justify-between items-center mb-6">
+//                         <h2 className="text-2xl font-bold text-dark-900">{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+//                         <button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-dark-900" /></button>
+//                     </div>
+
+//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                         <div>
+//                           <label className="label">Product Name *</label>
+//                           <input type="text" name="name" value={productForm.name} onChange={handleProductInputChange} className="input-field" required />
+//                         </div>
+//                         <div>
+//                             <label className="label">Category *</label>
+//                             <select name="category" value={productForm.category} onChange={handleProductInputChange} className="input-field bg-white" required>
+//                                 <option value="">Select Category</option>
+//                                 {categories && categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+//                             </select>
+//                         </div>
+//                         <div>
+//                             <label className="label">Subcategory *</label>
+//                             <select name="subcategory" value={productForm.subcategory} onChange={handleProductInputChange} className="input-field bg-white" required disabled={!productForm.category}>
+//                                 <option value="">Select Subcategory</option>
+//                                 {availableSubCategories?.map(sub => <option key={sub.id} value={sub.name}>{sub.name}</option>) || []}
+//                             </select>
+//                         </div>
+//                         <div>
+//                           <label className="label">Stock *</label>
+//                           <input type="number" name="stock" value={productForm.stock} onChange={handleProductInputChange} className="input-field" required min="0"/>
+//                         </div>
+//                         <div>
+//                           <label className="label">Sizes</label>
+//                           <input
+//                             type="text"
+//                             value={sizesInput}
+//                             onChange={(e) => setSizesInput(e.target.value)}
+//                             placeholder="S, M, L, XL"
+//                             className="input-field"
+//                           />
+//                           <p className="text-xs text-dark-400 mt-1">
+//                             Enter sizes separated by commas
+//                           </p>
+//                         </div>
+//                         <div>
+//                           <label className="label">Colours</label>
+//                           <input
+//                             type="text"
+//                             value={colorsInput}
+//                             onChange={(e) => setColorsInput(e.target.value)}
+//                             placeholder="Red, Black, Blue"
+//                             className="input-field"
+//                           />
+//                           <p className="text-xs text-dark-400 mt-1">
+//                             Enter colours separated by commas
+//                           </p>
+//                         </div>
+//                         <div>
+//                           <label className="label">Price *</label>
+//                           <input type="number" name="price" value={productForm.price} onChange={handleProductInputChange} className="input-field" required min="0" step="0.01"/>
+//                         </div>
+//                         <div>
+//                           <label className="label">Sale Price</label>
+//                           <input type="number" name="salePrice" value={productForm.salePrice} onChange={handleProductInputChange} className="input-field" min="0" step="0.01"/>
+//                         </div>
+//                     </div>
+//                     <div>
+//                       <label className="label">Description *</label>
+//                       <textarea name="description" value={productForm.description} onChange={handleProductInputChange} className="input-field min-h-[100px]" required />
+//                     </div>
+                    
+//                     {/* IMAGES SECTION */}
+//                     <div>
+//                         <label className="label">Images</label>
+//                         <div className="flex items-center justify-center w-full mb-4">
+//                             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dark-700 border-dashed rounded-lg cursor-pointer bg-dark-800 hover:bg-dark-700">
+//                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
+//                                     <FiImage className="w-8 h-8 mb-2 text-dark-400" />
+//                                     <p className="text-sm text-dark-400"><span className="font-semibold">Click to upload</span></p>
+//                                 </div>
+//                                 <input type="file" className="hidden" multiple onChange={handleFileChange} accept="image/*" />
+//                             </label>
+//                         </div>
+
+//                         <div className="grid grid-cols-4 gap-2">
+//                             {productForm.images.map((img, index) => (
+//                                <div key={`exist-${index}`} className="relative aspect-square">
+//                                   <img src={getImageUrl(img)} alt="Existing" className="w-full h-full object-cover rounded-lg border border-primary-500/50" />
+//                                   <button type="button" onClick={() => setProductForm(prev => ({...prev, images: prev.images.filter((_, i) => i !== index)}))} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-dark-900"><FiX size={12}/></button>
+//                                </div> 
+//                             ))}
+//                             {previewUrls.map((url, index) => (
+//                                 <div key={`new-${index}`} className="relative aspect-square">
+//                                    <img src={url} alt="New Upload" className="w-full h-full object-cover rounded-lg opacity-80" />
+//                                    <button type="button" onClick={() => removeFile(index)} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-dark-900"><FiX size={12}/></button>
+//                                 </div>
+//                             ))}
+//                         </div>
+//                     </div>
+
+//                     {/* VIDEOS SECTION */}
+//                     <div>
+//                       <label className="label">Product Videos</label>
+//                       <div className="flex items-center justify-center w-full mb-4">
+//                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dark-700 border-dashed rounded-lg cursor-pointer bg-dark-800 hover:bg-dark-700">
+//                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
+//                             <FiPlay className="w-8 h-8 mb-2 text-dark-400" />
+//                             <p className="text-sm text-dark-400">
+//                               <span className="font-semibold">Click or drag videos</span>
+//                             </p>
+//                           </div>
+//                           <input
+//                             type="file"
+//                             className="hidden"
+//                             multiple
+//                             accept="video/*"
+//                             onChange={handleVideoChange}
+//                           />
+//                         </label>
+//                       </div>
+
+//                       <div className="grid grid-cols-4 gap-2">
+//                         {videoPreviewUrls.map((url, index) => (
+//                           <div key={index} className="relative aspect-square bg-dark-900 rounded-lg overflow-hidden">
+//                             <video src={url} className="w-full h-full object-cover" muted />
+//                             <button type="button" onClick={() => removeVideo(index)} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-dark-900">
+//                               <FiX size={12} />
+//                             </button>
+//                           </div>
+//                         ))}
+//                       </div>
+//                     </div>
+
+//                     <div className="flex gap-3 pt-4">
+//                         <button type="submit" className="btn-primary flex-1">{editingProduct ? 'Update' : 'Create'}</button>
+//                         <button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button>
+//                     </div>
+//                   </form>
+//                 )}
+
+//                 {/* CATEGORY MODAL */}
+//                 {activeModal === 'CATEGORY' && (
+//                   <form onSubmit={handleCategorySubmit} className="space-y-4">
+//                     <div className="flex justify-between items-center mb-6">
+//                       <h2 className="text-2xl font-bold text-dark-900">
+//                         {editingCategory ? 'Edit Category' : 'Add New Category'}
+//                       </h2>
+//                       <button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-dark-900" /></button>
+//                     </div>
+//                     <div>
+//                       <label className="label">Category Name *</label>
+//                       <input type="text" value={categoryForm.name} onChange={e => setCategoryForm({...categoryForm, name: e.target.value})} className="input-field" required/>
+//                     </div>
+//                     <div>
+//                       <label className="label">Description</label>
+//                       <textarea value={categoryForm.description} onChange={e => setCategoryForm({...categoryForm, description: e.target.value})} className="input-field"/>
+//                     </div>
+//                     <div className="flex gap-3 pt-4">
+//                       <button type="submit" className="btn-primary flex-1">{editingCategory ? 'Update' : 'Create'} Category</button>
+//                       <button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button>
+//                     </div>
+//                   </form>
+//                 )}
+
+//                 {/* SUBCATEGORY MODAL */}
+//                 {activeModal === 'SUBCATEGORY' && (
+//                   <form onSubmit={handleSubCategorySubmit} className="space-y-4">
+//                     <div className="flex justify-between items-center mb-6">
+//                       <h2 className="text-2xl font-bold text-dark-900">
+//                         {editingSubCategory ? 'Edit Subcategory' : 'Add New Subcategory'}
+//                       </h2>
+//                       <button type="button" onClick={closeModal}><FiX size={24} className="text-dark-400 hover:text-dark-900" /></button>
+//                     </div>
+//                     <div>
+//                       <label className="label">Parent Category *</label>
+//                       <select value={subCatForm.parentCategoryId} onChange={e => setSubCatForm({...subCatForm, parentCategoryId: e.target.value})} className="input-field bg-white" required>
+//                         <option value="">Select Parent Category</option>
+//                         {categories && categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+//                       </select>
+//                     </div>
+//                     <div>
+//                       <label className="label">Subcategory Name *</label>
+//                       <input type="text" value={subCatForm.name} onChange={e => setSubCatForm({...subCatForm, name: e.target.value})} className="input-field" required/>
+//                     </div>
+//                     <div>
+//                       <label className="label">Description</label>
+//                       <textarea value={subCatForm.description} onChange={e => setSubCatForm({...subCatForm, description: e.target.value})} className="input-field"/>
+//                     </div>
+//                     <div className="flex gap-3 pt-4">
+//                       <button type="submit" className="btn-primary flex-1">{editingSubCategory ? 'Update' : 'Create'} Subcategory</button>
+//                       <button type="button" onClick={closeModal} className="btn-ghost flex-1">Cancel</button>
+//                     </div>
+//                   </form>
+//                 )}
+
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+      
+//       <style>{`
+//         .label { 
+//           @apply text-sm font-semibold text-dark-700 mb-2 block; 
+//         }
+//         .input-field {
+//           @apply w-full px-4 py-2 bg-dark-800 border border-dark-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-colors;
+//         }
+//         .btn-primary {
+//           @apply px-6 py-2 bg-primary-500 text-white font-semibold rounded-lg hover:bg-primary-600 transition-colors;
+//         }
+//         .btn-ghost {
+//           @apply px-6 py-2 bg-dark-800 text-dark-300 font-semibold rounded-lg hover:bg-dark-700 transition-colors;
+//         }
+//         .glass-card {
+//           @apply bg-white/95 backdrop-blur-sm;
+//         }
+//         .backdrop-overlay {
+//           @apply fixed inset-0 bg-black/50 z-40;
+//         }
+//       `}</style>
+//     </div>
+//   );
+// };
+
+// export default AdminProducts;
+
+
+
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiImage, FiFolder, FiGrid, FiPause, FiPlay, FiEye, FiSearch } from 'react-icons/fi';
@@ -2905,8 +4021,20 @@ const AdminProducts = () => {
         videos: product.videos || [],
         attributes: product.attributes || [],
       });
-      setSizesInput(product.attributes?.find((a: ProductAttribute) => a.key === 'size')?.value || '');
-      setColorsInput(product.attributes?.find((a: ProductAttribute) => a.key === 'color')?.value || '');
+      
+      // Extract sizes and colors from attributes
+      const sizes = product.attributes
+        ?.filter((attr: any) => attr.type === 'Size' || attr.type === 'size')
+        .map((attr: any) => attr.value)
+        .join(', ') || '';
+      
+      const colors = product.attributes
+        ?.filter((attr: any) => attr.type === 'Color' || attr.type === 'color' || attr.type === 'Colour')
+        .map((attr: any) => attr.value)
+        .join(', ') || '';
+      
+      setSizesInput(sizes);
+      setColorsInput(colors);
     } else {
       setEditingProduct(null);
       setProductForm({
@@ -2991,23 +4119,46 @@ const AdminProducts = () => {
     try {
       const formData = new FormData();
       
-      const updatedAttributes: ProductAttribute[] = [];
+      // Create attributes array in the format your backend expects
+      const updatedAttributes: any[] = [];
+      
+      // Process sizes (split by comma and trim)
       if (sizesInput.trim()) {
-        updatedAttributes.push({ key: 'size', value: sizesInput, type: 'TEXT' });
-      }
-      if (colorsInput.trim()) {
-        updatedAttributes.push({ key: 'color', value: colorsInput, type: 'TEXT' });
+        const sizesArray = sizesInput.split(',').map(s => s.trim()).filter(s => s !== '');
+        sizesArray.forEach(size => {
+          updatedAttributes.push({ type: 'Size', value: size });
+        });
       }
       
+      // Process colors (split by comma and trim)
+      if (colorsInput.trim()) {
+        const colorsArray = colorsInput.split(',').map(c => c.trim()).filter(c => c !== '');
+        colorsArray.forEach(color => {
+          updatedAttributes.push({ type: 'Color', value: color });
+        });
+      }
+      
+      // Prepare product data matching backend structure
       const productData = {
-        ...productForm,
+        name: productForm.name,
+        description: productForm.description,
+        price: productForm.price,
+        salePrice: productForm.salePrice,
+        stock: productForm.stock,
+        category: productForm.category,
+        subcategory: productForm.subcategory,
+        images: productForm.images, // Keep existing images
+        videos: productForm.videos || [], // Add videos array
         attributes: updatedAttributes
       };
       
       const productBlob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
       formData.append('product', productBlob);
       
+      // Append new image files
       selectedFiles.forEach((file) => formData.append('imageFiles', file));
+      
+      // Append new video files
       selectedVideos.forEach((video) => formData.append('videoFiles', video));
 
       if (editingProduct) {
@@ -3022,6 +4173,7 @@ const AdminProducts = () => {
       fetchData();
     } catch (error: any) {
       console.error("Submission Error:", error);
+      console.error("Error details:", error.response?.data);
       toast.error('Failed to save product.');
     }
   };
@@ -3644,11 +4796,11 @@ const AdminProducts = () => {
                             type="text"
                             value={sizesInput}
                             onChange={(e) => setSizesInput(e.target.value)}
-                            placeholder="S, M, L, XL"
+                            placeholder="S, M, L, XL (comma separated)"
                             className="input-field"
                           />
                           <p className="text-xs text-dark-400 mt-1">
-                            Enter sizes separated by commas
+                            Enter sizes separated by commas (e.g., S, M, L, XL)
                           </p>
                         </div>
                         <div>
@@ -3657,11 +4809,11 @@ const AdminProducts = () => {
                             type="text"
                             value={colorsInput}
                             onChange={(e) => setColorsInput(e.target.value)}
-                            placeholder="Red, Black, Blue"
+                            placeholder="Red, Black, Blue (comma separated)"
                             className="input-field"
                           />
                           <p className="text-xs text-dark-400 mt-1">
-                            Enter colours separated by commas
+                            Enter colours separated by commas (e.g., Red, Black, Blue)
                           </p>
                         </div>
                         <div>

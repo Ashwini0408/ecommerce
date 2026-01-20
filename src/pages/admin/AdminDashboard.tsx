@@ -588,7 +588,6 @@ const fetchStatistics = async () => {
             <p className="text-sm text-dark-600">
               {appt.serviceType.replace(/_/g, ' ')}
             </p>
-
             <p className="text-xs text-dark-500">
               {appt.appointmentDate} at {appt.appointmentTime?.slice(0, 5)}
             </p>

@@ -989,6 +989,535 @@
 
 // export default AdminUsers;
 
+// import { useEffect, useMemo, useState } from "react";
+// import { motion, AnimatePresence } from "framer-motion";
+// import {
+//   FiEye,
+//   FiTrash,
+//   FiX,
+//   FiSearch,
+//   FiPackage,
+//   FiCalendar,
+// } from "react-icons/fi";
+// import { format } from "date-fns";
+// import { userApi, type User } from "../../api/userApi";
+// import orderApi from "../../api/orderApi";
+// import appointmentApi from "../../api/appointmentApi";
+// import toast from "react-hot-toast";
+
+// const AdminUsers = () => {
+//   const [users, setUsers] = useState<User[]>([]);
+//   // const [page, setPage] = useState(0);
+//   // const [rowsPerPage, setRowsPerPage] = useState(5);
+//   // const [totalPages, setTotalPages] = useState(0);
+//   const [totalUsers, setTotalUsers] = useState(0);
+
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+//   const [search, setSearch] = useState("");
+
+//   // View modal
+//   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+//   const [showViewModal, setShowViewModal] = useState(false);
+
+//   // Orders modal
+//   const [showOrdersModal, setShowOrdersModal] = useState(false);
+//   const [ordersLoading, setOrdersLoading] = useState(false);
+//   const [userOrders, setUserOrders] = useState<any[]>([]);
+
+//   // Appointments modal
+//   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
+//   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+//   const [userAppointments, setUserAppointments] = useState<any[]>([]);
+
+//   // Fetch users
+//   useEffect(() => {
+//     const fetchUsers = async () => {
+//       try {
+//         setLoading(true);
+//         const res = await userApi.getCustomers(0, 5);
+//         setUsers(res.content);
+//         // setTotalPages(res.totalPages);
+//         setTotalUsers(res.totalElements);
+//       } catch {
+//         setError("Failed to load users");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchUsers();
+//   }, []);
+
+//   // Search
+//   const filteredUsers = useMemo(() => {
+//     return users.filter(
+//       (u) =>
+//         u.name.toLowerCase().includes(search.toLowerCase()) ||
+//         u.email.toLowerCase().includes(search.toLowerCase())
+//     );
+//   }, [users, search]);
+
+// const handleStatusChange = async (user: User) => {
+//   try {
+//     const updatedUser = user.isActive
+//       ? await userApi.deactivateUser(user.id)
+//       : await userApi.activateUser(user.id);
+
+//     setUsers((prev) =>
+//       prev.map((u) =>
+//         u.id === updatedUser.id ? updatedUser : u
+//       )
+//     );
+
+//     toast.success(
+//       updatedUser.isActive ? "User activated" : "User deactivated"
+//     );
+//   } catch (err) {
+//     toast.error("Failed to update user status");
+//   }
+// };
+
+//   // Orders modal
+//   const openOrdersModal = async (user: User) => {
+//     setSelectedUser(user);
+//     setShowOrdersModal(true);
+//     setOrdersLoading(true);
+
+//     try {
+//       const res = await orderApi.getUserOrders(user.id, 0, 50);
+//       setUserOrders(res.content);
+//     } catch {
+//       toast.error("Failed to load orders");
+//     } finally {
+//       setOrdersLoading(false);
+//     }
+//   };
+
+// const openAppointmentsModal = async (user: User) => {
+//   setSelectedUser(user);
+//   setShowAppointmentsModal(true);
+//   setAppointmentsLoading(true);
+
+//   try {
+//     // ✅ CORRECT API METHOD NAME
+//     const res = await appointmentApi.getUserAppointments(
+//       user.id,
+//       0,
+//       50
+//     );
+
+//     setUserAppointments(res.content);
+//   } catch (err) {
+//     console.error(err);
+//     toast.error("Failed to load appointments");
+//   } finally {
+//     setAppointmentsLoading(false);
+//   }
+// };
+
+//   return (
+//     <div className="space-y-6">
+//       {/* Header */}
+//       <div className="flex items-center justify-between">
+//         <div>
+//           <h2 className="text-2xl font-bold text-dark-900">
+//             User Management
+//           </h2>
+//           <p className="text-dark-600 mt-1">
+//             {totalUsers} users
+//           </p>
+//         </div>
+
+//         <div className="relative w-72">
+//           <FiSearch className="absolute left-3 top-3 text-dark-400" />
+//           <input
+//             className="input-field pl-10"
+//             placeholder="Search users..."
+//             value={search}
+//             onChange={(e) => setSearch(e.target.value)}
+//           />
+//         </div>
+//       </div>
+
+//       {/* Table (UI UNCHANGED) */}
+//       <div className="glass-card rounded-2xl overflow-x-auto p-4">
+//         {loading ? (
+//           <p className="text-center text-dark-400 py-6">
+//             Loading…
+//           </p>
+//         ) : error ? (
+//           <p className="text-center text-red-400 py-6">
+//             {error}
+//           </p>
+//         ) : (
+//           <table className="w-full text-sm text-dark-700 table-fixed">
+//             <colgroup>
+//               <col className="w-[70px]" />
+//               <col className="w-[160px]" />
+//               <col className="w-[280px]" />
+//               <col className="w-[160px]" />
+//               <col className="w-[200px]" />
+//               <col className="w-[160px]" />
+//               <col className="w-[180px]" />
+//             </colgroup>
+
+//             <thead>
+//               <tr className="text-left text-dark-400 border-b border-dark-700">
+//                 <th className="py-4 px-2">ID</th>
+//                 <th className="py-4 px-3">Name</th>
+//                 <th className="py-4 px-3">Email</th>
+//                 <th className="py-4 px-3">Phone</th>
+//                 <th className="py-4 px-3 text-center">Status</th>
+//                 <th className="py-4 px-3">Created</th>
+//                 <th className="py-4 px-3 text-right">Actions</th>
+//               </tr>
+//             </thead>
+
+//             <tbody>
+//               {filteredUsers.map((user) => (
+//                 <tr
+//                   key={user.id}
+//                   className="border-b border-dark-200 hover:bg-dark-50 transition"
+//                 >
+//                   <td className="py-4 px-2">{user.id}</td>
+//                   <td className="py-4 px-3">{user.name}</td>
+//                   <td className="py-4 px-3 break-all">
+//                     {user.email}
+//                   </td>
+//                   <td className="py-4 px-3">
+//                     {user.phone}
+//                   </td>
+
+//                   {/* Status */}
+//                   <td className="py-4 px-3">
+//                     <div className="flex justify-center items-center gap-4">
+//                       <button
+//                       onClick={() => handleStatusChange(user)}
+//                         className={`relative inline-flex h-6 w-11 rounded-full
+//                           ${
+//                             user.isActive
+//                               ? "bg-green-500"
+//                               : "bg-red-500"
+//                           }`}
+//                       >
+//                         <span
+//                           className={`inline-block h-4 w-4 rounded-full bg-white transition
+//                             ${
+//                               user.isActive
+//                                 ? "translate-x-6"
+//                                 : "translate-x-1"
+//                             }`}
+//                         />
+//                       </button>
+//                       <span
+//                         className={`text-xs font-semibold
+//                           ${
+//                             user.isActive
+//                               ? "text-green-600"
+//                               : "text-red-600"
+//                           }`}
+//                       >
+//                         {user.isActive
+//                           ? "Active"
+//                           : "Inactive"}
+//                       </span>
+//                     </div>
+//                   </td>
+
+//                   <td className="py-4 px-3">
+//                     {format(
+//                       new Date(user.createdAt),
+//                       "MMM dd, yyyy"
+//                     )}
+//                   </td>
+
+//                   {/* Actions */}
+//                   <td className="py-4 px-3">
+//                     <div className="flex justify-end items-center gap-4 pr-2">
+//                       <FiEye
+//                         title="View"
+//                         className="text-primary-400 cursor-pointer"
+//                         onClick={() => {
+//                           setSelectedUser(user);
+//                           setShowViewModal(true);
+//                         }}
+//                       />
+
+//                       <FiPackage
+//                         title="Orders"
+//                         className="text-yellow-600 cursor-pointer"
+//                         onClick={() => openOrdersModal(user)}
+//                       />
+
+//                       <FiCalendar
+//                         title="Appointments"
+//                         className="text-blue-600 cursor-pointer"
+//                         onClick={() => openAppointmentsModal(user)}
+//                       />
+
+//                     <FiTrash
+//   title="Delete"
+//   className="text-red-600 cursor-pointer"
+//   onClick={async () => {
+//     if (!window.confirm(`Delete ${user.name}?`)) return;
+
+//     try {
+//       const res = await userApi.deleteUser(user.id);
+
+//       toast.success(res.message || "User deleted");
+
+//       // Remove user from table
+//       setUsers((prev) => prev.filter((u) => u.id !== user.id));
+//     } catch (err: any) {
+//       toast.error(
+//         err?.response?.data?.message ||
+//         "Cannot delete user. Deactivate instead."
+//       );
+//     }
+//   }}
+// />
+
+//                     </div>
+//                   </td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         )}
+//       </div>
+
+//       {/* ================= VIEW USER MODAL ================= */}
+//       <AnimatePresence>
+//         {showViewModal && selectedUser && (
+//           <>
+//             <motion.div
+//               className="backdrop-overlay"
+//               onClick={() => setShowViewModal(false)}
+//             />
+//             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//               <motion.div className="glass-card rounded-3xl p-8 max-w-xl w-full">
+//                 <div className="flex justify-between mb-6">
+//                   <div>
+//                     <h2 className="text-2xl font-bold text-dark-900">
+//                       {selectedUser.name}
+//                     </h2>
+//                     <p className="text-sm text-dark-400">
+//                       User ID: #{selectedUser.id}
+//                     </p>
+//                   </div>
+//                   <FiX
+//                     className="cursor-pointer text-dark-400 hover:text-dark-900"
+//                     onClick={() => setShowViewModal(false)}
+//                   />
+//                 </div>
+
+//                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
+//                   <div>
+//  <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+//   Email
+// </p>
+// <p className="text-base font-semibold text-dark-900 break-all">
+
+//                       {selectedUser.email}
+//                     </p>
+//                   </div>
+
+//                   <div>
+//                     <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+//   Phone
+// </p>
+//                    <p className="text-base font-semibold text-dark-900 break-all">
+//                       {selectedUser.phone}
+//                     </p>
+//                   </div>
+
+//                   <div>
+//                    <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+//   Status
+// </p>
+//                     <span
+//                       className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold
+//                         ${
+//                           selectedUser.isActive
+//                             ? "bg-green-500/20 text-green-400"
+//                             : "bg-red-500/20 text-red-400"
+//                         }`}
+//                     >
+//                       {selectedUser.isActive
+//                         ? "ACTIVE"
+//                         : "INACTIVE"}
+//                     </span>
+//                   </div>
+
+//                   <div>
+//                     <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+//   Created At
+// </p>
+//                     <p className="text-base font-semibold text-dark-900 break-all">
+//                       {format(
+//                         new Date(selectedUser.createdAt),
+//                         "MMM dd, yyyy"
+//                       )}
+//                     </p>
+//                   </div>
+//                 </div>
+
+//                 <div className="my-6 border-t border-white/10" />
+
+//                 <div className="grid grid-cols-2 gap-4">
+//                   <div className="glass-card p-4 rounded-xl text-center">
+//                     <p className="text-3xl font-bold text-dark-900">
+//                       {selectedUser.orderCount ?? 0}
+//                     </p>
+//                     <p className="text-xs text-dark-400 mt-1">
+//                       Total Orders
+//                     </p>
+//                   </div>
+
+//                   <div className="glass-card p-4 rounded-xl text-center">
+//                     <p className="text-3xl font-bold text-dark-900">
+//                       {selectedUser.appointmentCount ?? 0}
+//                     </p>
+//                     <p className="text-xs text-dark-400 mt-1">
+//                       Appointments
+//                     </p>
+//                   </div>
+//                 </div>
+
+//                 <div className="flex justify-end mt-8">
+//                   <button
+//                     onClick={() => setShowViewModal(false)}
+//                     className="btn-primary px-6"
+//                   >
+//                     Close
+//                   </button>
+//                 </div>
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+
+//       {/* ================= ORDERS MODAL ================= */}
+//       <AnimatePresence>
+//         {showOrdersModal && selectedUser && (
+//           <>
+//             <motion.div
+//               className="backdrop-overlay"
+//               onClick={() => setShowOrdersModal(false)}
+//             />
+//             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//               <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
+//                 <div className="flex justify-between mb-4">
+//                   <h2 className="text-xl font-bold text-dark-900">
+//                     Orders – {selectedUser.name}
+//                   </h2>
+//                   <FiX
+//                     className="cursor-pointer"
+//                     onClick={() => setShowOrdersModal(false)}
+//                   />
+//                 </div>
+
+//                 {ordersLoading ? (
+//                   <p className="text-center text-dark-400">
+//                     Loading…
+//                   </p>
+//                 ) : userOrders.length === 0 ? (
+//                   <p className="text-center text-dark-400">
+//                     No orders found
+//                   </p>
+//                 ) : (
+//                   <div className="space-y-3 max-h-[60vh] overflow-auto">
+//                     {userOrders.map((o) => (
+//                       <div
+//                         key={o.id}
+//                         className="glass-card p-4 rounded-xl"
+//                       >
+//                         <div className="flex justify-between">
+//                           <span className="font-semibold text-dark-900">
+//                             Order #{o.id}
+//                           </span>
+//                           <span className="text-sm text-dark-400">
+//                             {o.status}
+//                           </span>
+//                         </div>
+//                         <p className="text-sm text-dark-600">
+//                           Amount: ₹{o.totalAmount}
+//                         </p>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 )}
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+
+//       {/* ================= APPOINTMENTS MODAL ================= */}
+//       <AnimatePresence>
+//         {showAppointmentsModal && selectedUser && (
+//           <>
+//             <motion.div
+//               className="backdrop-overlay"
+//               onClick={() => setShowAppointmentsModal(false)}
+//             />
+//             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//               <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
+//                 <div className="flex justify-between mb-4">
+//                   <h2 className="text-xl font-bold text-dark-900">
+//                     Appointments – {selectedUser.name}
+//                   </h2>
+//                   <FiX
+//                     className="cursor-pointer"
+//                     onClick={() =>
+//                       setShowAppointmentsModal(false)
+//                     }
+//                   />
+//                 </div>
+
+//                 {appointmentsLoading ? (
+//                   <p className="text-center text-dark-400">
+//                     Loading…
+//                   </p>
+//                 ) : userAppointments.length === 0 ? (
+//                   <p className="text-center text-dark-400">
+//                     No appointments found
+//                   </p>
+//                 ) : (
+//                   <div className="space-y-3 max-h-[60vh] overflow-auto">
+//                     {userAppointments.map((a) => (
+//                       <div
+//                         key={a.id}
+//                         className="glass-card p-4 rounded-xl"
+//                       >
+//                         <p className="font-semibold text-dark-900">
+//                           {a.serviceType}
+//                         </p>
+//                         <p className="text-sm text-dark-400">
+//                           {a.appointmentDate} •{" "}
+//                           {a.appointmentTime}
+//                         </p>
+//                         <p className="text-sm text-dark-400">
+//                           Status: {a.status}
+//                         </p>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 )}
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+//     </div>
+//   );
+// };
+
+// export default AdminUsers;
+
+
+
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -998,6 +1527,10 @@ import {
   FiSearch,
   FiPackage,
   FiCalendar,
+  FiMapPin,
+  FiCreditCard,
+  FiTruck,
+  FiCalendar as CalendarIcon,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { userApi, type User } from "../../api/userApi";
@@ -1005,13 +1538,36 @@ import orderApi from "../../api/orderApi";
 import appointmentApi from "../../api/appointmentApi";
 import toast from "react-hot-toast";
 
+interface OrderItem {
+  id: number;
+  productId: number;
+  productName: string;
+  productImage: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  selectedSize: string;
+  selectedColor: string;
+}
+
+interface Order {
+  id: number;
+  userId: number;
+  status: string;
+  paymentStatus: string;
+  totalAmount: number;
+  discount: number | null;
+  tax: number | null;
+  trackingNumber: string | null;
+  shippingAddress: string;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+}
+
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [totalPages, setTotalPages] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -1023,21 +1579,53 @@ const AdminUsers = () => {
   // Orders modal
   const [showOrdersModal, setShowOrdersModal] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [userOrders, setUserOrders] = useState<any[]>([]);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+
+  // Order detail modal
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   // Appointments modal
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [userAppointments, setUserAppointments] = useState<any[]>([]);
 
+  // Mock product images as fallback
+  const mockProductImages = [
+    "/api/placeholder/400/400", // Use a placeholder or fallback
+  ];
+
+  // Helper function to build image URL from backend
+  const getProductImageUrl = (imagePath: string | undefined, fallbackIndex: number = 0) => {
+    if (!imagePath) return mockProductImages[fallbackIndex];
+    
+    // If imagePath is already a full URL, return it
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // For Vite, use import.meta.env instead of process.env
+    // const backendBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    
+    // Alternative: Use a relative path or your actual API base URL
+    // If your images are served from the same backend as your API:
+    const backendBaseUrl = ''; // Empty string for relative paths
+    
+    // If the imagePath doesn't start with /uploads or similar, prepend it
+    if (!imagePath.startsWith('/') && !imagePath.startsWith('uploads/')) {
+      return `${backendBaseUrl}/uploads/${imagePath}`;
+    }
+    
+    return `${backendBaseUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+  };
+
   // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const res = await userApi.getCustomers(page, rowsPerPage);
+        const res = await userApi.getCustomers(0, 5);
         setUsers(res.content);
-        setTotalPages(res.totalPages);
         setTotalUsers(res.totalElements);
       } catch {
         setError("Failed to load users");
@@ -1046,7 +1634,7 @@ const AdminUsers = () => {
       }
     };
     fetchUsers();
-  }, [page, rowsPerPage]);
+  }, []);
 
   // Search
   const filteredUsers = useMemo(() => {
@@ -1057,25 +1645,55 @@ const AdminUsers = () => {
     );
   }, [users, search]);
 
-const handleStatusChange = async (user: User) => {
-  try {
-    const updatedUser = user.isActive
-      ? await userApi.deactivateUser(user.id)
-      : await userApi.activateUser(user.id);
+  const handleStatusChange = async (user: User) => {
+    try {
+      const updatedUser = user.isActive
+        ? await userApi.deactivateUser(user.id)
+        : await userApi.activateUser(user.id);
 
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === updatedUser.id ? updatedUser : u
-      )
-    );
+      setUsers((prev) =>
+        prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+      );
 
-    toast.success(
-      updatedUser.isActive ? "User activated" : "User deactivated"
-    );
-  } catch (err) {
-    toast.error("Failed to update user status");
-  }
-};
+      toast.success(
+        updatedUser.isActive ? "User activated" : "User deactivated"
+      );
+    } catch (err) {
+      toast.error("Failed to update user status");
+    }
+  };
+
+  // Get status color using your theme
+  const getStatusColor = (status: string) => {
+    switch (status.toUpperCase()) {
+      case "PENDING":
+        return "bg-yellow-500/20 text-yellow-600 border-yellow-500/30";
+      case "PROCESSING":
+        return "bg-sage/20 text-sage border-sage/30";
+      case "SHIPPED":
+        return "bg-blue-500/20 text-blue-600 border-blue-500/30";
+      case "DELIVERED":
+        return "bg-green-500/20 text-green-600 border-green-500/30";
+      case "CANCELLED":
+        return "bg-red-500/20 text-red-600 border-red-500/30";
+      default:
+        return "bg-muted text-muted-foreground border-border";
+    }
+  };
+
+  // Get payment status color
+  const getPaymentStatusColor = (status: string) => {
+    switch (status.toUpperCase()) {
+      case "PAID":
+        return "text-green-600";
+      case "PENDING":
+        return "text-yellow-600";
+      case "FAILED":
+        return "text-red-600";
+      default:
+        return "text-muted-foreground";
+    }
+  };
 
   // Orders modal
   const openOrdersModal = async (user: User) => {
@@ -1085,51 +1703,123 @@ const handleStatusChange = async (user: User) => {
 
     try {
       const res = await orderApi.getUserOrders(user.id, 0, 50);
-      setUserOrders(res.content);
-    } catch {
+      console.log("Orders API Response:", res); // Debug log
+      
+      // SAFER TRANSFORMATION: Check if content exists
+      if (!res || !res.content) {
+        setUserOrders([]);
+        return;
+      }
+
+      const transformedOrders: Order[] = res.content.map((order: any, index: number) => {
+        // Get a random mock image for fallback
+        const fallbackImage = mockProductImages[0];
+        
+        // Check if order has items
+        const hasItems = order.items && Array.isArray(order.items) && order.items.length > 0;
+        
+        return {
+          id: order.id || index,
+          userId: order.userId || user.id,
+          status: order.status || "PENDING",
+          paymentStatus: order.paymentStatus || "PENDING",
+          totalAmount: order.totalAmount || 0,
+          discount: order.discount || null,
+          tax: order.tax || null,
+          trackingNumber: order.trackingNumber || null,
+          shippingAddress: order.shippingAddress || "Address not specified",
+          createdAt: order.createdAt || new Date().toISOString(),
+          updatedAt: order.updatedAt || new Date().toISOString(),
+          items: hasItems 
+            ? order.items.map((item: any, itemIndex: number) => ({
+                id: item.id || itemIndex,
+                productId: item.productId || 0,
+                productName: item.productName || `Product ${itemIndex + 1}`,
+                // Use the actual image path from API, let getProductImageUrl handle it
+                productImage: item.productImage || item.imageUrl || '',
+                quantity: item.quantity || 1,
+                unitPrice: item.unitPrice || item.price || 0,
+                totalPrice: item.totalPrice || (item.quantity || 1) * (item.unitPrice || item.price || 0),
+                selectedSize: item.selectedSize || item.size || "M",
+                selectedColor: item.selectedColor || item.color || "Black",
+              }))
+            : [{
+                id: 0,
+                productId: order.id || 0,
+                productName: order.productName || "Unknown Product",
+                productImage: fallbackImage,
+                quantity: 1,
+                unitPrice: order.totalAmount || 0,
+                totalPrice: order.totalAmount || 0,
+                selectedSize: "M",
+                selectedColor: "Black",
+              }],
+        };
+      });
+      
+      console.log("Transformed orders:", transformedOrders); // Debug log
+      setUserOrders(transformedOrders);
+    } catch (error) {
+      console.error("Error loading orders:", error);
       toast.error("Failed to load orders");
+      setUserOrders([]); // Set empty array on error
     } finally {
       setOrdersLoading(false);
     }
   };
 
-const openAppointmentsModal = async (user: User) => {
-  setSelectedUser(user);
-  setShowAppointmentsModal(true);
-  setAppointmentsLoading(true);
+  const openAppointmentsModal = async (user: User) => {
+    setSelectedUser(user);
+    setShowAppointmentsModal(true);
+    setAppointmentsLoading(true);
 
-  try {
-    // ✅ CORRECT API METHOD NAME
-    const res = await appointmentApi.getUserAppointments(
-      user.id,
-      0,
-      50
-    );
+    try {
+      const res = await appointmentApi.getUserAppointments(user.id, 0, 50);
+      setUserAppointments(res.content || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load appointments");
+    } finally {
+      setAppointmentsLoading(false);
+    }
+  };
 
-    setUserAppointments(res.content);
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to load appointments");
-  } finally {
-    setAppointmentsLoading(false);
-  }
-};
+  const openOrderDetail = (order: Order) => {
+    setSelectedOrder(order);
+    setShowOrderDetailModal(true);
+  };
+
+  // Safe render helper for order items
+  const renderOrderItem = (order: Order) => {
+    if (!order.items || order.items.length === 0) {
+      return {
+        productImage: mockProductImages[0],
+        productName: "Unknown Product",
+        productId: order.id,
+        itemsLength: 0
+      };
+    }
+    
+    const firstItem = order.items[0];
+    return {
+      productImage: getProductImageUrl(firstItem.productImage),
+      productName: firstItem.productName || "Unknown Product",
+      productId: firstItem.productId || order.id,
+      itemsLength: order.items.length
+    };
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-dark-900">
-            User Management
-          </h2>
-          <p className="text-dark-600 mt-1">
-            {totalUsers} users
-          </p>
+          <h2 className="text-2xl font-bold text-foreground">User Management</h2>
+          <p className="text-muted-foreground mt-1">{totalUsers} users</p>
         </div>
 
         <div className="relative w-72">
-          <FiSearch className="absolute left-3 top-3 text-dark-400" />
+          <FiSearch className="absolute left-3 top-3 text-muted-foreground" />
           <input
             className="input-field pl-10"
             placeholder="Search users..."
@@ -1139,18 +1829,14 @@ const openAppointmentsModal = async (user: User) => {
         </div>
       </div>
 
-      {/* Table (UI UNCHANGED) */}
+      {/* Table */}
       <div className="glass-card rounded-2xl overflow-x-auto p-4">
         {loading ? (
-          <p className="text-center text-dark-400 py-6">
-            Loading…
-          </p>
+          <p className="text-center text-muted-foreground py-6">Loading…</p>
         ) : error ? (
-          <p className="text-center text-red-400 py-6">
-            {error}
-          </p>
+          <p className="text-center text-destructive py-6">{error}</p>
         ) : (
-          <table className="w-full text-sm text-dark-700 table-fixed">
+          <table className="w-full text-sm text-foreground table-fixed">
             <colgroup>
               <col className="w-[70px]" />
               <col className="w-[160px]" />
@@ -1162,7 +1848,7 @@ const openAppointmentsModal = async (user: User) => {
             </colgroup>
 
             <thead>
-              <tr className="text-left text-dark-400 border-b border-dark-700">
+              <tr className="text-left text-muted-foreground border-b border-border">
                 <th className="py-4 px-2">ID</th>
                 <th className="py-4 px-3">Name</th>
                 <th className="py-4 px-3">Email</th>
@@ -1177,58 +1863,40 @@ const openAppointmentsModal = async (user: User) => {
               {filteredUsers.map((user) => (
                 <tr
                   key={user.id}
-                  className="border-b border-dark-200 hover:bg-dark-50 transition"
+                  className="border-b border-border/50 hover:bg-secondary/50 transition"
                 >
                   <td className="py-4 px-2">{user.id}</td>
                   <td className="py-4 px-3">{user.name}</td>
-                  <td className="py-4 px-3 break-all">
-                    {user.email}
-                  </td>
-                  <td className="py-4 px-3">
-                    {user.phone}
-                  </td>
+                  <td className="py-4 px-3 break-all">{user.email}</td>
+                  <td className="py-4 px-3">{user.phone}</td>
 
                   {/* Status */}
                   <td className="py-4 px-3">
                     <div className="flex justify-center items-center gap-4">
                       <button
-                      onClick={() => handleStatusChange(user)}
-                        className={`relative inline-flex h-6 w-11 rounded-full
-                          ${
-                            user.isActive
-                              ? "bg-green-500"
-                              : "bg-red-500"
-                          }`}
+                        onClick={() => handleStatusChange(user)}
+                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
+                          user.isActive ? "bg-green-500" : "bg-red-500"
+                        }`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 rounded-full bg-white transition
-                            ${
-                              user.isActive
-                                ? "translate-x-6"
-                                : "translate-x-1"
-                            }`}
+                          className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                            user.isActive ? "translate-x-6" : "translate-x-1"
+                          }`}
                         />
                       </button>
                       <span
-                        className={`text-xs font-semibold
-                          ${
-                            user.isActive
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
+                        className={`text-xs font-semibold ${
+                          user.isActive ? "text-green-600" : "text-red-600"
+                        }`}
                       >
-                        {user.isActive
-                          ? "Active"
-                          : "Inactive"}
+                        {user.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
                   </td>
 
                   <td className="py-4 px-3">
-                    {format(
-                      new Date(user.createdAt),
-                      "MMM dd, yyyy"
-                    )}
+                    {format(new Date(user.createdAt), "MMM dd, yyyy")}
                   </td>
 
                   {/* Actions */}
@@ -1236,7 +1904,7 @@ const openAppointmentsModal = async (user: User) => {
                     <div className="flex justify-end items-center gap-4 pr-2">
                       <FiEye
                         title="View"
-                        className="text-primary-400 cursor-pointer"
+                        className="text-primary hover:text-primary/80 cursor-pointer transition-colors"
                         onClick={() => {
                           setSelectedUser(user);
                           setShowViewModal(true);
@@ -1245,38 +1913,36 @@ const openAppointmentsModal = async (user: User) => {
 
                       <FiPackage
                         title="Orders"
-                        className="text-yellow-600 cursor-pointer"
+                        className="text-sage hover:text-sage/80 cursor-pointer transition-colors"
                         onClick={() => openOrdersModal(user)}
                       />
 
                       <FiCalendar
                         title="Appointments"
-                        className="text-blue-600 cursor-pointer"
+                        className="text-blue-600 hover:text-blue-600/80 cursor-pointer transition-colors"
                         onClick={() => openAppointmentsModal(user)}
                       />
 
-                    <FiTrash
-  title="Delete"
-  className="text-red-600 cursor-pointer"
-  onClick={async () => {
-    if (!window.confirm(`Delete ${user.name}?`)) return;
+                      <FiTrash
+                        title="Delete"
+                        className="text-destructive hover:text-destructive/80 cursor-pointer transition-colors"
+                        onClick={async () => {
+                          if (!window.confirm(`Delete ${user.name}?`)) return;
 
-    try {
-      const res = await userApi.deleteUser(user.id);
-
-      toast.success(res.message || "User deleted");
-
-      // Remove user from table
-      setUsers((prev) => prev.filter((u) => u.id !== user.id));
-    } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message ||
-        "Cannot delete user. Deactivate instead."
-      );
-    }
-  }}
-/>
-
+                          try {
+                            const res = await userApi.deleteUser(user.id);
+                            toast.success(res.message || "User deleted");
+                            setUsers((prev) =>
+                              prev.filter((u) => u.id !== user.id)
+                            );
+                          } catch (err: any) {
+                            toast.error(
+                              err?.response?.data?.message ||
+                                "Cannot delete user. Deactivate instead."
+                            );
+                          }
+                        }}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -1291,103 +1957,92 @@ const openAppointmentsModal = async (user: User) => {
         {showViewModal && selectedUser && (
           <>
             <motion.div
-              className="backdrop-overlay"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
               onClick={() => setShowViewModal(false)}
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div className="glass-card rounded-3xl p-8 max-w-xl w-full">
                 <div className="flex justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-dark-900">
+                    <h2 className="text-2xl font-bold text-foreground">
                       {selectedUser.name}
                     </h2>
-                    <p className="text-sm text-dark-400">
+                    <p className="text-sm text-muted-foreground">
                       User ID: #{selectedUser.id}
                     </p>
                   </div>
                   <FiX
-                    className="cursor-pointer text-dark-400 hover:text-dark-900"
+                    className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => setShowViewModal(false)}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
                   <div>
- <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
-  Email
-</p>
-<p className="text-base font-semibold text-dark-900 break-all">
-
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      Email
+                    </p>
+                    <p className="text-base font-semibold text-foreground break-all">
                       {selectedUser.email}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
-  Phone
-</p>
-                   <p className="text-base font-semibold text-dark-900 break-all">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      Phone
+                    </p>
+                    <p className="text-base font-semibold text-foreground break-all">
                       {selectedUser.phone}
                     </p>
                   </div>
 
                   <div>
-                   <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
-  Status
-</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      Status
+                    </p>
                     <span
-                      className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold
-                        ${
-                          selectedUser.isActive
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
+                      className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                        selectedUser.isActive
+                          ? "bg-green-500/20 text-green-600"
+                          : "bg-red-500/20 text-red-600"
+                      }`}
                     >
-                      {selectedUser.isActive
-                        ? "ACTIVE"
-                        : "INACTIVE"}
+                      {selectedUser.isActive ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
-  Created At
-</p>
-                    <p className="text-base font-semibold text-dark-900 break-all">
-                      {format(
-                        new Date(selectedUser.createdAt),
-                        "MMM dd, yyyy"
-                      )}
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                      Created At
+                    </p>
+                    <p className="text-base font-semibold text-foreground break-all">
+                      {format(new Date(selectedUser.createdAt), "MMM dd, yyyy")}
                     </p>
                   </div>
                 </div>
 
-                <div className="my-6 border-t border-white/10" />
+                <div className="my-6 border-t border-border" />
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="glass-card p-4 rounded-xl text-center">
-                    <p className="text-3xl font-bold text-dark-900">
+                    <p className="text-3xl font-bold text-foreground">
                       {selectedUser.orderCount ?? 0}
                     </p>
-                    <p className="text-xs text-dark-400 mt-1">
-                      Total Orders
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Total Orders</p>
                   </div>
 
                   <div className="glass-card p-4 rounded-xl text-center">
-                    <p className="text-3xl font-bold text-dark-900">
+                    <p className="text-3xl font-bold text-foreground">
                       {selectedUser.appointmentCount ?? 0}
                     </p>
-                    <p className="text-xs text-dark-400 mt-1">
-                      Appointments
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Appointments</p>
                   </div>
                 </div>
 
                 <div className="flex justify-end mt-8">
                   <button
                     onClick={() => setShowViewModal(false)}
-                    className="btn-primary px-6"
+                    className="bg-primary text-primary-foreground py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all duration-300"
                   >
                     Close
                   </button>
@@ -1398,56 +2053,363 @@ const openAppointmentsModal = async (user: User) => {
         )}
       </AnimatePresence>
 
-      {/* ================= ORDERS MODAL ================= */}
+      {/* ================= ENHANCED ORDERS MODAL ================= */}
       <AnimatePresence>
         {showOrdersModal && selectedUser && (
           <>
             <motion.div
-              className="backdrop-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
               onClick={() => setShowOrdersModal(false)}
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
-                <div className="flex justify-between mb-4">
-                  <h2 className="text-xl font-bold text-dark-900">
-                    Orders – {selectedUser.name}
-                  </h2>
-                  <FiX
-                    className="cursor-pointer"
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-card border border-border rounded-3xl shadow-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-sage flex items-center justify-center">
+                      <FiPackage className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-foreground">
+                        Customer Orders
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {userOrders.length} total orders • {selectedUser.name}
+                      </p>
+                    </div>
+                  </div>
+                  <button
                     onClick={() => setShowOrdersModal(false)}
-                  />
+                    className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center transition-colors"
+                  >
+                    <FiX className="text-muted-foreground" size={20} />
+                  </button>
                 </div>
 
                 {ordersLoading ? (
-                  <p className="text-center text-dark-400">
-                    Loading…
-                  </p>
+                  <p className="text-center text-muted-foreground py-10">Loading orders…</p>
                 ) : userOrders.length === 0 ? (
-                  <p className="text-center text-dark-400">
-                    No orders found
+                  <p className="text-center text-muted-foreground py-10">
+                    No orders found for this user
                   </p>
                 ) : (
-                  <div className="space-y-3 max-h-[60vh] overflow-auto">
-                    {userOrders.map((o) => (
-                      <div
-                        key={o.id}
-                        className="glass-card p-4 rounded-xl"
-                      >
-                        <div className="flex justify-between">
-                          <span className="font-semibold text-dark-900">
-                            Order #{o.id}
-                          </span>
-                          <span className="text-sm text-dark-400">
-                            {o.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-dark-600">
-                          Amount: ₹{o.totalAmount}
-                        </p>
-                      </div>
-                    ))}
+                  <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                    {userOrders.map((order) => {
+                      // SAFE ACCESS: Use helper function
+                      const firstItem = renderOrderItem(order);
+                      
+                      return (
+                        <motion.div
+                          key={order.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-gradient-to-br from-background to-secondary/50 rounded-2xl border border-border hover:border-primary/50 transition-all duration-300 overflow-hidden group hover:shadow-lg"
+                        >
+                          <div className="p-5 flex gap-5">
+                            <div className="relative flex-shrink-0">
+                              <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted border-2 border-border group-hover:border-primary/50 transition-colors">
+                                <img
+                                  src={firstItem.productImage}
+                                  alt={firstItem.productName}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Fallback if image fails to load
+                                    e.currentTarget.src = mockProductImages[0];
+                                  }}
+                                />
+                              </div>
+                              {firstItem.itemsLength > 1 && (
+                                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg">
+                                  +{firstItem.itemsLength - 1}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-3">
+                                <div>
+                                  <h3 className="text-base font-bold text-foreground mb-1">
+                                    {firstItem.productName}
+                                  </h3>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span className="font-medium">
+                                      Product ID: #{firstItem.productId}
+                                    </span>
+                                    <span className="w-1 h-1 bg-border rounded-full"></span>
+                                    <span>Order ID: #{order.id}</span>
+                                  </div>
+                                </div>
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(
+                                    order.status
+                                  )}`}
+                                >
+                                  {order.status}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-4 mb-3">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <CalendarIcon className="text-muted-foreground" size={14} />
+                                  <span>
+                                    {format(new Date(order.createdAt), "MMM dd, yyyy")}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <FiCreditCard className="text-muted-foreground" size={14} />
+                                  <span className="font-semibold text-foreground">
+                                    ${order.totalAmount.toFixed(2)}
+                                  </span>
+                                </div>
+                                {order.trackingNumber && (
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <FiTruck className="text-muted-foreground" size={14} />
+                                    <span className="text-xs">{order.trackingNumber}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <button
+                                onClick={() => openOrderDetail(order)}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-sage text-white rounded-lg font-semibold text-xs transition-all duration-300 shadow-md hover:shadow-lg hover:opacity-90"
+                              >
+                                <FiPackage size={14} />
+                                View Details
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 )}
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ================= ORDER DETAIL MODAL ================= */}
+      <AnimatePresence>
+        {showOrderDetailModal && selectedOrder && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setShowOrderDetailModal(false)}
+            />
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-card border border-border rounded-3xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+              >
+                <div className="bg-gradient-sage px-6 py-5 flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Order Details</h2>
+                    <p className="text-white/80 text-sm">
+                      Order #{selectedOrder.id}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowOrderDetailModal(false)}
+                    className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
+                  >
+                    <FiX className="text-white" size={20} />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gradient-to-br from-secondary/50 to-secondary rounded-xl p-4 border border-border">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                          <FiPackage className="text-white" size={16} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-primary font-semibold uppercase tracking-wide">
+                            Status
+                          </p>
+                          <p className="text-base font-bold text-foreground">
+                            {selectedOrder.status}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 border border-border">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                          <FiCreditCard className="text-white" size={16} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-green-600 dark:text-green-400 font-semibold uppercase tracking-wide">
+                            Payment
+                          </p>
+                          <p className={`text-base font-bold ${getPaymentStatusColor(selectedOrder.paymentStatus)}`}>
+                            {selectedOrder.paymentStatus}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 border border-border">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                          <CalendarIcon className="text-white" size={16} />
+                        </div>
+                        <div>
+                          <p className="text-xs text-purple-600 dark:text-purple-400 font-semibold uppercase tracking-wide">
+                            Order Date
+                          </p>
+                          <p className="text-base font-bold text-foreground">
+                            {format(new Date(selectedOrder.createdAt), "MMM dd, yyyy")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-secondary/50 to-secondary rounded-xl p-5 border border-border">
+                    <div className="flex items-center gap-3 mb-3">
+                      <FiMapPin className="text-primary" size={18} />
+                      <h3 className="text-base font-bold text-foreground">
+                        Shipping Address
+                      </h3>
+                    </div>
+                    <p className="text-foreground text-sm leading-relaxed">
+                      {selectedOrder.shippingAddress}
+                    </p>
+                    {selectedOrder.trackingNumber && (
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <div className="flex items-center gap-2">
+                          <FiTruck className="text-primary" size={16} />
+                          <span className="text-sm text-muted-foreground">Tracking Number:</span>
+                          <span className="text-sm font-bold text-foreground">
+                            {selectedOrder.trackingNumber}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-foreground mb-3">
+                      Order Items
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedOrder.items?.map((item, index) => {
+                        const imageUrl = getProductImageUrl(item.productImage);
+                        return (
+                          <div
+                            key={item.id || index}
+                            className="bg-background rounded-xl border border-border p-4 flex gap-4 hover:border-primary/50 transition-colors"
+                          >
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
+                              <img
+                                src={imageUrl}
+                                alt={item.productName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = mockProductImages[0];
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-bold text-foreground mb-1">
+                                {item.productName || "Unknown Product"}
+                              </h4>
+                              <p className="text-xs text-muted-foreground mb-2">
+                                Product ID: #{item.productId || "N/A"}
+                              </p>
+                              <div className="flex items-center gap-3 text-xs">
+                                {item.selectedSize && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-muted-foreground">Size:</span>
+                                    <span className="font-semibold text-foreground">
+                                      {item.selectedSize}
+                                    </span>
+                                  </div>
+                                )}
+                                {item.selectedColor && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-muted-foreground">Color:</span>
+                                    <span className="font-semibold text-foreground">
+                                      {item.selectedColor}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-muted-foreground">Qty:</span>
+                                  <span className="font-semibold text-foreground">
+                                    {item.quantity || 1}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground mb-1">Price</p>
+                              <p className="text-lg font-bold text-foreground">
+                                ${(item.totalPrice || 0).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-5 border border-border">
+                    <h3 className="text-base font-bold text-foreground mb-3">
+                      Order Summary
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedOrder.discount && selectedOrder.discount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Discount</span>
+                          <span className="font-semibold text-green-600">
+                            -${selectedOrder.discount.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      {selectedOrder.tax && selectedOrder.tax > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Tax</span>
+                          <span className="font-semibold text-foreground">
+                            ${selectedOrder.tax.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="pt-3 border-t-2 border-primary flex justify-between">
+                        <span className="text-base font-bold text-foreground">
+                          Total Amount
+                        </span>
+                        <span className="text-xl font-bold text-primary">
+                          ${selectedOrder.totalAmount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-secondary/50 px-6 py-4 flex justify-end gap-3 border-t border-border">
+                  <button
+                    onClick={() => setShowOrderDetailModal(false)}
+                    className="px-5 py-2 bg-background hover:bg-secondary text-foreground font-semibold rounded-lg border border-border transition-colors text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
               </motion.div>
             </div>
           </>
@@ -1459,48 +2421,34 @@ const openAppointmentsModal = async (user: User) => {
         {showAppointmentsModal && selectedUser && (
           <>
             <motion.div
-              className="backdrop-overlay"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
               onClick={() => setShowAppointmentsModal(false)}
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
                 <div className="flex justify-between mb-4">
-                  <h2 className="text-xl font-bold text-dark-900">
+                  <h2 className="text-xl font-bold text-foreground">
                     Appointments – {selectedUser.name}
                   </h2>
                   <FiX
-                    className="cursor-pointer"
-                    onClick={() =>
-                      setShowAppointmentsModal(false)
-                    }
+                    className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setShowAppointmentsModal(false)}
                   />
                 </div>
 
                 {appointmentsLoading ? (
-                  <p className="text-center text-dark-400">
-                    Loading…
-                  </p>
+                  <p className="text-center text-muted-foreground">Loading…</p>
                 ) : userAppointments.length === 0 ? (
-                  <p className="text-center text-dark-400">
-                    No appointments found
-                  </p>
+                  <p className="text-center text-muted-foreground">No appointments found</p>
                 ) : (
                   <div className="space-y-3 max-h-[60vh] overflow-auto">
                     {userAppointments.map((a) => (
-                      <div
-                        key={a.id}
-                        className="glass-card p-4 rounded-xl"
-                      >
-                        <p className="font-semibold text-dark-900">
-                          {a.serviceType}
+                      <div key={a.id} className="glass-card p-4 rounded-xl">
+                        <p className="font-semibold text-foreground">{a.serviceType}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {a.appointmentDate} • {a.appointmentTime}
                         </p>
-                        <p className="text-sm text-dark-400">
-                          {a.appointmentDate} •{" "}
-                          {a.appointmentTime}
-                        </p>
-                        <p className="text-sm text-dark-400">
-                          Status: {a.status}
-                        </p>
+                        <p className="text-sm text-muted-foreground">Status: {a.status}</p>
                       </div>
                     ))}
                   </div>

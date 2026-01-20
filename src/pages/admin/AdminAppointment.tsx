@@ -762,7 +762,7 @@ import {
   getDay
 } from "date-fns";
 // import { ChevronLeft, ChevronRight } from "lucide-react";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+// import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import appointmentApi from "../../api/appointmentApi";
 import toast from "react-hot-toast";
 
@@ -859,8 +859,8 @@ export default function AdminAppointment() {
   const [loading, setLoading] = useState(true);
 
   // Pagination
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  // const [page, setPage] = useState(0);
+  // const [totalPages, setTotalPages] = useState(1);
 
   // Search
   const [search, setSearch] = useState("");
@@ -872,7 +872,7 @@ export default function AdminAppointment() {
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      const res = await appointmentApi.getAllAppointments(page, 50);
+      const res = await appointmentApi.getAllAppointments(0, 50);
 
       const mapped = res.content.map((a: any) => ({
         id: a.id,
@@ -884,7 +884,7 @@ export default function AdminAppointment() {
       }));
 
       setAppointments(mapped);
-      setTotalPages(res.totalPages);
+      // setTotalPages(res.totalPages);
     } catch {
       toast.error("Failed to load appointments");
     } finally {
@@ -927,7 +927,7 @@ const handleReject = async (id: number) => {
   }
 };
 
-  useEffect(() => { loadAppointments(); }, [page]);
+  useEffect(() => { loadAppointments(); }, []);
 
   // -------- Calendar Logic ----------
   const weekStart = startOfWeek(currentDate);

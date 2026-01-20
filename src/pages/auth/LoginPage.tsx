@@ -203,6 +203,7 @@ import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { login } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
+import logo from '../../assets/logo.png';
 
 /* ================== ANIMATIONS (TS SAFE) ================== */
 const cardVariants: Variants = {
@@ -289,8 +290,8 @@ const LoginPage = () => {
   const { isAuthenticated, isLoading, dispatch } = useAuth();
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
 
@@ -298,7 +299,7 @@ const LoginPage = () => {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-      toast.error('Please fill in all fields');
+      toast.error("Please fill in all fields");
       return;
     }
 
@@ -313,7 +314,7 @@ const LoginPage = () => {
         navigate('/', { replace: true });
       }
     } catch (err: any) {
-      toast.error(err || 'Login failed');
+      toast.error(err || "Login failed");
     }
 
   };
@@ -345,11 +346,14 @@ if (isLoading) {
             animate="show"
             className="text-center mb-4"
           >
-            <Link to="/">
-              <h1 className="text-2xl font-serif gradient-text mb-1">
-                Styliste Couturier
-              </h1>
-            </Link>
+            <Link to="/" className="inline-flex items-center gap-4 mb-6">
+    {/* LOGO */}
+    <img
+      src={logo}
+      alt="Styliste Couturier Logo"
+      className="w-22 h-14 object-contain"
+    />
+  </Link>
             <p className="text-muted-foreground">
               Welcome back! Please login to your account
             </p>

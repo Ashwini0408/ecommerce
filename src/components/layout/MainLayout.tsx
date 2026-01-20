@@ -5,9 +5,9 @@ import { Outlet } from "react-router-dom";
 import { Footer } from "./Footer";
 import { WhatsAppButton } from "../../pages/public/WhatsAppButton";
 
-type Props = {
-  children: React.ReactNode;
-};
+// type Props = {
+//   children: React.ReactNode;
+// };
 
 const MainLayout = () => {
   return (

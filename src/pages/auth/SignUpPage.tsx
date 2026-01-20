@@ -957,6 +957,7 @@ import { FiMail, FiLock, FiUser, FiPhone, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { signup } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
+import logo from '../../assets/logo.png';
 
 /* ================== ANIMATIONS ================== */
 const cardVariants: Variants = {
@@ -1114,11 +1115,14 @@ if (isLoading) {
         <div className="glass-card rounded-xl p-6">
           {/* Header */}
           <motion.div variants={itemVariants} className="text-center mb-4">
-            <Link to="/">
-              <h1 className="text-2xl font-serif gradient-text mb-1">
-                Styliste Couturier
-              </h1>
-            </Link>
+            <Link to="/" className="inline-flex items-center gap-4 mb-6">
+    {/* LOGO */}
+    <img
+      src={logo}
+      alt="Styliste Couturier Logo"
+      className="w-22 h-14 object-contain"
+    />
+  </Link>
             <p className="text-sm text-muted-foreground">
               Create your account and start shopping
             </p>

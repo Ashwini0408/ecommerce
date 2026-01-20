@@ -9,7 +9,18 @@ import type { Product } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
-const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
+
+// ----------------------------------------------------------------------
+// 1. HELPER: Fix Image URLs
+// ----------------------------------------------------------------------
+const SERVER_URL = import.meta.env.VITE_API_IMG_URL ;
+  const getImageUrl = (path?: string) => {
+    if (!path) return '/placeholder.jpg';
+    if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('https://')) return path; // Already absolute or local blob
+    return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -128,7 +139,7 @@ const ProductDetailPage = () => {
               className="aspect-square rounded-2xl overflow-hidden glass-card"
             >
               <img
-                src={product.images[selectedImage]}
+                src={getImageUrl(product.images[selectedImage])}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -149,7 +160,12 @@ const ProductDetailPage = () => {
                         : 'glass-card'
                     }`}
                   >
-                    <img src={image} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
+                    <img 
+                        // ✅ Fix: Use helper here
+                        src={getImageUrl(image)} 
+                        alt={`${product.name} ${index + 1}`} 
+                        className="w-full h-full object-cover" 
+                    />
                   </motion.button>
                 ))}
               </div>

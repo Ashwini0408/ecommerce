@@ -637,7 +637,7 @@ useEffect(() => {
                 alt="Styliste Couturier Logo"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="h-12 w-auto object-contain"
+                className="h-12 w-15 object-contain"
               />
             </Link>
 
