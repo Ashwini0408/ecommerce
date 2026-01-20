@@ -59,17 +59,26 @@ axiosInstance.interceptors.response.use(
       console.error(`[API Error] ${status}`, data);
       
       // Handle 401 Unauthorized - Token expired or invalid
-      if (status === 401) {
-        console.warn('Unauthorized access - Clearing auth token');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        
-        // Redirect to login page
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
-      }
-      
+    if (status === 401) {
+  const url = error.config?.url || "";
+
+  const isPublicApi =
+    url.includes("/appointments") ||
+    url.includes("/products") ||
+    url.includes("/cart");
+
+  // 🚫 DO NOT clear auth for public APIs
+  if (!isPublicApi) {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+
+    if (window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  }
+}
+
+
       // Handle 403 Forbidden
       if (status === 403) {
         console.warn('Forbidden - Insufficient permissions');

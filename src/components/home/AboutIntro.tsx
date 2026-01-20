@@ -212,7 +212,7 @@ export const AboutIntro = () => {
               <div className="relative overflow-hidden rounded-2xl">
                 <motion.img
                   src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
-                  alt="STYLISTE Boutique"
+                  alt="Styliste Couturier Boutique"
                   className="w-full h-[500px] object-cover"
                   animate={{ scale: [1, 1.06, 1] }}
                   transition={{
@@ -278,7 +278,7 @@ export const AboutIntro = () => {
               <div className="w-8 h-px bg-white/60" />
               <p className="text-white/80 tracking-[0.3em] text-xs uppercase flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                About STYLISTE
+                About Styliste Couturier
               </p>
             </motion.div>
 

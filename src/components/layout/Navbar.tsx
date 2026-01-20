@@ -597,6 +597,19 @@ const isActive = (path: string) => location.pathname === path;
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+useEffect(() => {
+  // 🔒 Prevent mobile menu glitch on refresh / resize
+  const handleResize = () => {
+    if (window.innerWidth >= 768) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  handleResize(); // 👈 run once on mount
+
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -608,21 +621,20 @@ const isActive = (path: string) => location.pathname === path;
   return (
     <>
       {/* ---------------- NAVBAR ---------------- */}
-     <nav
+<nav
   className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
     isScrolled
-      ? "bg-gradient-to-r from-[#7F8F72] via-[#8FA17A] to-[#7F8F72] shadow-xl backdrop-blur"
-      : "bg-gradient-to-r from-[#9CAF88] via-[#A8B79A] to-[#9CAF88]"
+      ? "bg-gradient-to-r from-[#5E6E54] via-[#6B7D60] to-[#5E6E54] shadow-xl backdrop-blur"
+      : "bg-gradient-to-r from-[#6B7D60] via-[#7A8D6D] to-[#6B7D60]"
   }`}
 >
-
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* ---------------- LOGO ---------------- */}
             <Link to="/" className="flex items-center">
               <motion.img
                 src={logo}
-                alt="Styliste Logo"
+                alt="Styliste Couturier Logo"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="h-12 w-auto object-contain"
@@ -630,80 +642,90 @@ const isActive = (path: string) => location.pathname === path;
             </Link>
 
             {/* ---------------- DESKTOP NAV ---------------- */}
-            <div className="hidden md:flex items-center space-x-8">
-              {[
-                { name: "Home", path: "/" },
-                // { name: "Products", path: "/products" },
-                { name: "About", path: "/about" },
-                { name: "Services", path: "/services" },
-                { name: "Contact us", path: "/contact" },
-                // { name: "Blog", path: "/blog" },
-                { name: "Testimonials", path: "/testimonials" },
-              ].map((item) => (
-                <Link
-  key={item.name}
-  to={item.path}
-  className={`relative transition-all duration-300
-    ${
-      isActive(item.path)
-        ? "text-white font-medium after:w-full"
-        : "text-white/80 hover:text-white after:w-0"
-    }
-    after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
-    after:transition-all after:duration-300`}
->
+            {/* <div className="hidden md:flex items-center space-x-8"> */}
+              <div className="hidden md:flex items-center space-x-8">
+  {/* PUBLIC PAGES — ONLY FOR NON-ADMIN */}
+  {!isAdmin &&
+    [
+      { name: "Home", path: "/" },
+      { name: "Products", path: "/products" },
+      { name: "About", path: "/about" },
+      { name: "Services", path: "/services" },
+      { name: "Contact us", path: "/contact" },
+      { name: "Testimonials", path: "/testimonials" },
+    ].map((item) => (
+      <Link
+        key={item.name}
+        to={item.path}
+        className={`relative transition-all duration-300
+          ${
+            isActive(item.path)
+              ? "text-white font-medium after:w-full"
+              : "text-white/80 hover:text-white after:w-0"
+          }
+          after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
+          after:transition-all after:duration-300`}
+      >
+        {item.name}
+      </Link>
+    ))}
 
-                  {item.name}
-                </Link>
-              ))}
+  {/* USER DASHBOARD */}
+  {isAuthenticated && !isAdmin && (
+    <Link
+      to="/dashboard"
+      className="text-white/80 hover:text-white transition-colors"
+    >
+      Dashboard
+    </Link>
+  )}
 
-              {isAuthenticated && !isAdmin && (
-                <Link
-                  to="/dashboard"
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  Dashboard
-                </Link>
-              )}
+  {/* ADMIN DASHBOARD */}
+  {isAdmin && (
+    <Link
+      to="/admin"
+      className="text-white font-semibold"
+    >
+      Dashboard
+    </Link>
+  )}
+</div>
 
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  Admin
-                </Link>
-              )}
-            </div>
 
             {/* ---------------- RIGHT ACTIONS ---------------- */}
             <div className="hidden md:flex items-center space-x-4">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => navigate("/products")}
-                className="p-2 text-white/80 hover:text-white"
-              >
-                <FiSearch size={22} />
-              </motion.button>
+              {!isAdmin && (
+  <motion.button
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    onClick={() => navigate("/products")}
+    className="p-2 text-white/80 hover:text-white"
+  >
+    <FiSearch size={22} />
+  </motion.button>
+)}
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => navigate("/cart")}
-                className="relative p-2 text-white/80 hover:text-white"
-              >
-                <FiShoppingCart size={22} />
-                {totalItems > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
-                  >
-                    {totalItems}
-                  </motion.span>
-                )}
-              </motion.button>
+
+             {!isAdmin && (
+  <motion.button
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    onClick={() => navigate("/cart")}
+    className="relative p-2 text-white/80 hover:text-white"
+  >
+    <FiShoppingCart size={22} />
+    {totalItems > 0 && (
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="absolute -top-1 -right-1 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
+      >
+        {totalItems}
+      </motion.span>
+    )}
+  </motion.button>
+)}
+
 
               {isAuthenticated ? (
                 <div className="relative">
@@ -717,7 +739,7 @@ const isActive = (path: string) => location.pathname === path;
                     <span className="text-sm font-medium">{user?.name}</span>
                   </motion.button>
 
-                  <AnimatePresence>
+                  <AnimatePresence initial={false}>
                     {isUserMenuOpen && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
@@ -771,34 +793,65 @@ const isActive = (path: string) => location.pathname === path;
         </div>
 
         {/* ---------------- MOBILE MENU ---------------- */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-gradient-to-b from-[#9CAF88] to-[#7F8F72]"
+ {/* ---------------- MOBILE MENU ---------------- */}
+<AnimatePresence initial={false}>
+  {isMenuOpen && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="md:hidden bg-gradient-to-b from-[#9CAF88] to-[#7F8F72]"
+    >
+      {/* 🔒 MOBILE ONLY CONTENT */}
+      <div className="px-4 py-4 space-y-3 md:hidden">
+
+        {/* ========== ADMIN MOBILE VIEW ONLY ========== */}
+        {isAdmin && (
+          <>
+            <Link
+              to="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsMenuOpen(false)}
+              className="block py-2 text-white font-semibold"
             >
-              <div className="px-4 py-4 space-y-3">
-                {[
-                  { name: "Home", path: "/" },
-                  { name: "Products", path: "/products" },
-                  { name: "About us", path: "/about" },
-                  { name: "Contact us", path: "/contact" },
-                ].map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block py-2 text-white/80 hover:text-white"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              Home
+            </Link>
+
+            <Link
+              to="/admin"
+              onClick={() => setIsMenuOpen(false)}
+              className="block py-2 text-white font-semibold"
+            >
+              Dashboard
+            </Link>
+          </>
+        )}
+
+        {/* ========== NON-ADMIN MOBILE VIEW ========== */}
+        {!isAdmin &&
+          [
+            { name: "Home", path: "/" },
+            { name: "Services", path: "/services" },
+            { name: "About us", path: "/about" },
+            { name: "Contact us", path: "/contact" },
+            { name: "Testimonials", path: "/testimonials" },
+          ].map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              onClick={() => setIsMenuOpen(false)}
+              className="block py-2 text-white/80 hover:text-white"
+            >
+              {item.name}
+            </Link>
+          ))}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
       </nav>
 
       {/* ---------------- NAVBAR SPACER (IMPORTANT FIX) ---------------- */}

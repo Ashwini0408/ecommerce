@@ -7,12 +7,14 @@ import App from './App';
 import { store } from './store/store';
 import './index.css';
 // import './App.css'
+import { HelmetProvider } from "react-helmet-async";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <BrowserRouter>
-        <App />
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <HelmetProvider>
+    <React.StrictMode>
+      <Provider store={store}>
+        <BrowserRouter>
+          <App />
         <Toaster
           position="top-right"
           toastOptions={{
@@ -39,4 +41,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       </BrowserRouter>
     </Provider>
   </React.StrictMode>
+  </HelmetProvider>
 );

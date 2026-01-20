@@ -161,7 +161,7 @@ const Contact = () => {
               <h2 className="font-serif text-3xl mb-8">Visit Our Boutique</h2>
 
               <p className="text-muted-foreground mb-10 leading-relaxed">
-                Experience STYLISTE in person at our boutique. Our style
+                Experience Styliste Couturier in person at our boutique. Our style
                 consultants are available to provide personalized styling
                 assistance and doorstep service.
               </p>
@@ -226,7 +226,7 @@ const Contact = () => {
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767.5!2d72.97!3d19.22!5e0!3m2!1sen!2sin"
                   className="w-full h-full opacity-80"
                   loading="lazy"
-                  title="STYLISTE Location"
+                  title="Styliste Couturier Location"
                 />
               </div>
             </motion.div>

@@ -81,8 +81,8 @@ const AdminOrders = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Order Management</h2>
-          <p className="text-dark-400 mt-1">{orders.length} orders</p>
+          <h2 className="text-2xl font-bold text-dark-900">Order Management</h2>
+          <p className="text-dark-600 mt-1">{orders.length} orders</p>
         </div>
 
         {/* Filter */}
@@ -107,9 +107,9 @@ const AdminOrders = () => {
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <div className="glass-card rounded-2xl p-12 text-center">
+        <div className="glass-card rounded-2xl p-12 text-center ring-1 ring-[#8FAE8B]">
           <FiPackage className="mx-auto text-dark-600 mb-4" size={48} />
-          <p className="text-dark-400">No orders found</p>
+          <p className="text-dark-600">No orders found</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -117,21 +117,31 @@ const AdminOrders = () => {
             <motion.div
               key={order.id}
               whileHover={{ x: 4 }}
-              className="glass-card-hover rounded-2xl p-6"
+              className="glass-card-hover rounded-2xl p-6 ring-1 ring-[#8FAE8B]"
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-white">Order #{order.id}</h3>
-                    <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                    <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.paymentStatus)}`}>
-                      {order.paymentStatus}
-                    </span>
-                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+  <h3 className="text-lg font-semibold text-dark-900">
+    Order #{order.id}
+  </h3>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-dark-400">
+  {/* Order Status */}
+  <span
+    className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.status)}`}
+  >
+    Order: {order.status}
+  </span>
+
+  {/* Payment Status */}
+  <span
+    className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(order.paymentStatus)}`}
+  >
+    Payment: {order.paymentStatus}
+  </span>
+</div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-dark-600">
                     <p>📅 {format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</p>
                     <p>💰 {formatINR(order.totalAmount)}</p>
                     <p>📦 {order.items.length} items</p>
@@ -139,7 +149,7 @@ const AdminOrders = () => {
                   </div>
 
                   {order.shippingAddress && (
-                    <p className="text-sm text-dark-500 mt-2 line-clamp-1">
+                    <p className="text-sm text-dark-600 mt-2 line-clamp-1">
                       📍 {order.shippingAddress}
                     </p>
                   )}
@@ -154,7 +164,7 @@ const AdminOrders = () => {
                       setSelectedOrder(order);
                       setShowDetailsModal(true);
                     }}
-                    className="p-3 glass-card rounded-xl hover:bg-white/10 transition-colors"
+                    className="p-3 glass-card rounded-xl ring-1 ring-[#8FAE8B] hover:bg-primary-50 transition-colors"
                     title="View Details"
                   >
                     <FiEye className="text-primary-400" />
@@ -168,7 +178,7 @@ const AdminOrders = () => {
                       setTrackingNumber(order.trackingNumber || '');
                       setUpdateStatusModal(true);
                     }}
-                    className="p-3 glass-card rounded-xl hover:bg-white/10 transition-colors"
+                    className="p-3 glass-card rounded-xl ring-1 ring-[#8FAE8B] hover:bg-primary-50 transition-colors"
                     title="Update Status"
                   >
                     <FiTruck className="text-green-400" />
@@ -196,12 +206,12 @@ const AdminOrders = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="glass-card rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
+                className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Order #{selectedOrder.id}</h2>
+                  <h2 className="text-2xl font-bold text-dark-900">Order #{selectedOrder.id}</h2>
                   <button onClick={() => setShowDetailsModal(false)}>
-                    <FiX size={24} className="text-dark-400 hover:text-white" />
+                    <FiX size={24} className="text-dark-400 hover:text-dark-900" />
                   </button>
                 </div>
 
@@ -222,21 +232,24 @@ const AdminOrders = () => {
                     </div>
                     <div>
                       <p className="text-sm text-dark-400 mb-1">Order Date</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-dark-900 font-semibold">
                         {format(new Date(selectedOrder.createdAt), 'MMM dd, yyyy HH:mm')}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-dark-400 mb-1">Total Amount</p>
-                      <p className="text-white font-semibold">${selectedOrder.totalAmount.toFixed(2)}</p>
-                    </div>
+  <p className="text-sm text-dark-400 mb-1">Total Amount</p>
+  <p className="text-dark-900 font-semibold">
+    {formatINR(selectedOrder.totalAmount)}
+  </p>
+</div>
+
                   </div>
 
                   {/* Shipping Address */}
                   <div>
                     <p className="text-sm text-dark-400 mb-2">Shipping Address</p>
-                    <div className="glass-card p-4 rounded-xl">
-                      <p className="text-white">{selectedOrder.shippingAddress}</p>
+                    <div className="glass-card p-4 rounded-xl ring-1 ring-[#8FAE8B]">
+                      <p className="text-dark-900">{selectedOrder.shippingAddress}</p>
                     </div>
                   </div>
 
@@ -245,33 +258,55 @@ const AdminOrders = () => {
                     <p className="text-sm text-dark-400 mb-2">Order Items</p>
                     <div className="space-y-3">
                       {selectedOrder.items.map((item) => (
-                        <div key={item.id} className="glass-card p-4 rounded-xl flex items-center justify-between">
-                          <div>
-                            <p className="text-white font-semibold">{item.productName}</p>
-                            <p className="text-sm text-dark-400">
-                              Qty: {item.quantity} × ${item.unitPrice.toFixed(2)}
-                            </p>
-                            {(item.selectedSize || item.selectedColor) && (
-                              <div className="flex gap-2 mt-1">
-                                {item.selectedSize && (
-                                  <span className="text-xs px-2 py-1 bg-dark-800 rounded">
-                                    {item.selectedSize}
-                                  </span>
-                                )}
-                                {item.selectedColor && (
-                                  <span className="text-xs px-2 py-1 bg-dark-800 rounded">
-                                    {item.selectedColor}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-white font-semibold">
-  {formatINR(item.totalPrice)}
-</span>
+  <div
+    key={item.id}
+    className="glass-card p-4 rounded-xl flex gap-4 items-center"
+  >
+    {/* 🖼 Product Image */}
+    <div className="w-16 h-16 rounded-lg overflow-hidden ring-1 ring-[#8FAE8B] flex-shrink-0">
+      <img
+       src={(item as any)?.productImage || '/placeholder.jpg'}
+        alt={item.productName}
+        className="w-full h-full object-cover"
+      />
+    </div>
 
-                        </div>
-                      ))}
+    {/* 📦 Product Info */}
+    <div className="flex-1">
+      <p className="text-dark-900 font-semibold">
+        {item.productName}
+      </p>
+
+      <p className="text-sm text-dark-500">
+        Qty: {item.quantity} × {formatINR(item.unitPrice)}
+      </p>
+
+      {/* Size & Colour */}
+      {(item.selectedSize || item.selectedColor) && (
+        <div className="flex gap-2 mt-2">
+          {item.selectedSize && (
+            <span className="text-xs px-2 py-1 bg-dark-800 rounded">
+              Size: {item.selectedSize}
+            </span>
+          )}
+          {item.selectedColor && (
+            <span className="text-xs px-2 py-1 bg-dark-800 rounded">
+              Colour: {item.selectedColor}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* 💰 Price */}
+    <div className="text-right">
+      <p className="text-dark-900 font-semibold">
+        {formatINR(item.totalPrice)}
+      </p>
+    </div>
+  </div>
+))}
+
                     </div>
                   </div>
 
@@ -279,8 +314,8 @@ const AdminOrders = () => {
                   {selectedOrder.trackingNumber && (
                     <div>
                       <p className="text-sm text-dark-400 mb-2">Tracking Number</p>
-                      <div className="glass-card p-4 rounded-xl">
-                        <p className="text-white font-mono">{selectedOrder.trackingNumber}</p>
+                      <div className="glass-card p-4 rounded-xl ring-1 ring-[#8FAE8B]">
+                        <p className="text-dark-900 font-mono">{selectedOrder.trackingNumber}</p>
                       </div>
                     </div>
                   )}
@@ -310,9 +345,9 @@ const AdminOrders = () => {
                 className="glass-card rounded-2xl p-6 max-w-md w-full"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Update Order Status</h2>
+                  <h2 className="text-2xl font-bold text-dark-900">Update Order Status</h2>
                   <button onClick={() => setUpdateStatusModal(false)}>
-                    <FiX size={24} className="text-dark-400 hover:text-white" />
+                    <FiX size={24} className="text-dark-400 hover:text-dark-900" />
                   </button>
                 </div>
 

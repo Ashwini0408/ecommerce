@@ -94,7 +94,7 @@ export const Newsletter = () => {
             viewport={{ once: true }}
             className="font-serif text-4xl md:text-6xl mb-6"
           >
-            Experience STYLISTE
+            Experience Styliste Couturier
           </motion.h2>
 
           <motion.p

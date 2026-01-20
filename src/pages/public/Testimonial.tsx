@@ -785,7 +785,7 @@ function HeroVideo() {
           <div className="w-20 h-px bg-primary-foreground/30 mx-auto mb-4" />
           <p className="text-primary-foreground/70 text-sm leading-relaxed">
             A glimpse into the craftsmanship, precision, and passion behind every
-            STYLISTE creation.
+            Styliste Couturier creation.
           </p>
         </div>
       </div>
@@ -804,7 +804,7 @@ const Testimonials = () => {
         <div className="absolute inset-0">
           <img
             src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1920&q=80"
-            alt="STYLISTE testimonials"
+            alt="Styliste Couturier testimonials"
             className="w-full h-full object-cover opacity-10"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
@@ -855,7 +855,7 @@ const Testimonials = () => {
         <div className="container mx-auto px-6 text-center max-w-4xl">
           <Quote className="w-16 h-16 mx-auto mb-8 opacity-30" />
           <p className="font-serif text-2xl md:text-4xl italic mb-8">
-            "STYLISTE has transformed how I think about fashion. Every piece feels
+            "Styliste Couturier has transformed how I think about fashion. Every piece feels
             special."
           </p>
         </div>

@@ -1,10 +1,1025 @@
+// import { useState, useEffect } from 'react';
+// import { Link, useNavigate } from 'react-router-dom';
+// import { motion } from 'framer-motion';
+// import { FiMail, FiLock, FiUser, FiPhone, FiArrowRight } from 'react-icons/fi';
+// import { useAuth } from '../../hooks/useAuth';
+// import { signup } from '../../store/slices/authSlice';
+// import toast from 'react-hot-toast';
+// import {
+//   containerVariants,
+//   itemVariants,
+//   cardVariants,
+// } from '../../animations/authAnimations';
+
+
+// const SignUpPage = () => {
+//   const navigate = useNavigate();
+//   const { isAuthenticated, isLoading, dispatch } = useAuth();
+
+//   const [formData, setFormData] = useState({
+//     name: '',
+//     email: '',
+//     password: '',
+//     confirmPassword: '',
+//     phone: '',
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated) {
+//       navigate('/');
+//     }
+//   }, [isAuthenticated, navigate]);
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+
+//     // Validation
+//     if (!formData.name || !formData.email || !formData.password) {
+//       toast.error('Please fill in all required fields');
+//       return;
+//     }
+
+//     if (formData.password.length < 6) {
+//       toast.error('Password must be at least 6 characters');
+//       return;
+//     }
+
+//     if (formData.password !== formData.confirmPassword) {
+//       toast.error('Passwords do not match');
+//       return;
+//     }
+
+//     try {
+//       await dispatch(
+//         signup({
+//           name: formData.name,
+//           email: formData.email,
+//           password: formData.password,
+//           phone: formData.phone || undefined,
+//         })
+//       ).unwrap();
+//       toast.success('Account created successfully!');
+//       navigate('/');
+//     } catch (err: any) {
+//       toast.error(err || 'Signup failed');
+//     }
+//   };
+
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
+
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 px-4 py-12">
+//       {/* Animated Background */}
+//       <div className="absolute inset-0 overflow-hidden">
+//         <motion.div
+//           animate={{
+//             scale: [1, 1.2, 1],
+//             rotate: [0, 90, 0],
+//           }}
+//           transition={{
+//             duration: 20,
+//             repeat: Infinity,
+//             ease: 'linear',
+//           }}
+//           className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl"
+//         />
+//         <motion.div
+//           animate={{
+//             scale: [1, 1.3, 1],
+//             rotate: [0, -90, 0],
+//           }}
+//           transition={{
+//             duration: 25,
+//             repeat: Infinity,
+//             ease: 'linear',
+//           }}
+//           className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl"
+//         />
+//       </div>
+
+//       {/* Sign Up Card */}
+//       <motion.div
+//         initial={{ opacity: 0, y: 20 }}
+//         animate={{ opacity: 1, y: 0 }}
+//         className="relative z-10 w-full max-w-md"
+//       >
+//         <div className="glass-card rounded-2xl p-8">
+//           {/* Header */}
+//           <div className="text-center mb-8">
+//             <Link to="/">
+//               <h1 className="text-3xl font-display font-bold gradient-text mb-2">STYLISTE</h1>
+//             </Link>
+//             <p className="text-dark-400">Create your account and start shopping</p>
+//           </div>
+
+//           {/* Form */}
+//           <form onSubmit={handleSubmit} className="space-y-5">
+//             {/* Name */}
+//             <div>
+//               <label className="text-sm font-semibold text-dark-300 mb-2 block">
+//                 Full Name *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="text"
+//                   name="name"
+//                   value={formData.name}
+//                   onChange={handleInputChange}
+//                   placeholder="John Doe"
+//                   className="input-field pl-10"
+//                   required
+//                 />
+//                 <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+//               </div>
+//             </div>
+
+//             {/* Email */}
+//             <div>
+//               <label className="text-sm font-semibold text-dark-300 mb-2 block">
+//                 Email Address *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="email"
+//                   name="email"
+//                   value={formData.email}
+//                   onChange={handleInputChange}
+//                   placeholder="your@email.com"
+//                   className="input-field pl-10"
+//                   required
+//                 />
+//                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+//               </div>
+//             </div>
+
+//             {/* Phone */}
+//             <div>
+//               <label className="text-sm font-semibold text-dark-300 mb-2 block">
+//                 Phone Number
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="tel"
+//                   name="phone"
+//                   value={formData.phone}
+//                   onChange={handleInputChange}
+//                   placeholder="+1 (555) 000-0000"
+//                   className="input-field pl-10"
+//                 />
+//                 <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+//               </div>
+//             </div>
+
+//             {/* Password */}
+//             <div>
+//               <label className="text-sm font-semibold text-dark-300 mb-2 block">
+//                 Password *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="password"
+//                   name="password"
+//                   value={formData.password}
+//                   onChange={handleInputChange}
+//                   placeholder="••••••••"
+//                   className="input-field pl-10"
+//                   required
+//                   minLength={6}
+//                 />
+//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+//               </div>
+//             </div>
+
+//             {/* Confirm Password */}
+//             <div>
+//               <label className="text-sm font-semibold text-dark-300 mb-2 block">
+//                 Confirm Password *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="password"
+//                   name="confirmPassword"
+//                   value={formData.confirmPassword}
+//                   onChange={handleInputChange}
+//                   placeholder="••••••••"
+//                   className="input-field pl-10"
+//                   required
+//                 />
+//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+//               </div>
+//             </div>
+
+//             {/* Terms */}
+//             <label className="flex items-start space-x-2 cursor-pointer text-sm">
+//               <input
+//                 type="checkbox"
+//                 className="accent-primary-500 mt-1"
+//                 required
+//               />
+//               <span className="text-dark-300">
+//                 I agree to the{' '}
+//                 <a href="#" className="text-primary-400 hover:text-primary-300">
+//                   Terms & Conditions
+//                 </a>{' '}
+//                 and{' '}
+//                 <a href="#" className="text-primary-400 hover:text-primary-300">
+//                   Privacy Policy
+//                 </a>
+//               </span>
+//             </label>
+
+//             {/* Submit Button */}
+//             <motion.button
+//               type="submit"
+//               disabled={isLoading}
+//               whileHover={{ scale: 1.02 }}
+//               whileTap={{ scale: 0.98 }}
+//               className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
+//             >
+//               <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
+//               {!isLoading && <FiArrowRight />}
+//             </motion.button>
+//           </form>
+
+//           {/* Divider */}
+//           <div className="flex items-center my-6">
+//             <div className="flex-1 border-t border-white/10"></div>
+//             <span className="px-4 text-sm text-dark-500">OR</span>
+//             <div className="flex-1 border-t border-white/10"></div>
+//           </div>
+
+//           {/* Login Link */}
+//           <div className="text-center">
+//             <p className="text-dark-400">
+//               Already have an account?{' '}
+//               <Link to="/login" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
+//                 Login
+//               </Link>
+//             </p>
+//           </div>
+
+//           {/* Back to Home */}
+//           <div className="text-center mt-6">
+//             <Link to="/" className="text-sm text-dark-500 hover:text-dark-300 transition-colors">
+//               ← Back to Home
+//             </Link>
+//           </div>
+//         </div>
+//       </motion.div>
+//     </div>
+//   );
+// };
+
+// export default SignUpPage;
+
+// import { useState, useEffect } from 'react';
+// import { Link, useNavigate } from 'react-router-dom';
+// import { motion, type Variants } from 'framer-motion';
+// import { FiMail, FiLock, FiUser, FiPhone, FiArrowRight } from 'react-icons/fi';
+// import { useAuth } from '../../hooks/useAuth';
+// import { signup } from '../../store/slices/authSlice';
+// import toast from 'react-hot-toast';
+
+// /* SAME VARIANTS */
+// const cardVariants: Variants = {
+//   hidden: { opacity: 0, y: 30, scale: 0.96 },
+//   show: {
+//     opacity: 1,
+//     y: 0,
+//     scale: 1,
+//     transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+//   },
+// };
+
+// const containerVariants: Variants = {
+//   hidden: {},
+//   show: { transition: { staggerChildren: 0.08 } },
+// };
+
+// const itemVariants: Variants = {
+//   hidden: { opacity: 0, y: 18, scale: 0.98 },
+//   show: {
+//     opacity: 1,
+//     y: 0,
+//     scale: 1,
+//     transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+//   },
+// };
+
+// const SignUpPage = () => {
+//   const navigate = useNavigate();
+//   const { isAuthenticated, isLoading, dispatch } = useAuth();
+
+//   const [formData, setFormData] = useState({
+//     name: '',
+//     email: '',
+//     password: '',
+//     confirmPassword: '',
+//     phone: '',
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated) navigate('/');
+//   }, [isAuthenticated, navigate]);
+
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setFormData({ ...formData, [e.target.name]: e.target.value });
+//   };
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     try {
+//       await dispatch(
+//         signup({
+//           name: formData.name,
+//           email: formData.email,
+//           password: formData.password,
+//           phone: formData.phone || undefined,
+//         })
+//       ).unwrap();
+//       toast.success('Account created successfully!');
+//       navigate('/');
+//     } catch (err: any) {
+//       toast.error(err || 'Signup failed');
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 px-4 py-12">
+//       <motion.div
+//         variants={cardVariants}
+//         initial="hidden"
+//         animate="show"
+//         className="relative z-10 w-full max-w-md"
+//       >
+//         <div className="glass-card rounded-2xl p-8">
+//           <motion.form
+//             onSubmit={handleSubmit}
+//             variants={containerVariants}
+//             initial="hidden"
+//             animate="show"
+//             className="space-y-5"
+//           >
+//             {/* Wrap all inputs with motion.div variants={itemVariants} */}
+//             {/* Logic unchanged */}
+//           </motion.form>
+//         </div>
+//       </motion.div>
+//     </div>
+//   );
+// };
+
+// export default SignUpPage;
+
+
+// import { useState, useEffect } from 'react';
+// import { Link, useNavigate } from 'react-router-dom';
+// import { motion, type Variants } from 'framer-motion';
+// import { FiMail, FiLock, FiUser, FiPhone, FiArrowRight } from 'react-icons/fi';
+// import { useAuth } from '../../hooks/useAuth';
+// import { signup } from '../../store/slices/authSlice';
+// import toast from 'react-hot-toast';
+
+// /* ================== ANIMATIONS (TS SAFE) ================== */
+// const cardVariants: Variants = {
+//   hidden: { opacity: 0, y: 30, scale: 0.96 },
+//   show: {
+//     opacity: 1,
+//     y: 0,
+//     scale: 1,
+//     transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+//   },
+// };
+
+// const containerVariants: Variants = {
+//   hidden: {},
+//   show: {
+//     transition: { staggerChildren: 0.08 },
+//   },
+// };
+
+// const itemVariants: Variants = {
+//   hidden: { opacity: 0, y: 18, scale: 0.98 },
+//   show: {
+//     opacity: 1,
+//     y: 0,
+//     scale: 1,
+//     transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+//   },
+// };
+// /* ========================================================== */
+
+// const SignUpPage = () => {
+//   const navigate = useNavigate();
+//   const { isAuthenticated, isLoading, dispatch } = useAuth();
+
+//   const [formData, setFormData] = useState({
+//     name: '',
+//     email: '',
+//     password: '',
+//     confirmPassword: '',
+//     phone: '',
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated) {
+//       navigate('/');
+//     }
+//   }, [isAuthenticated, navigate]);
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+
+//     if (!formData.name || !formData.email || !formData.password) {
+//       toast.error('Please fill in all required fields');
+//       return;
+//     }
+
+//     if (formData.password.length < 6) {
+//       toast.error('Password must be at least 6 characters');
+//       return;
+//     }
+
+//     if (formData.password !== formData.confirmPassword) {
+//       toast.error('Passwords do not match');
+//       return;
+//     }
+
+//     try {
+//       await dispatch(
+//         signup({
+//           name: formData.name,
+//           email: formData.email,
+//           password: formData.password,
+//           phone: formData.phone || undefined,
+//         })
+//       ).unwrap();
+//       toast.success('Account created successfully!');
+//       navigate('/');
+//     } catch (err: any) {
+//       toast.error(err || 'Signup failed');
+//     }
+//   };
+
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
+
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+//       {/* Animated Card */}
+//       <motion.div
+//         variants={cardVariants}
+//         initial="hidden"
+//         animate="show"
+//         className="relative z-10 w-full max-w-md"
+//       >
+//         <div className="glass-card rounded-2xl p-8">
+//           {/* Header */}
+//           <motion.div variants={itemVariants} className="text-center mb-8">
+//             <Link to="/">
+//               <h1 className="text-3xl font-serif gradient-text mb-2">
+//                 STYLISTE
+//               </h1>
+//             </Link>
+//             <p className="text-muted-foreground">
+//               Create your account and start shopping
+//             </p>
+//           </motion.div>
+
+//           {/* Form */}
+//           <motion.form
+//             onSubmit={handleSubmit}
+//             variants={containerVariants}
+//             initial="hidden"
+//             animate="show"
+//             className="space-y-5"
+//           >
+//             {/* Full Name */}
+//             <motion.div variants={itemVariants}>
+//               <label className="text-sm font-medium text-foreground mb-2 block">
+//                 Full Name *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="text"
+//                   name="name"
+//                   value={formData.name}
+//                   onChange={handleInputChange}
+//                   placeholder="John Doe"
+//                   className="input-field pl-10 focus:scale-[1.01]"
+//                   required
+//                 />
+//                 <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//               </div>
+//             </motion.div>
+
+//             {/* Email */}
+//             <motion.div variants={itemVariants}>
+//               <label className="text-sm font-medium text-foreground mb-2 block">
+//                 Email Address *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="email"
+//                   name="email"
+//                   value={formData.email}
+//                   onChange={handleInputChange}
+//                   placeholder="your@email.com"
+//                   className="input-field pl-10 focus:scale-[1.01]"
+//                   required
+//                 />
+//                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//               </div>
+//             </motion.div>
+
+//             {/* Phone */}
+//             <motion.div variants={itemVariants}>
+//               <label className="text-sm font-medium text-foreground mb-2 block">
+//                 Phone Number
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="tel"
+//                   name="phone"
+//                   value={formData.phone}
+//                   onChange={handleInputChange}
+//                   placeholder="+1 (555) 000-0000"
+//                   className="input-field pl-10 focus:scale-[1.01]"
+//                 />
+//                 <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//               </div>
+//             </motion.div>
+
+//             {/* Password */}
+//             <motion.div variants={itemVariants}>
+//               <label className="text-sm font-medium text-foreground mb-2 block">
+//                 Password *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="password"
+//                   name="password"
+//                   value={formData.password}
+//                   onChange={handleInputChange}
+//                   placeholder="••••••••"
+//                   className="input-field pl-10 focus:scale-[1.01]"
+//                   required
+//                   minLength={6}
+//                 />
+//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//               </div>
+//             </motion.div>
+
+//             {/* Confirm Password */}
+//             <motion.div variants={itemVariants}>
+//               <label className="text-sm font-medium text-foreground mb-2 block">
+//                 Confirm Password *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="password"
+//                   name="confirmPassword"
+//                   value={formData.confirmPassword}
+//                   onChange={handleInputChange}
+//                   placeholder="••••••••"
+//                   className="input-field pl-10 focus:scale-[1.01]"
+//                   required
+//                 />
+//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//               </div>
+//             </motion.div>
+
+//             {/* Terms */}
+//             <motion.label
+//               variants={itemVariants}
+//               className="flex items-start space-x-2 cursor-pointer text-sm"
+//             >
+//               <input
+//                 type="checkbox"
+//                 className="accent-primary mt-1"
+//                 required
+//               />
+//               <span className="text-muted-foreground">
+//                 I agree to the{' '}
+//                 <a href="#" className="text-sage hover:underline">
+//                   Terms & Conditions
+//                 </a>{' '}
+//                 and{' '}
+//                 <a href="#" className="text-sage hover:underline">
+//                   Privacy Policy
+//                 </a>
+//               </span>
+//             </motion.label>
+
+//             {/* Submit */}
+//             <motion.button
+//               variants={itemVariants}
+//               type="submit"
+//               disabled={isLoading}
+//               whileHover={{ scale: 1.03 }}
+//               whileTap={{ scale: 0.97 }}
+//               className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60"
+//             >
+//               <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
+//               {!isLoading && <FiArrowRight />}
+//             </motion.button>
+//           </motion.form>
+
+//           {/* Divider */}
+//           <motion.div
+//             variants={itemVariants}
+//             className="flex items-center my-6"
+//           >
+//             <div className="flex-1 border-t border-border"></div>
+//             <span className="px-4 text-sm text-muted-foreground">OR</span>
+//             <div className="flex-1 border-t border-border"></div>
+//           </motion.div>
+
+//           {/* Login Link */}
+//           <motion.div variants={itemVariants} className="text-center">
+//             <p className="text-muted-foreground">
+//               Already have an account?{' '}
+//               <Link to="/login" className="text-sage font-medium hover:underline">
+//                 Login
+//               </Link>
+//             </p>
+//           </motion.div>
+
+//           {/* Back to Home */}
+//           <motion.div variants={itemVariants} className="text-center mt-6">
+//             <Link
+//               to="/"
+//               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+//             >
+//               ← Back to Home
+//             </Link>
+//           </motion.div>
+//         </div>
+//       </motion.div>
+//     </div>
+//   );
+// };
+
+// export default SignUpPage;
+
+
+// import { useState, useEffect } from 'react';
+// import { Link, useNavigate } from 'react-router-dom';
+// import { motion, type Variants } from 'framer-motion';
+// import { FiMail, FiLock, FiUser, FiPhone, FiArrowRight } from 'react-icons/fi';
+// import { useAuth } from '../../hooks/useAuth';
+// import { signup } from '../../store/slices/authSlice';
+// import toast from 'react-hot-toast';
+
+// /* ================== ANIMATIONS ================== */
+// const cardVariants: Variants = {
+//   hidden: { opacity: 0, y: 24, scale: 0.96 },
+//   show: {
+//     opacity: 1,
+//     y: 0,
+//     scale: 1,
+//     transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+//   },
+// };
+
+// const containerVariants: Variants = {
+//   hidden: {},
+//   show: {
+//     transition: {
+//       staggerChildren: 0.06,
+//     },
+//   },
+// };
+
+// const itemVariants: Variants = {
+//   hidden: { opacity: 0, y: 14 },
+//   show: {
+//     opacity: 1,
+//     y: 0,
+//     transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+//   },
+// };
+// /* ================================================ */
+
+// const SignUpPage = () => {
+//   const navigate = useNavigate();
+//   const { isAuthenticated, isLoading, dispatch } = useAuth();
+
+//   const [formData, setFormData] = useState({
+//     name: '',
+//     email: '',
+//     password: '',
+//     confirmPassword: '',
+//     phone: '',
+//   });
+
+//   useEffect(() => {
+//     if (isAuthenticated) navigate('/');
+//   }, [isAuthenticated, navigate]);
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+
+//     if (!formData.name || !formData.email || !formData.password) {
+//       toast.error('Please fill in all required fields');
+//       return;
+//     }
+
+//     if (formData.password.length < 6) {
+//       toast.error('Password must be at least 6 characters');
+//       return;
+//     }
+
+//     if (formData.password !== formData.confirmPassword) {
+//       toast.error('Passwords do not match');
+//       return;
+//     }
+
+//     try {
+//       await dispatch(
+//         signup({
+//           name: formData.name,
+//           email: formData.email,
+//           password: formData.password,
+//           phone: formData.phone || undefined,
+//         })
+//       ).unwrap();
+//       toast.success('Account created successfully!');
+//       navigate('/');
+//     } catch (err: any) {
+//       toast.error(err || 'Signup failed');
+//     }
+//   };
+
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setFormData({ ...formData, [e.target.name]: e.target.value });
+//   };
+
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
+//       <motion.div
+//         variants={cardVariants}
+//         initial="hidden"
+//         animate="show"
+//         className="w-full max-w-[360px]"
+//       >
+//         <div className="glass-card rounded-xl p-6">
+//           {/* Header */}
+//           <motion.div variants={itemVariants} className="text-center mb-4">
+//             <Link to="/">
+//               <h1 className="text-2xl font-serif gradient-text mb-1">
+//                 STYLISTE
+//               </h1>
+//             </Link>
+//             <p className="text-sm text-muted-foreground">
+//               Create your account and start shopping
+//             </p>
+//           </motion.div>
+
+//           {/* Form */}
+//           <motion.form
+//             onSubmit={handleSubmit}
+//             variants={containerVariants}
+//             initial="hidden"
+//             animate="show"
+//             className="space-y-3"
+//           >
+//             {/* Full Name */}
+//             <motion.div variants={itemVariants}>
+//               <label className="text-sm font-medium mb-1 block">
+//                 Full Name *
+//               </label>
+//               <div className="relative">
+//                 <input
+//                   type="text"
+//                   name="name"
+//                   value={formData.name}
+//                   onChange={handleInputChange}
+//                   placeholder="John Doe"
+//                   className="input-field pl-9"
+//                   required
+//                 />
+//                 <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//               </div>
+//             </motion.div>
+
+//             {/* Email + Phone */}
+//             <motion.div
+//               variants={itemVariants}
+//               className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+//             >
+//               <div>
+//                 <label className="text-sm font-medium mb-1 block">
+//                   Email *
+//                 </label>
+//                 <div className="relative">
+//                   <input
+//                     type="email"
+//                     name="email"
+//                     value={formData.email}
+//                     onChange={handleInputChange}
+//                     placeholder="your@email.com"
+//                     className="input-field pl-9"
+//                     required
+//                   />
+//                   <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//                 </div>
+//               </div>
+
+//               <div>
+//                 <label className="text-sm font-medium mb-1 block">
+//                   Phone
+//                 </label>
+//                 <div className="relative">
+//                   <input
+//                     type="tel"
+//                     name="phone"
+//                     value={formData.phone}
+//                     onChange={handleInputChange}
+//                     placeholder="+1 (555) 000-0000"
+//                     className="input-field pl-9"
+//                   />
+//                   <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//                 </div>
+//               </div>
+//             </motion.div>
+
+//             {/* Password + Confirm */}
+//             <motion.div
+//               variants={itemVariants}
+//               className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+//             >
+//               <div>
+//                 <label className="text-sm font-medium mb-1 block">
+//                   Password *
+//                 </label>
+//                 <div className="relative">
+//                   <input
+//                     type="password"
+//                     name="password"
+//                     value={formData.password}
+//                     onChange={handleInputChange}
+//                     className="input-field pl-9"
+//                     required
+//                     minLength={6}
+//                   />
+//                   <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//                 </div>
+//               </div>
+
+//               <div>
+//                 <label className="text-sm font-medium mb-1 block">
+//                   Confirm *
+//                 </label>
+//                 <div className="relative">
+//                   <input
+//                     type="password"
+//                     name="confirmPassword"
+//                     value={formData.confirmPassword}
+//                     onChange={handleInputChange}
+//                     className="input-field pl-9"
+//                     required
+//                   />
+//                   <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+//                 </div>
+//               </div>
+//             </motion.div>
+
+//             {/* Terms */}
+//             <motion.label
+//               variants={itemVariants}
+//               className="flex items-start gap-2 text-xs"
+//             >
+//               <input type="checkbox" className="accent-primary mt-1" required />
+//               <span className="text-muted-foreground">
+//                 I agree to the{' '}
+//                 <a href="#" className="text-sage hover:underline">
+//                   Terms
+//                 </a>{' '}
+//                 &{' '}
+//                 <a href="#" className="text-sage hover:underline">
+//                   Privacy Policy
+//                 </a>
+//               </span>
+//             </motion.label>
+
+//             {/* Submit */}
+//             <motion.button
+//               variants={itemVariants}
+//               type="submit"
+//               disabled={isLoading}
+//               whileHover={{ scale: 1.03 }}
+//               whileTap={{ scale: 0.97 }}
+//               className="w-full btn-primary mt-1 flex items-center justify-center gap-2 disabled:opacity-60"
+//             >
+//               <span>{isLoading ? 'Creating...' : 'Sign Up'}</span>
+//               {!isLoading && <FiArrowRight />}
+//             </motion.button>
+//           </motion.form>
+
+//           {/* Footer */}
+//           <motion.div variants={itemVariants} className="text-center mt-4 text-sm">
+//             <p className="text-muted-foreground">
+//               Already have an account?{' '}
+//               <Link to="/login" className="text-sage font-medium">
+//                 Login
+//               </Link>
+//             </p>
+//           </motion.div>
+
+//           <motion.div variants={itemVariants} className="text-center mt-3">
+//             <Link to="/" className="text-xs text-muted-foreground">
+//               ← Back to Home
+//             </Link>
+//           </motion.div>
+//         </div>
+//       </motion.div>
+//     </div>
+//   );
+// };
+
+// export default SignUpPage;
+
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { FiMail, FiLock, FiUser, FiPhone, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { signup } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
+
+/* ================== ANIMATIONS ================== */
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.06 },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+  },
+};
+/* ================================================ */
+const FullPageLoader = () => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="
+      fixed inset-0 z-50 
+      flex items-center justify-center
+      bg-sage/40 backdrop-blur-sm
+    "
+  >
+    {/* Floating Loader Card */}
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="
+        w-[220px] 
+        rounded-xl 
+        bg-white/90
+        shadow-xl
+        p-6 
+        flex flex-col items-center
+      "
+    >
+      {/* Spinner */}
+      <div className="h-10 w-10 rounded-full border-2 border-sage border-t-transparent animate-spin mb-4" />
+
+      {/* Text */}
+      <p className="text-sm font-medium text-slate">
+        Signing you in…
+      </p>
+    </motion.div>
+  </motion.div>
+);
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -19,27 +1034,50 @@ const SignUpPage = () => {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
-    }
+    if (isAuthenticated) navigate('/');
   }, [isAuthenticated, navigate]);
+
+  /* ================== VALIDATIONS ================== */
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // Any 10-digit phone number
+  const isValidPhone = (phone: string) =>
+    /^\d{10}$/.test(phone);
+
+  // Strong password:
+  // 8+ chars, uppercase, lowercase, number, symbol
+  const isValidPassword = (password: string) =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(password);
+  /* ================================================ */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.name || !formData.email || !formData.password) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (!isValidEmail(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (!isValidPassword(formData.password)) {
+      toast.error(
+        'Password must be at least 8 characters and include uppercase, lowercase, number, and symbol'
+      );
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
+      return;
+    }
+
+    if (formData.phone && !isValidPhone(formData.phone)) {
+      toast.error('Phone number must be exactly 10 digits');
       return;
     }
 
@@ -58,211 +1096,173 @@ const SignUpPage = () => {
       toast.error(err || 'Signup failed');
     }
   };
-
+if (isLoading) {
+  return <FullPageLoader />;
+}
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 px-4 py-12">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            rotate: [0, -90, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl"
-        />
-      </div>
-
-      {/* Sign Up Card */}
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-md"
+        variants={cardVariants}
+        initial="hidden"
+        animate="show"
+        className="w-full max-w-[420px]"
       >
-        <div className="glass-card rounded-2xl p-8">
+        <div className="glass-card rounded-xl p-6">
           {/* Header */}
-          <div className="text-center mb-8">
+          <motion.div variants={itemVariants} className="text-center mb-4">
             <Link to="/">
-              <h1 className="text-3xl font-display font-bold gradient-text mb-2">STYLISTE</h1>
+              <h1 className="text-2xl font-serif gradient-text mb-1">
+                Styliste Couturier
+              </h1>
             </Link>
-            <p className="text-dark-400">Create your account and start shopping</p>
-          </div>
+            <p className="text-sm text-muted-foreground">
+              Create your account and start shopping
+            </p>
+          </motion.div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Full Name *
-              </label>
+          <motion.form
+            onSubmit={handleSubmit}
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-3"
+          >
+            {/* Full Name */}
+            <motion.div variants={itemVariants}>
+              {/* <label className="text-sm font-medium mb-1 block">Full Name *</label> */}
               <div className="relative">
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="John Doe"
-                  className="input-field pl-10"
+                  placeholder="Enter Full Name"
+                  className="input-field pl-8 py-2"
                   required
                 />
-                <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+                <FiUser className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Email */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Email Address *
-              </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="your@email.com"
-                  className="input-field pl-10"
-                  required
-                />
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+            {/* Email + Phone */}
+            <motion.div
+              variants={itemVariants}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            >
+              <div>
+                {/* <label className="text-sm font-medium mb-1 block">Email *</label> */}
+                <div className="relative">
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter Email"
+                    className="input-field pl-8 py-2"
+                    required
+                  />
+                  <FiMail className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                </div>
               </div>
-            </div>
 
-            {/* Phone */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Phone Number
-              </label>
-              <div className="relative">
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="+1 (555) 000-0000"
-                  className="input-field pl-10"
-                />
-                <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+              <div>
+                {/* <label className="text-sm font-medium mb-1 block">Phone</label> */}
+                <div className="relative">
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="Enter Phone Number"
+                    className="input-field pl-8 py-2"
+                  />
+                  <FiPhone className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                </div>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Password */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Password *
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="••••••••"
-                  className="input-field pl-10"
-                  required
-                  minLength={6}
-                />
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+            {/* Password + Confirm */}
+            <motion.div
+              variants={itemVariants}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            >
+              <div>
+                {/* <label className="text-sm font-medium mb-1 block">Password *</label> */}
+                <div className="relative">
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder='Enter password'
+                    className="input-field pl-8 py-2"
+                    required
+                  />
+                  <FiLock className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                </div>
               </div>
-            </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="text-sm font-semibold text-dark-300 mb-2 block">
-                Confirm Password *
-              </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="••••••••"
-                  className="input-field pl-10"
-                  required
-                />
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+              <div>
+                {/* <label className="text-sm font-medium mb-1 block">Confirm *</label> */}
+                <div className="relative">
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    placeholder='Confirm password'
+                    className="input-field pl-8 py-2"
+                    required
+                  />
+                  <FiLock className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Terms */}
-            <label className="flex items-start space-x-2 cursor-pointer text-sm">
-              <input
-                type="checkbox"
-                className="accent-primary-500 mt-1"
-                required
-              />
-              <span className="text-dark-300">
-                I agree to the{' '}
-                <a href="#" className="text-primary-400 hover:text-primary-300">
-                  Terms & Conditions
-                </a>{' '}
-                and{' '}
-                <a href="#" className="text-primary-400 hover:text-primary-300">
-                  Privacy Policy
-                </a>
-              </span>
-            </label>
+            <motion.label
+  variants={itemVariants}
+  className="flex items-start gap-2 text-xs mb-2.5"
+>
+  <input type="checkbox" className="accent-primary mt-1" required />
+  <span className="text-muted-foreground">
+    I agree to the{' '}
+    <a href="#" className="text-sage hover:underline">Terms</a> &{' '}
+    <a href="#" className="text-sage hover:underline">Privacy Policy</a>
+  </span>
+</motion.label>
 
-            {/* Submit Button */}
-            <motion.button
-              type="submit"
-              disabled={isLoading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
-            >
-              <span>{isLoading ? 'Creating Account...' : 'Sign Up'}</span>
-              {!isLoading && <FiArrowRight />}
-            </motion.button>
-          </form>
+<motion.button
+  variants={itemVariants}
+  type="submit"
+  disabled={isLoading}
+  whileHover={{ scale: 1.03 }}
+  whileTap={{ scale: 0.97 }}
+  className="w-full btn-primary mt-2 flex items-center justify-center gap-2 disabled:opacity-60"
+>
+  <span>{isLoading ? 'Creating...' : 'Sign Up'}</span>
+  {!isLoading && <FiArrowRight />}
+</motion.button>
+          </motion.form>
 
-          {/* Divider */}
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-white/10"></div>
-            <span className="px-4 text-sm text-dark-500">OR</span>
-            <div className="flex-1 border-t border-white/10"></div>
-          </div>
-
-          {/* Login Link */}
-          <div className="text-center">
-            <p className="text-dark-400">
+          {/* Footer */}
+          <motion.div variants={itemVariants} className="text-center mt-4 text-sm">
+            <p className="text-muted-foreground">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
-                Login
-              </Link>
+              <Link to="/login" className="text-sage font-medium">Login</Link>
             </p>
-          </div>
+          </motion.div>
 
-          {/* Back to Home */}
-          <div className="text-center mt-6">
-            <Link to="/" className="text-sm text-dark-500 hover:text-dark-300 transition-colors">
+          <motion.div variants={itemVariants} className="text-center mt-3">
+            <Link to="/" className="text-xs text-muted-foreground">
               ← Back to Home
             </Link>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
     </div>

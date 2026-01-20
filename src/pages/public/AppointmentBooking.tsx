@@ -281,6 +281,7 @@
 
 
 
+
 import { useState } from "react";
 // import { motion } from "framer-motion";
 import { /* Calendar, */ Clock, /* User, */ Sparkles, ArrowRight } from "lucide-react";
@@ -310,18 +311,23 @@ export default function AppointmentBooking() {
   const [services, setServices] = useState<string[]>([]);
 const [servicesLoading, setServicesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     notes: "",
   });
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   // Convert AM/PM → backend format HH:mm:ss
   const convertTo24Hour = (timeStr: string) => {
     const time = new Date(`1970-01-01 ${timeStr}`);
     return time.toTimeString().split(" ")[0];
   };
+
+  const storedUser = localStorage.getItem("user");
+const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
+
 // backend "HH:mm:ss" → "10:00 AM"
 const convertTo12Hour = (time24: string) => {
   const [h, m] = time24.split(":").map(Number);
@@ -362,66 +368,96 @@ const formatServiceName = (service: string) =>
   };
 
   // ---------------- SUBMIT → API CALL ----------------
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+const handleSubmit = async (e: any) => {
+  e.preventDefault();
 
-    if (!selectedService || !selectedDate || !selectedTime) {
-      toast.error("Please complete all required fields");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const payload = {
-        appointmentDate: selectedDate,
-        appointmentTime: convertTo24Hour(selectedTime),
-        serviceType: selectedService,
-        notes: formData.notes || "",
-      };
-      const res = await bookingApi.createAppointment(payload);
-
-      toast.success("Appointment booked successfully!");
-      console.log("APPOINTMENT CREATED:", res);
-
-      // Reset form
-      setSelectedService("");
-      setSelectedDate("");
-      setSelectedTime("");
-      setFormData({ name: "", email: "", phone: "", notes: "" });
-    } catch (error: any) {
-      console.log(error);
-      toast.error(
-        error?.response?.data?.message || "Failed to book appointment"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-useEffect(() => {
-  if (!selectedDate) {
-    setBookedSlots([]);
+  if (!selectedService || !selectedDate || !selectedTime) {
+    toast.error("Please complete all required fields");
     return;
   }
 
-  const loadBookedSlots = async () => {
+  try {
+    setLoading(true);
+
+    const baseData = {
+      appointmentDate: selectedDate,
+      appointmentTime: convertTo24Hour(selectedTime),
+      serviceType: selectedService,
+      notes: formData.notes || "",
+    };
+
+    let response;
+
+    if (loggedInUser) {
+      // ✅ LOGGED-IN USER
+      response = await bookingApi.createAppointment(baseData);
+    } else {
+      // ✅ GUEST USER
+      response = await bookingApi.createGuestAppointment({
+        ...baseData,
+        guestName: formData.name,
+        guestEmail: formData.email,
+        guestPhone: formData.phone,
+      });
+    }
+
+    toast.success("Appointment booked successfully!");
+    console.log("APPOINTMENT CREATED:", response);
+    setShowSuccessModal(true);
+
+    // reset
+    setSelectedService("");
+    setSelectedDate("");
+    setSelectedTime("");
+    setFormData({ name: "", email: "", phone: "", notes: "" });
+
+  } catch (error: any) {
+    console.error(error);
+    toast.error(
+      error?.response?.data?.message || "Failed to book appointment"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  if (!selectedDate) {
+    setAvailableSlots([]);
+    return;
+  }
+
+  const loadAvailableSlots = async () => {
     try {
-      const appointments =
-        await bookingApi.getAppointmentsByDate(selectedDate);
+      const slots24 =
+        await bookingApi.getAvailableSlots(selectedDate);
 
-      const slots = appointments.map((a) =>
-        convertTo12Hour(a.appointmentTime)
-      );
+      // convert backend 24h → frontend AM/PM
+      const slots12 = slots24.map(convertTo12Hour);
 
-      setBookedSlots(slots);
+      setAvailableSlots(slots12);
     } catch (err) {
-      console.error("Failed to fetch booked slots", err);
-      setBookedSlots([]);
+      console.error("Failed to load available slots", err);
+      setAvailableSlots([]);
     }
   };
 
-  loadBookedSlots();
+  loadAvailableSlots();
 }, [selectedDate]);
+
+
+
+useEffect(() => {
+  if (loggedInUser) {
+    setFormData({
+      name: loggedInUser.name || "",
+      email: loggedInUser.email || "",
+      phone: loggedInUser.phone || "",
+      notes: "",
+    });
+  }
+}, []);
+
 useEffect(() => {
   const loadServices = async () => {
     try {
@@ -525,29 +561,30 @@ useEffect(() => {
             {/* TIME */}
             <div>
               <h2 className="font-serif text-2xl mb-8">Select Time</h2>
-
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-                {timeSlots
-  .filter((time) => !bookedSlots.includes(time)) // 👈 HIDE booked
-  .map((time) => (
-    <button
-      key={time}
-      type="button"
-      onClick={() => setSelectedTime(time)}
-      className={`px-3 py-3 border text-xs tracking-wide
-        ${
-          selectedTime === time
-            ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
-            : "hover:border-black/40"
-        }
-      `}
-    >
-      {time}
-    </button>
-  ))}
-
-
-              </div>
+<div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+  {availableSlots.length === 0 ? (
+    <p className="col-span-full text-sm text-gray-500">
+      No slots available for this date
+    </p>
+  ) : (
+    availableSlots.map((time) => (
+      <button
+        key={time}
+        type="button"
+        onClick={() => setSelectedTime(time)}
+        className={`px-3 py-3 border text-xs tracking-wide transition
+          ${
+            selectedTime === time
+              ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+              : "hover:border-black/40"
+          }
+        `}
+      >
+        {time}
+      </button>
+    ))
+  )}
+</div>
             </div>
 
             {/* USER INFO */}
@@ -666,9 +703,61 @@ outline-none transition rounded-md"
             </div>
           </form>
         </div>
+{showSuccessModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.85 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className="relative bg-white rounded-2xl max-w-lg w-full p-10 text-center shadow-2xl overflow-hidden"
+    >
+      {/* CONFETTI DOTS */}
+      <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle,#6E9F7D_1px,transparent_1px)] bg-[length:20px_20px]" />
 
+      {/* CHECK ICON */}
+      <div className="relative z-10 w-24 h-24 mx-auto mb-6 rounded-full border-4 border-green-500 flex items-center justify-center">
+        <svg
+          className="w-12 h-12 text-green-500"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={3}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+      </div>
+
+      {/* TITLE */}
+      <h2 className="relative z-10 text-3xl font-serif font-semibold mb-2 text-gray-900">
+        Appointment Booked Successfully
+      </h2>
+
+      <p className="relative z-10 text-gray-600 mb-8">
+        Thank you for patronizing us today. <br />
+        We value you!
+      </p>
+
+      {/* CTA */}
+      <button
+        onClick={() => setShowSuccessModal(false)}
+        className="relative z-10 px-10 py-3 bg-[#6E9F7D] text-white rounded-md font-medium hover:bg-[#628c71] transition"
+      >
+        Return Home
+      </button>
+    </motion.div>
+  </div>
+)}
         <Footer />
       </section>
     </div>
   );
 }
+
+
+
+

@@ -16,7 +16,7 @@ const testimonials = [
     name: "Anjali Mehta",
     location: "Mulund",
     review:
-      "Got my wedding lehenga stitched from STYLISTE. The fitting was perfect and they delivered on time!",
+      "Got my wedding lehenga stitched from Styliste Couturier. The fitting was perfect and they delivered on time!",
     rating: 5,
     image:
       "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&q=80",

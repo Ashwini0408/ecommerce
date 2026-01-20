@@ -150,22 +150,22 @@ import { Instagram, Facebook, Phone, Mail, MapPin, Clock } from "lucide-react";
 
 const footerLinks = {
   services: [
-    { name: "Bespoke Tailoring", href: "/appointment" },
-    { name: "Designer Dresses", href: "/shop" },
-    { name: "Upscaling Sarees", href: "/appointment" },
-    { name: "Bridal Wear", href: "/shop" },
-    { name: "Alterations", href: "/appointment" },
+    { name: "Bespoke Tailoring", href: "/services" },
+    { name: "Designer Dresses", href: "/services" },
+    { name: "Upscaling Sarees", href: "/services" },
+    { name: "Bridal Wear", href: "/services" },
+    { name: "Alterations", href: "/services" },
   ],
   company: [
     { name: "About Us", href: "/about" },
-    { name: "Our Process", href: "/about" },
+    { name: "Our Process", href: "/services" },
     { name: "Sustainability", href: "/sustainability" },
   ],
   support: [
     { name: "Contact Us", href: "/contact" },
     { name: "Shipping", href: "/shipping" },
     { name: "Returns", href: "/returns" },
-    { name: "Size Guide", href: "/size-guide" },
+    { name: "Size Guide", href: "/sizeGuide" },
     { name: "Book Appointment", href: "/appointment" },
   ],
  legal: [
@@ -181,12 +181,16 @@ export const Footer = () => {
       <div className="container mx-auto px-6 py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12">
           {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link to="/" className="inline-block">
-              <h2 className="font-serif text-4xl tracking-[0.2em] mb-6">
-                STYLISTE
-              </h2>
-            </Link>
+         <div className="lg:col-span-2">
+  <Link to="/" className="inline-flex items-center gap-4 mb-6">
+    {/* LOGO */}
+    <img
+      src="./src/assets/logo.png"
+      alt="Styliste Couturier Logo"
+      className="w-20 h-12 object-contain"
+    />
+  </Link>
+
 
             <p className="text-muted-foreground max-w-sm mb-6 text-sm leading-relaxed">
               Your trusted destination for premium custom fashion. We specialise

@@ -315,15 +315,15 @@ import AdminAppointment from './AdminAppointment';
 const getStatusClasses = (status: string) => {
   switch (status) {
     case 'PENDING':
-      return 'bg-yellow-500/20 text-yellow-400';
+      return 'bg-yellow-500/20 text-yellow-600';
     case 'CONFIRMED':
-      return 'bg-blue-500/20 text-blue-400';
+      return 'bg-blue-500/20 text-blue-600';
     case 'COMPLETED':
-      return 'bg-green-500/20 text-green-400';
+      return 'bg-green-500/20 text-green-600';
     case 'CANCELLED':
-      return 'bg-red-500/20 text-red-400';
+      return 'bg-red-500/20 text-red-600';
     default:
-      return 'bg-gray-500/20 text-gray-400';
+      return 'bg-gray-500/20 text-gray-600';
   }
 };
 
@@ -467,7 +467,7 @@ const fetchStatistics = async () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -4 }}
-              className="glass-card-hover rounded-2xl p-6"
+              className="glass-card-hover rounded-2xl p-6 border border-dark-200"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 ${stat.bgColor} rounded-xl`}>
@@ -477,7 +477,7 @@ const fetchStatistics = async () => {
                   <p className="text-3xl font-bold gradient-text">{stat.value}</p>
                 </div>
               </div>
-              <p className="text-dark-400 text-sm">{stat.title}</p>
+              <p className="text-dark-600 text-sm">{stat.title}</p>
             </motion.div>
           );
         })}
@@ -488,7 +488,11 @@ const fetchStatistics = async () => {
 
   {/* ================= RECENT ORDERS ================= */}
   <div className="glass-card rounded-2xl p-6">
-    <h2 className="text-2xl font-bold text-white mb-6">Recent Orders</h2>
+  {/* Header */}
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-bold text-dark-900">
+      Recent Orders
+    </h2>
 
     <div className="space-y-4">
       {recentOrders.length === 0 ? (
@@ -520,22 +524,82 @@ const fetchStatistics = async () => {
     </div>
   </div>
 
+  {/* Orders */}
+  <div className="space-y-4">
+    {recentOrders.length === 0 ? (
+      <p className="text-dark-600 text-sm text-center">
+        No recent orders
+      </p>
+    ) : (
+      recentOrders.map((order) => (
+        <div
+          key={order.id}
+          className="flex items-center justify-between p-4 glass-card rounded-xl border border-dark-200"
+        >
+          {/* Left */}
+<div>
+  <p className="text-dark-900 font-semibold">
+    Order #{order.orderNumber ?? order.id}
+  </p>
+
+  <p className="text-sm text-dark-600">
+    ₹{order.totalAmount}
+  </p>
+
+  {/* Products */}
+  <div className="mt-1 space-y-0.5">
+    {order.items?.map((item: any) => (
+      <p
+        key={item.id}
+        className="text-xs text-dark-500"
+      >
+        {item.productName} × {item.quantity}
+      </p>
+    ))}
+  </div>
+</div>
+          {/* Status Badge */}
+          <span
+            className={`px-3 py-1 text-xs font-semibold rounded-full
+                        border border-white/10
+                        backdrop-blur-sm
+                        whitespace-nowrap
+                        ${getStatusClasses(order.status)}`}
+          >
+            {order.status}
+          </span>
+        </div>
+      ))
+    )}
+  </div>
+</div>
+
+
 {/* ================= RECENT APPOINTMENTS ================= */}
 <div className="glass-card rounded-2xl p-6">
-  <h2 className="text-2xl font-bold text-white mb-6">
-    Recent Appointments
-  </h2>
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-bold text-dark-900">
+      Recent Appointments
+    </h2>
+
+    <Link
+      to="/admin/orders"
+      className="text-sm font-medium text-primary-500 hover:underline"
+    >
+      View All
+    </Link>
+  </div>
 
   <div className="space-y-4">
     {recentAppointments.length === 0 ? (
-      <p className="text-dark-400 text-sm text-center">
+      <p className="text-dark-600 text-sm text-center">
         No recent appointments
       </p>
     ) : (
       recentAppointments.map((appt) => (
         <div
           key={appt.id}
-          className="flex items-center justify-between p-4 glass-card rounded-xl"
+          className="flex items-center justify-between p-4 glass-card rounded-xl border border-dark-200"
         >
           {/* LEFT INFO */}
           <div>
@@ -565,7 +629,8 @@ const fetchStatistics = async () => {
 
 
        <div className="glass-card rounded-2xl p-6">
-  <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
+  <h2 className="text-2xl font-bold text-dark-900 mb-6">
+Quick Actions</h2>
 
   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
     
@@ -584,28 +649,31 @@ const fetchStatistics = async () => {
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="w-full btn-ghost flex items-center justify-center space-x-2"
+        className="w-full btn-ghost flex items-center justify-center space-x-2 h-12 rounded-3xl ring-1 ring-[#8FAE8B] hover:bg-primary-50 hover:ring-[#7E9F7A] text-dark-800 transition-all"
       >
         <FiShoppingBag />
         <span>View Orders</span>
       </motion.button>
     </Link>
 
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-full btn-ghost flex items-center justify-center space-x-2"
-    >
-      <FiUsers />
-      <span>Manage Users</span>
-    </motion.button>
+    <Link to="/admin/users">
+  <motion.button
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    className="w-full btn-ghost flex items-center justify-center space-x-2 h-12 rounded-3xl ring-1 ring-[#8FAE8B] hover:bg-primary-50 hover:ring-[#7E9F7A] text-dark-800 transition-all"
+  >
+    <FiUsers />
+    <span>Manage Users</span>
+  </motion.button>
+</Link>
+
 
     {/* ✅ New View Appointments Button */}
     <Link to="/admin/appointments">
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="w-full btn-ghost flex items-center justify-center space-x-2"
+        className="w-full btn-ghost flex items-center justify-center space-x-2 h-12 rounded-3xl ring-1 ring-[#8FAE8B] hover:bg-primary-50 hover:ring-[#7E9F7A] text-dark-800 transition-all"
       >
         <FiCalendar />
         <span>View Appointments</span>
@@ -638,12 +706,15 @@ const AdminDashboard = () => {
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8  mx-auto">
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-display font-bold text-white mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-dark-400">Manage your store, products, and customers</p>
-        </div>
+       <div className="mb-8">
+  <h1 className="text-4xl font-display font-bold text-dark-900 mb-2">
+    Admin Dashboard
+  </h1>
+  <p className="text-dark-600">
+    Manage your store, products, and customers
+  </p>
+</div>
+
 
         {/* Tabs */}
         <div className="flex space-x-2 mb-8 overflow-x-auto pb-2">
@@ -657,8 +728,8 @@ const AdminDashboard = () => {
                   whileTap={{ scale: 0.98 }}
                   className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-colors whitespace-nowrap ${
                     isActive
-                      ? 'bg-primary-500 text-white'
-                      : 'glass-card hover:bg-white/10 text-dark-300'
+  ? 'bg-[#8FAE8B] text-white border border-[#7E9F7A] shadow-md'
+  : 'glass-card border border-dark-200 hover:bg-primary-50 text-dark-700'
                   }`}
                 >
                   <Icon size={20} />

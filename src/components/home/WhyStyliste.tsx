@@ -70,7 +70,7 @@ export const WhyStyliste = () => {
             >
               Why Women Trust
               <br />
-              <span className="italic text-primary">STYLISTE</span>
+              <span className="italic text-primary">Styliste Couturier</span>
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}

@@ -116,6 +116,7 @@ export interface OrderItem {
 }
 
 export interface Order {
+  orderNumber: number;
   id: number;
   userId: number;
   status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
@@ -156,6 +157,7 @@ export interface OrderStatistics {
 
 // ==================== APPOINTMENT ====================
 export interface Appointment {
+  name: ReactNode;
   id: number;
   userId: number;
   appointmentDate: string;

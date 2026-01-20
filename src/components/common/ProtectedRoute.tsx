@@ -1,16 +1,15 @@
-import { Navigate } from 'react-router-dom';
-import  useAuth  from '../../hooks/useAuth';
+import { Navigate, useLocation } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requireAdmin?: boolean;
-}
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  const location = useLocation();
 
-const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  // ⏳ wait until auth is loaded
+  if (isLoading) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (requireAdmin && !isAdmin) {

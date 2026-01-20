@@ -127,7 +127,7 @@
 //       {/* Header */}
 //       <div className="flex items-center justify-between">
 //         <div>
-//           <h2 className="text-2xl font-bold text-white">User Management</h2>
+//           <h2 className="text-2xl font-bold text-dark-900">User Management</h2>
 //           <p className="text-dark-400 mt-1">{users.length} users</p>
 //         </div>
 
@@ -295,7 +295,7 @@
 //                 className="glass-card rounded-2xl p-6 max-w-lg w-full"
 //               >
 //                 <div className="flex justify-between items-center mb-4">
-//                   <h2 className="text-xl font-bold text-white">
+//                   <h2 className="text-xl font-bold text-dark-900">
 //                     {selectedUser.name}
 //                   </h2>
 //                   <FiX
@@ -335,7 +335,7 @@
 //                 className="glass-card rounded-2xl p-6 max-w-md w-full"
 //               >
 //                 <div className="flex justify-between items-center mb-4">
-//                   <h2 className="text-xl font-bold text-white">Edit User</h2>
+//                   <h2 className="text-xl font-bold text-dark-900">Edit User</h2>
 //                   <FiX
 //                     className="text-dark-400 cursor-pointer"
 //                     size={22}
@@ -477,7 +477,7 @@
 //       {/* Header */}
 //       <div className="flex items-center justify-between">
 //         <div>
-//           <h2 className="text-2xl font-bold text-white">
+//           <h2 className="text-2xl font-bold text-dark-900">
 //             User Management
 //           </h2>
 //           <p className="text-dark-400 mt-1">
@@ -630,7 +630,7 @@
 //                 className="glass-card rounded-2xl p-6 max-w-lg w-full"
 //               >
 //                 <div className="flex justify-between items-center mb-4">
-//                   <h2 className="text-xl font-bold text-white">
+//                   <h2 className="text-xl font-bold text-dark-900">
 //                     {selectedUser.name}
 //                   </h2>
 //                   <FiX
@@ -764,7 +764,7 @@
 //       {/* Header */}
 //       <div className="flex items-center justify-between">
 //         <div>
-//           <h2 className="text-2xl font-bold text-white">User Management</h2>
+//           <h2 className="text-2xl font-bold text-dark-900">User Management</h2>
 //           <p className="text-dark-400 mt-1">{totalUsers} users</p>
 //         </div>
 
@@ -966,7 +966,7 @@
 //             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 //               <motion.div className="glass-card rounded-2xl p-6 max-w-lg w-full">
 //                 <div className="flex justify-between mb-4">
-//                   <h2 className="text-xl font-bold text-white">
+//                   <h2 className="text-xl font-bold text-dark-900">
 //                     {selectedUser.name}
 //                   </h2>
 //                   <FiX
@@ -1120,10 +1120,10 @@ const openAppointmentsModal = async (user: User) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="text-2xl font-bold text-dark-900">
             User Management
           </h2>
-          <p className="text-dark-400 mt-1">
+          <p className="text-dark-600 mt-1">
             {totalUsers} users
           </p>
         </div>
@@ -1150,7 +1150,7 @@ const openAppointmentsModal = async (user: User) => {
             {error}
           </p>
         ) : (
-          <table className="w-full text-sm text-dark-300 table-fixed">
+          <table className="w-full text-sm text-dark-700 table-fixed">
             <colgroup>
               <col className="w-[70px]" />
               <col className="w-[160px]" />
@@ -1177,7 +1177,7 @@ const openAppointmentsModal = async (user: User) => {
               {filteredUsers.map((user) => (
                 <tr
                   key={user.id}
-                  className="border-b border-dark-800 hover:bg-white/5 transition"
+                  className="border-b border-dark-200 hover:bg-dark-50 transition"
                 >
                   <td className="py-4 px-2">{user.id}</td>
                   <td className="py-4 px-3">{user.name}</td>
@@ -1213,8 +1213,8 @@ const openAppointmentsModal = async (user: User) => {
                         className={`text-xs font-semibold
                           ${
                             user.isActive
-                              ? "text-green-400"
-                              : "text-red-400"
+                              ? "text-green-600"
+                              : "text-red-600"
                           }`}
                       >
                         {user.isActive
@@ -1245,19 +1245,19 @@ const openAppointmentsModal = async (user: User) => {
 
                       <FiPackage
                         title="Orders"
-                        className="text-yellow-400 cursor-pointer"
+                        className="text-yellow-600 cursor-pointer"
                         onClick={() => openOrdersModal(user)}
                       />
 
                       <FiCalendar
                         title="Appointments"
-                        className="text-blue-400 cursor-pointer"
+                        className="text-blue-600 cursor-pointer"
                         onClick={() => openAppointmentsModal(user)}
                       />
 
                     <FiTrash
   title="Delete"
-  className="text-red-400 cursor-pointer"
+  className="text-red-600 cursor-pointer"
   onClick={async () => {
     if (!window.confirm(`Delete ${user.name}?`)) return;
 
@@ -1298,7 +1298,7 @@ const openAppointmentsModal = async (user: User) => {
               <motion.div className="glass-card rounded-3xl p-8 max-w-xl w-full">
                 <div className="flex justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold text-dark-900">
                       {selectedUser.name}
                     </h2>
                     <p className="text-sm text-dark-400">
@@ -1306,28 +1306,35 @@ const openAppointmentsModal = async (user: User) => {
                     </p>
                   </div>
                   <FiX
-                    className="cursor-pointer text-dark-400 hover:text-white"
+                    className="cursor-pointer text-dark-400 hover:text-dark-900"
                     onClick={() => setShowViewModal(false)}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
                   <div>
-                    <p className="text-dark-400 mb-1">Email</p>
-                    <p className="text-white break-all">
+ <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+  Email
+</p>
+<p className="text-base font-semibold text-dark-900 break-all">
+
                       {selectedUser.email}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-dark-400 mb-1">Phone</p>
-                    <p className="text-white">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+  Phone
+</p>
+                   <p className="text-base font-semibold text-dark-900 break-all">
                       {selectedUser.phone}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-dark-400 mb-1">Status</p>
+                   <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+  Status
+</p>
                     <span
                       className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold
                         ${
@@ -1343,8 +1350,10 @@ const openAppointmentsModal = async (user: User) => {
                   </div>
 
                   <div>
-                    <p className="text-dark-400 mb-1">Created At</p>
-                    <p className="text-white">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-dark-700 mb-1">
+  Created At
+</p>
+                    <p className="text-base font-semibold text-dark-900 break-all">
                       {format(
                         new Date(selectedUser.createdAt),
                         "MMM dd, yyyy"
@@ -1357,7 +1366,7 @@ const openAppointmentsModal = async (user: User) => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="glass-card p-4 rounded-xl text-center">
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-3xl font-bold text-dark-900">
                       {selectedUser.orderCount ?? 0}
                     </p>
                     <p className="text-xs text-dark-400 mt-1">
@@ -1366,7 +1375,7 @@ const openAppointmentsModal = async (user: User) => {
                   </div>
 
                   <div className="glass-card p-4 rounded-xl text-center">
-                    <p className="text-3xl font-bold text-white">
+                    <p className="text-3xl font-bold text-dark-900">
                       {selectedUser.appointmentCount ?? 0}
                     </p>
                     <p className="text-xs text-dark-400 mt-1">
@@ -1400,7 +1409,7 @@ const openAppointmentsModal = async (user: User) => {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
                 <div className="flex justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-dark-900">
                     Orders – {selectedUser.name}
                   </h2>
                   <FiX
@@ -1425,14 +1434,14 @@ const openAppointmentsModal = async (user: User) => {
                         className="glass-card p-4 rounded-xl"
                       >
                         <div className="flex justify-between">
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-dark-900">
                             Order #{o.id}
                           </span>
                           <span className="text-sm text-dark-400">
                             {o.status}
                           </span>
                         </div>
-                        <p className="text-sm text-dark-400">
+                        <p className="text-sm text-dark-600">
                           Amount: ₹{o.totalAmount}
                         </p>
                       </div>
@@ -1456,7 +1465,7 @@ const openAppointmentsModal = async (user: User) => {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
                 <div className="flex justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-dark-900">
                     Appointments – {selectedUser.name}
                   </h2>
                   <FiX
@@ -1482,7 +1491,7 @@ const openAppointmentsModal = async (user: User) => {
                         key={a.id}
                         className="glass-card p-4 rounded-xl"
                       >
-                        <p className="font-semibold text-white">
+                        <p className="font-semibold text-dark-900">
                           {a.serviceType}
                         </p>
                         <p className="text-sm text-dark-400">

@@ -348,3 +348,38 @@
     animation: pulse-glow 2s ease-in-out infinite;
   }
 }
+
+@layer components {
+  .glass-card {
+    @apply bg-card text-card-foreground border border-border rounded-xl shadow-lg;
+  }
+
+  .input-field {
+    @apply w-full bg-background text-foreground
+    border border-input rounded-lg px-4 py-3
+    focus:outline-none focus:ring-2 focus:ring-primary/30
+    transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground
+    py-3 rounded-lg font-medium
+    hover:opacity-90 transition-all duration-300;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-sage to-sage-dark
+    bg-clip-text text-transparent;
+  }
+}
+
+.input-field::placeholder {
+  font-size: 0.80rem;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.8;
+}
+@media (max-width: 640px) {
+  .input-field::placeholder {
+    font-size: 0.8rem;
+  }
+}

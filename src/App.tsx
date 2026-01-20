@@ -86,7 +86,7 @@ import { useAppDispatch } from './hooks/useAuth';
 import { loadUserFromStorage } from './store/slices/authSlice';
 import { loadCartFromStorage } from './store/slices/cartSlice';
 import { FloatingAppointmentButton } from "./pages/public/FloatingAppointmentButton";
-
+import { useAppSelector } from "./hooks/useAuth";
 
 // Public Pages
 import HomePage from './pages/public/HomePage';
@@ -105,12 +105,18 @@ import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import TermsOfService from './pages/public/TermsAndConditions';
 import RefundPolicy from './pages/public/RefundPolicy';
 import Testimonial from './pages/public/Testimonial';
+// import sustainability from './pages/public/SustainabilityComingSoon';
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { WhatsAppButton } from './pages/public/WhatsAppButton';
+import SustainabilityComingSoon from './pages/public/SustainabilityComingSoon';
+import ComingSoon from './pages/public/ShippingCommingSoon';
+import ShippingCommingSoon from './pages/public/ShippingCommingSoon';
+import ReturnCommingSoon from './pages/public/ReturnCommingSoon';
+
 
 
 const NotFound = () => (
@@ -132,7 +138,8 @@ function ScrollToTop() {
 
 function App() {
   const dispatch = useAppDispatch();
-
+const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === "ADMIN";
   // Load user and cart from localStorage on app mount
   useEffect(() => {
     dispatch(loadUserFromStorage());
@@ -140,11 +147,10 @@ function App() {
   }, [dispatch]);
 
   return (
+    
     <div className="min-h-screen bg-dark-950 text-dark-50">
-
       {/* Scroll To Top Component */}
       <ScrollToTop />
-
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
@@ -164,6 +170,10 @@ function App() {
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />
         <Route path="/testimonials" element={<Testimonial />} />
+        <Route path="/sustainability" element={<SustainabilityComingSoon />} />
+        <Route path="/shipping" element={<ShippingCommingSoon />} />
+        <Route path="/returns" element={<ReturnCommingSoon />} />
+        
 
         {/* Protected User Routes */}
         <Route
@@ -176,23 +186,29 @@ function App() {
         />
 
         {/* Protected Admin Routes */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
+       <Route
+  path="/admin/*"
+  element={
+    <ProtectedRoute requireAdmin>
+      <AdminDashboard />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Fallback */}
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
-       {/* ✅ FLOATING BUTTON — ADD HERE */}
+      {/* Floating buttons only for non-admin */}
+{(!isAuthenticated || !isAdmin) && (
+  <>
     <FloatingAppointmentButton />
     <WhatsAppButton />
+  </>
+)}
+
     </div>
+      
   );
 }
 
