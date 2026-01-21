@@ -149,9 +149,10 @@
 }
 
 @layer base {
-  * {
+  /* REMOVED the problematic line causing the error */
+  /* * {
     @apply border-border;
-  }
+  } */
 
   body {
     @apply bg-background text-foreground antialiased;
@@ -169,6 +170,11 @@
     font-family: 'Cormorant Garamond', serif;
     font-weight: 400;
     letter-spacing: 0.02em;
+  }
+
+  /* Add border styling without @apply */
+  * {
+    border-color: hsl(var(--border));
   }
 }
 
@@ -366,11 +372,14 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card text-card-foreground border border-border rounded-xl shadow-lg;
+    /* Fixed: removed border-border reference */
+    @apply bg-card text-card-foreground border rounded-xl shadow-lg;
+    border-color: hsl(var(--border));
   }
 
   .input-field {
-    @apply w-full bg-background text-foreground border border-input rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all duration-300;
+    @apply w-full bg-background text-foreground border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all duration-300;
+    border-color: hsl(var(--input));
   }
 
   .btn-primary {

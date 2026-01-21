@@ -1,0 +1,252 @@
+// import { Outlet, useLocation, Link } from 'react-router-dom';
+// import { motion } from 'framer-motion';
+// import {
+//   FiHome,
+//   FiPackage,
+//   FiShoppingBag,
+//   FiUsers,
+//   FiCalendar,
+//   FiTrendingUp,
+//   FiFileText,
+//   FiSettings,
+//   FiLogOut,
+// } from 'react-icons/fi';
+// import useAuth from '../../hooks/useAuth';
+
+// const AdminLayout = () => {
+//   const location = useLocation();
+//   const { user, dispatch } = useAuth();
+
+//   const menuItems = [
+//     { name: 'Dashboard', path: '/admin', icon: FiHome },
+//     { name: 'Products', path: '/admin/products', icon: FiPackage },
+//     { name: 'Orders', path: '/admin/orders', icon: FiShoppingBag },
+//     { name: 'Users', path: '/admin/users', icon: FiUsers },
+//     { name: 'Appointments', path: '/admin/appointments', icon: FiCalendar },
+//     { name: 'Reports', path: '/admin/reports', icon: FiTrendingUp },
+//     { name: 'Content', path: '/admin/content', icon: FiFileText },
+//     { name: 'Settings', path: '/admin/settings', icon: FiSettings },
+//   ];
+
+//   const isActive = (path: string) => {
+//     if (path === '/admin') {
+//       return location.pathname === path;
+//     }
+//     return location.pathname.startsWith(path);
+//   };
+
+//   const handleLogout = () => {
+//     // Add your logout logic here
+//     console.log('Logout clicked');
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       {/* Hide the regular navbar for admin */}
+//       <style>{`
+//         nav { display: none !important; }
+//         .h-20 { height: 0 !important; }
+//       `}</style>
+
+//       {/* Static Sidebar */}
+//       <div className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-[#2C3E50] to-[#1A252F] text-white shadow-xl z-40">
+//         {/* Logo/Header */}
+//         <div className="p-6 border-b border-white/10">
+//           <h1 className="text-2xl font-bold">Admin Panel</h1>
+//           <p className="text-sm text-white/60 mt-1">Styliste Couturier</p>
+//           <p className="text-xs text-white/40 mt-2">Logged in as: {user?.name || 'Admin'}</p>
+//         </div>
+
+//         {/* Navigation Menu */}
+//         <nav className="p-4 space-y-1">
+//           {menuItems.map((item) => {
+//             const Icon = item.icon;
+//             const active = isActive(item.path);
+            
+//             return (
+//               <Link
+//                 key={item.name}
+//                 to={item.path}
+//                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+//                   active
+//                     ? 'bg-white/20 text-white shadow-md border-l-4 border-white'
+//                     : 'text-white/80 hover:text-white hover:bg-white/10'
+//                 }`}
+//               >
+//                 <Icon size={20} className={active ? 'text-white' : 'text-white/70'} />
+//                 <span className="font-medium">{item.name}</span>
+//                 {active && (
+//                   <motion.div
+//                     layoutId="activeTab"
+//                     className="ml-auto w-2 h-2 bg-white rounded-full"
+//                   />
+//                 )}
+//               </Link>
+//             );
+//           })}
+//         </nav>
+
+//         {/* Logout Button */}
+//         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
+//           <button
+//             onClick={handleLogout}
+//             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200"
+//           >
+//             <FiLogOut size={18} />
+//             <span className="font-medium">Logout</span>
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* Main Content Area */}
+//       <main className="ml-64 p-6">
+//         <div className="max-w-7xl mx-auto">
+//           <Outlet />
+//         </div>
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default AdminLayout;
+
+
+import { Outlet, useLocation, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  FiHome,
+  FiPackage,
+  FiShoppingBag,
+  FiUsers,
+  FiCalendar,
+  FiLogOut,
+} from 'react-icons/fi';
+import useAuth from '../../hooks/useAuth';
+import logo from '../../assets/logo.png';
+
+// Add your logo import - replace with your actual logo
+// import Logo from '../../assets/logo.svg';
+
+const AdminLayout = () => {
+  const location = useLocation();
+  const { user, dispatch } = useAuth();
+
+  // Main navigation items
+  const mainMenuItems = [
+    { name: 'Dashboard', path: '/admin', icon: FiHome },
+    { name: 'Product Management', path: '/admin/products', icon: FiPackage },
+    { name: 'Order Management', path: '/admin/orders', icon: FiShoppingBag },
+    { name: 'Users Management', path: '/admin/users', icon: FiUsers },
+    { name: 'Appointments', path: '/admin/appointments', icon: FiCalendar },
+    { name: 'Log Out', path: '/auth/LoginPage', icon: FiLogOut, onClick: true },
+  ];
+
+  const isActive = (path: string) => {
+    if (path === '/admin') {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  const handleLogout = () => {
+    // Add your logout logic here
+    console.log('Logout clicked');
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Static Sidebar */}
+      <div className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-white to-gray-50 text-gray-800 shadow-lg z-40 border-r border-gray-200">
+       {/* Logo/Header */}
+<div className="p-6 bg-[#5E6E54] border-b border-[#4F5D47]">
+  <div className="flex justify-center items-center">
+    <img
+      src={logo}
+      alt="Styliste Couturier Logo"
+      className="w-12.5 h-14 object-contain mr-3 bg"
+    />
+    <div>
+      {/* <p className="text-xs text-gray-500">Admin Panel</p> */}
+    </div>
+  </div>
+</div>
+
+
+        {/* Navigation Menu */}
+        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-180px)]">
+          {mainMenuItems.map((item, index) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            const isLogout = item.onClick;
+
+            return (
+              <div key={`${item.name}-${index}`}>
+                {isLogout ? (
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-700 hover:text-gray-900 hover:bg-gray-100 text-left"
+                  >
+                    {Icon && <Icon size={20} className="text-gray-500" />}
+                    <span className="font-medium">{item.name}</span>
+                  </button>
+                ) : (
+                  <Link
+                    to={item.path}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      active
+                        ? 'bg-[#8FAE8B]/10 text-[#8FAE8B] border-l-4 border-[#8FAE8B]'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    {Icon ? (
+                      <Icon 
+                        size={20} 
+                        className={active ? 'text-[#8FAE8B]' : 'text-gray-500'} 
+                      />
+                    ) : (
+                      <span className="w-5"></span>
+                    )}
+                    <span className="font-medium">{item.name}</span>
+                    {active && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="ml-auto w-2 h-2 bg-[#8FAE8B] rounded-full"
+                      />
+                    )}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* User Info at Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-[#8FAE8B] rounded-full flex items-center justify-center text-white font-semibold">
+              {user?.name?.charAt(0) || 'A'}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-900">
+                {user?.name || 'Admin User'}
+              </p>
+              <p className="text-xs text-gray-500">
+                {user?.email || 'admin@example.com'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="ml-64 flex-1 p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Bar - You can remove this if you want just the sidebar navigation */}
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default AdminLayout;
