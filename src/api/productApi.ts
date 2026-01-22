@@ -48,10 +48,12 @@ export const productApi = {
   },
 
   // Update product (Admin only)
-  updateProduct: async (id: number, productData: UpdateProductRequest): Promise<Product> => {
-    const response = await axiosInstance.put<Product>(`/products/${id}`, productData);
-    return response.data;
-  },
+updateProduct: async (id: number, data: FormData) => {
+  const response = await axiosInstance.put(`/products/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+},
 
   // Delete product (Admin only)
   deleteProduct: async (id: number): Promise<void> => {
