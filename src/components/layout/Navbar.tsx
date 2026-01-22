@@ -591,6 +591,7 @@ const isActive = (path: string) => location.pathname === path;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+const isAdminRoute = location.pathname.startsWith("/admin");
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -645,30 +646,31 @@ useEffect(() => {
             {/* <div className="hidden md:flex items-center space-x-8"> */}
               <div className="hidden md:flex items-center space-x-8">
   {/* PUBLIC PAGES — ONLY FOR NON-ADMIN */}
-  {!isAdmin &&
-    [
-      { name: "Home", path: "/" },
-      { name: "Products", path: "/products" },
-      { name: "About", path: "/about" },
-      { name: "Services", path: "/services" },
-      { name: "Contact us", path: "/contact" },
-      { name: "Testimonials", path: "/testimonials" },
-    ].map((item) => (
-      <Link
-        key={item.name}
-        to={item.path}
-        className={`relative transition-all duration-300
-          ${
-            isActive(item.path)
-              ? "text-white font-medium after:w-full"
-              : "text-white/80 hover:text-white after:w-0"
-          }
-          after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
-          after:transition-all after:duration-300`}
-      >
-        {item.name}
-      </Link>
-    ))}
+{/* PUBLIC NAV — SHOW TO USERS & ADMINS OUTSIDE ADMIN PANEL */}
+{(!isAdmin || !isAdminRoute) &&
+  [
+    { name: "Home", path: "/" },
+    { name: "Products", path: "/products" },
+    { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    { name: "Contact us", path: "/contact" },
+    { name: "Testimonials", path: "/testimonials" },
+  ].map((item) => (
+    <Link
+      key={item.name}
+      to={item.path}
+      className={`relative transition-all duration-300
+        ${
+          isActive(item.path)
+            ? "text-white font-medium after:w-full"
+            : "text-white/80 hover:text-white after:w-0"
+        }
+        after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:bg-white
+        after:transition-all after:duration-300`}
+    >
+      {item.name}
+    </Link>
+  ))}
 
   {/* USER DASHBOARD */}
   {isAuthenticated && !isAdmin && (
@@ -681,17 +683,15 @@ useEffect(() => {
   )}
 
   {/* ADMIN DASHBOARD */}
-  {isAdmin && (
-    <Link
-      to="/admin"
-      className="text-white font-semibold"
-    >
-      Dashboard
-    </Link>
-  )}
+{isAdmin && isAdminRoute && (
+  <Link
+    to="/admin"
+    className="text-white font-semibold"
+  >
+    Dashboard
+  </Link>
+)}
 </div>
-
-
             {/* ---------------- RIGHT ACTIONS ---------------- */}
             <div className="hidden md:flex items-center space-x-4">
               {!isAdmin && (
@@ -704,8 +704,6 @@ useEffect(() => {
     <FiSearch size={22} />
   </motion.button>
 )}
-
-
              {!isAdmin && (
   <motion.button
     whileHover={{ scale: 1.1 }}
