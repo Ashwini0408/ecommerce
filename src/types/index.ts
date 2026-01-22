@@ -119,6 +119,9 @@ export interface OrderItem {
 }
 
 export interface Order {
+  userName: string;
+  userPhone: string;
+  userEmail: string;
   orderNumber: number;
   id: number;
   userId: number;
