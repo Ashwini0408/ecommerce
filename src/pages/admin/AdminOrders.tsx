@@ -1093,7 +1093,6 @@ const AdminOrders = () => {
                             src={getProductImageUrl((order.items[0] as any)?.productImage)}
                             alt={(order.items[0] as any)?.productName || 'Product'}
                             className="h-10 w-10 rounded object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg' }}
                           />
                         </div>
                       )}
@@ -1315,7 +1314,6 @@ const AdminOrders = () => {
                                 src={getProductImageUrl((item as any)?.productImage)}
                                 alt={(item as any)?.productName || 'Product'}
                                 className="w-full h-full object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.jpg' }}
                               />
                             </div>
                             <div className="flex-1">
