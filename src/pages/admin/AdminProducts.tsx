@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiImage, FiFolder, FiGrid, FiPause, FiPlay, FiEye, FiSearch } from 'react-icons/fi';
 import { productApi } from '../../api/productApi';
 import { categoryApi, type Category } from '../../api/categoryApi';
-import type { Product, CreateProductRequest, ProductAttribute } from '../../types';
+// 2. FIXED: Removed unused 'ProductAttribute' to clear warning
+import type { Product, CreateProductRequest } from '../../types';
 import toast from 'react-hot-toast';
 
 // --- CONFIGURATION ---
@@ -12,6 +13,95 @@ const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:809
 // Define the modes for our modal system
 type ModalType = 'NONE' | 'PRODUCT' | 'CATEGORY' | 'SUBCATEGORY' | 'PRODUCT_VIEW';
 type AdminTab = 'CATEGORY' | 'SUBCATEGORY' | 'PRODUCT';
+
+// Tag component for sizes and colors
+interface TagProps {
+  text: string;
+  onRemove: () => void;
+}
+
+const Tag = ({ text, onRemove }: TagProps) => {
+  return (
+    <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#8FAE8B]/10 text-[#8FAE8B] rounded-full text-sm font-medium border border-[#8FAE8B]/30">
+      {text}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ml-1 text-[#8FAE8B] hover:text-[#7E9F7A] focus:outline-none"
+      >
+        <FiX size={14} />
+      </button>
+    </div>
+  );
+};
+
+// Tag input component
+interface TagInputProps {
+  tags: string[];
+  onTagsChange: (tags: string[]) => void;
+  placeholder?: string;
+  label?: string;
+}
+
+const TagInput = ({ tags, onTagsChange, placeholder = "Type and press Enter", label }: TagInputProps) => {
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && inputValue.trim()) {
+      e.preventDefault();
+      if (!tags.includes(inputValue.trim())) {
+        onTagsChange([...tags, inputValue.trim()]);
+      }
+      setInputValue('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    onTagsChange(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputBlur = () => {
+    if (inputValue.trim()) {
+      if (!tags.includes(inputValue.trim())) {
+        onTagsChange([...tags, inputValue.trim()]);
+      }
+      setInputValue('');
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {label && (
+        <label className="text-sm font-semibold text-gray-700">{label}</label>
+      )}
+      <div className="min-h-[44px] p-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-[#8FAE8B] focus-within:border-[#8FAE8B] bg-white">
+        <div className="flex flex-wrap gap-2 mb-2">
+          {tags.map((tag, index) => (
+            <Tag key={index} text={tag} onRemove={() => removeTag(tag)} />
+          ))}
+        </div>
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleInputBlur}
+          placeholder={tags.length === 0 ? placeholder : ''}
+          className="w-full px-2 py-1 bg-transparent border-none outline-none text-sm placeholder-gray-400"
+        />
+      </div>
+      <p className="text-xs text-gray-400">
+        Type and press Enter to add tags
+      </p>
+    </div>
+  );
+};
 
 const AdminProducts = () => {
   // --- DATA STATE ---
@@ -37,8 +127,10 @@ const AdminProducts = () => {
     category: '', subcategory: '', images: [], videos: [], attributes: [],
   });
 
-  const [sizesInput, setSizesInput] = useState('');
-  const [colorsInput, setColorsInput] = useState('');
+  // New tag states
+  const [sizeTags, setSizeTags] = useState<string[]>([]);
+  const [colorTags, setColorTags] = useState<string[]>([]);
+  
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
   const [subCatForm, setSubCatForm] = useState({ parentCategoryId: '', name: '', description: '' });
 
@@ -54,11 +146,20 @@ const AdminProducts = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // --- HELPER: RESOLVE IMAGE URL ---
-  const getImageUrl = (path?: string) => {
-    if (!path) return '/placeholder.jpg';
+  // --- HELPER: RESOLVE IMAGE/VIDEO URL ---
+  const getMediaUrl = (path?: string) => {
+    if (!path) return null;
     if (path.startsWith('http') || path.startsWith('blob:')) return path;
     return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  const getImageUrl = (path?: string) => {
+    const url = getMediaUrl(path);
+    return url || '/placeholder.jpg';
+  };
+
+  const getVideoUrl = (path?: string) => {
+    return getMediaUrl(path);
   };
 
   // --- INITIAL DATA FETCH ---
@@ -188,26 +289,25 @@ const AdminProducts = () => {
         attributes: product.attributes || [],
       });
       
+      // Extract sizes and colors from attributes to tags
       const sizes = product.attributes
         ?.filter((attr: any) => attr.type === 'Size' || attr.type === 'size')
-        .map((attr: any) => attr.value)
-        .join(', ') || '';
+        .map((attr: any) => attr.value) || [];
       
       const colors = product.attributes
         ?.filter((attr: any) => attr.type === 'Color' || attr.type === 'color' || attr.type === 'Colour')
-        .map((attr: any) => attr.value)
-        .join(', ') || '';
+        .map((attr: any) => attr.value) || [];
       
-      setSizesInput(sizes);
-      setColorsInput(colors);
+      setSizeTags(sizes);
+      setColorTags(colors);
     } else {
       setEditingProduct(null);
       setProductForm({
         name: '', description: '', price: 0, salePrice: 0, stock: 0,
         category: '', subcategory: '', images: [], videos: [], attributes: [],
       });
-      setSizesInput('');
-      setColorsInput('');
+      setSizeTags([]);
+      setColorTags([]);
     }
     setActiveModal('PRODUCT');
   };
@@ -281,61 +381,53 @@ const AdminProducts = () => {
 
   // --- FORM SUBMIT HANDLERS ---
 const handleProductSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const t = toast.loading(editingProduct ? 'Updating product...' : 'Creating product...');
-  
-  try {
-    const formData = new FormData();
-    const updatedAttributes: any[] = [];
+    e.preventDefault();
+    const t = toast.loading(editingProduct ? 'Updating product...' : 'Creating product...');
     
-    // Process Sizes/Colors into Attributes
-    if (sizesInput.trim()) {
-      sizesInput.split(',').map(s => s.trim()).filter(Boolean)
-        .forEach(size => updatedAttributes.push({ type: 'Size', value: size }));
+    try {
+      const formData = new FormData();
+      const updatedAttributes: any[] = [];
+      
+      // 3. FIXED: Using 'sizeTags' and 'colorTags' arrays instead of missing string inputs
+      sizeTags.forEach(size => updatedAttributes.push({ type: 'Size', value: size }));
+      colorTags.forEach(color => updatedAttributes.push({ type: 'Color', value: color }));
+
+      const productData = {
+        name: productForm.name,
+        description: productForm.description,
+        price: productForm.price,
+        salePrice: productForm.salePrice,
+        stock: productForm.stock,
+        category: productForm.category,
+        subcategory: productForm.subcategory,
+        images: productForm.images,
+        videos: productForm.videos || [], // FIXED: Added fallback for undefined
+        attributes: updatedAttributes,
+        isActive: editingProduct ? editingProduct.isActive : true
+      };
+
+      const productBlob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
+      formData.append('product', productBlob);
+
+      selectedFiles.forEach((file) => formData.append('imageFiles', file));
+      selectedVideos.forEach((video) => formData.append('videoFiles', video));
+
+      if (editingProduct) {
+        // 4. FIXED: Pass 'formData' instead of 'productData' for the Update API
+        await productApi.updateProduct(editingProduct.id, formData);
+        toast.success('Product updated successfully', { id: t });
+      } else {
+        await productApi.createProduct(formData);
+        toast.success('Product created successfully', { id: t });
+      }
+
+      closeModal();
+      fetchData();
+    } catch (error: any) {
+      console.error("Submission Error:", error);
+      toast.error(error.response?.data?.message || 'Failed to save product', { id: t });
     }
-    if (colorsInput.trim()) {
-      colorsInput.split(',').map(c => c.trim()).filter(Boolean)
-        .forEach(color => updatedAttributes.push({ type: 'Color', value: color }));
-    }
-
-    // Prepare the JSON part (Contains existing image/video URLs)
-    const productData = {
-      name: productForm.name,
-      description: productForm.description,
-      price: productForm.price,
-      salePrice: productForm.salePrice,
-      stock: productForm.stock,
-      category: productForm.category,
-      subcategory: productForm.subcategory,
-      images: productForm.images, // These are existing URL strings
-      videos: productForm.videos, // These are existing URL strings
-      attributes: updatedAttributes,
-      isActive: editingProduct ? editingProduct.isActive : true
-    };
-
-    const productBlob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
-    formData.append('product', productBlob);
-
-    // Append NEW binary files
-    selectedFiles.forEach((file) => formData.append('imageFiles', file));
-    selectedVideos.forEach((video) => formData.append('videoFiles', video));
-
-    if (editingProduct) {
-      // FIX: Use formData instead of productData
-      await productApi.updateProduct(editingProduct.id, formData);
-      toast.success('Product updated successfully', { id: t });
-    } else {
-      await productApi.createProduct(formData);
-      toast.success('Product created successfully', { id: t });
-    }
-
-    closeModal();
-    fetchData();
-  } catch (error: any) {
-    console.error("Submission Error:", error);
-    toast.error(error.response?.data?.message || 'Failed to save product', { id: t });
-  }
-};
+  };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1019,38 +1111,87 @@ const handleProductSubmit = async (e: React.FormEvent) => {
                           </div>
                         </div>
 
+                        {/* Tags display in view mode */}
                         {viewingProduct.attributes && viewingProduct.attributes.length > 0 && (
                           <div className="mt-6">
                             <h3 className="text-lg font-semibold mb-2">Attributes</h3>
-                            <div className="space-y-2">
-                              {viewingProduct.attributes.map((attr: any, index: number) => (
-                                <div key={index} className="flex justify-between">
-                                  <span className="text-gray-700 break-words">{attr.type}:</span>
-                                  <span className="font-medium break-words">{attr.value}</span>
+                            <div className="space-y-4">
+                              <div>
+                                <label className="text-sm font-semibold text-gray-700 mb-2 block">Sizes</label>
+                                <div className="flex flex-wrap gap-2">
+                                  {viewingProduct.attributes
+                                    ?.filter((attr: any) => attr.type === 'Size' || attr.type === 'size')
+                                    .map((attr: any, index: number) => (
+                                      <div key={index} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#8FAE8B]/10 text-[#8FAE8B] rounded-full text-sm font-medium border border-[#8FAE8B]/30">
+                                        {attr.value}
+                                      </div>
+                                    ))}
+                                  {viewingProduct.attributes?.filter((attr: any) => attr.type === 'Size' || attr.type === 'size').length === 0 && (
+                                    <span className="text-gray-400 text-sm">No sizes specified</span>
+                                  )}
                                 </div>
-                              ))}
+                              </div>
+                              <div>
+                                <label className="text-sm font-semibold text-gray-700 mb-2 block">Colors</label>
+                                <div className="flex flex-wrap gap-2">
+                                  {viewingProduct.attributes
+                                    ?.filter((attr: any) => attr.type === 'Color' || attr.type === 'color' || attr.type === 'Colour')
+                                    .map((attr: any, index: number) => (
+                                      <div key={index} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#8FAE8B]/10 text-[#8FAE8B] rounded-full text-sm font-medium border border-[#8FAE8B]/30">
+                                        {attr.value}
+                                      </div>
+                                    ))}
+                                  {viewingProduct.attributes?.filter((attr: any) => attr.type === 'Color' || attr.type === 'color' || attr.type === 'Colour').length === 0 && (
+                                    <span className="text-gray-400 text-sm">No colors specified</span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {viewingProduct.images && viewingProduct.images.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">Product Images</h3>
-                        <div className="grid grid-cols-4 gap-2">
-                          {viewingProduct.images.map((img, index) => (
-                            <div key={index} className="relative aspect-square">
-                              <img 
-                                src={getImageUrl(img)} 
-                                alt={`Product ${index + 1}`} 
-                                className="w-full h-full object-cover rounded-lg border border-[#8FAE8B]/50"
-                              />
-                            </div>
-                          ))}
+                    {/* Images and Videos in view mode */}
+                    <div className="space-y-6">
+                      {viewingProduct.images && viewingProduct.images.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Product Images</h3>
+                          <div className="grid grid-cols-4 gap-2">
+                            {viewingProduct.images.map((img, index) => (
+                              <div key={index} className="relative aspect-square">
+                                <img 
+                                  src={getImageUrl(img)} 
+                                  alt={`Product ${index + 1}`} 
+                                  className="w-full h-full object-cover rounded-lg border border-[#8FAE8B]/50"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {viewingProduct.videos && viewingProduct.videos.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Product Videos</h3>
+                          <div className="grid grid-cols-2 gap-2">
+                            {viewingProduct.videos.map((video, index) => {
+                              const videoUrl = getVideoUrl(video);
+                              return videoUrl ? (
+                                <div key={index} className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                                  <video 
+                                    src={videoUrl} 
+                                    className="w-full h-full object-cover"
+                                    controls
+                                    preload="metadata"
+                                  />
+                                </div>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="flex gap-3 pt-6">
                       <button
@@ -1099,32 +1240,6 @@ const handleProductSubmit = async (e: React.FormEvent) => {
                           <input type="number" name="stock" value={productForm.stock} onChange={handleProductInputChange} className="input-field" required min="0"/>
                         </div>
                         <div>
-                          <label className="label">Sizes</label>
-                          <input
-                            type="text"
-                            value={sizesInput}
-                            onChange={(e) => setSizesInput(e.target.value)}
-                            placeholder="S, M, L, XL (comma separated)"
-                            className="input-field"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">
-                            Enter sizes separated by commas (e.g., S, M, L, XL)
-                          </p>
-                        </div>
-                        <div>
-                          <label className="label">Colours</label>
-                          <input
-                            type="text"
-                            value={colorsInput}
-                            onChange={(e) => setColorsInput(e.target.value)}
-                            placeholder="Red, Black, Blue (comma separated)"
-                            className="input-field"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">
-                            Enter colours separated by commas (e.g., Red, Black, Blue)
-                          </p>
-                        </div>
-                        <div>
                           <label className="label">Price *</label>
                           <input type="number" name="price" value={productForm.price} onChange={handleProductInputChange} className="input-field" required min="0" step="0.01"/>
                         </div>
@@ -1133,6 +1248,23 @@ const handleProductSubmit = async (e: React.FormEvent) => {
                           <input type="number" name="salePrice" value={productForm.salePrice} onChange={handleProductInputChange} className="input-field" min="0" step="0.01"/>
                         </div>
                     </div>
+                    
+                    {/* Tag inputs for sizes and colors */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <TagInput
+                        tags={sizeTags}
+                        onTagsChange={setSizeTags}
+                        label="Sizes"
+                        placeholder="Type size and press Enter (e.g., S, M, L)"
+                      />
+                      <TagInput
+                        tags={colorTags}
+                        onTagsChange={setColorTags}
+                        label="Colors"
+                        placeholder="Type color and press Enter (e.g., Red, Black)"
+                      />
+                    </div>
+                    
                     <div>
                       <label className="label">Description *</label>
                       <textarea name="description" value={productForm.description} onChange={handleProductInputChange} className="input-field min-h-[100px]" required />
@@ -1171,7 +1303,7 @@ const handleProductSubmit = async (e: React.FormEvent) => {
                       <div className="flex items-center justify-center w-full mb-4">
                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <FiPlay className="w-8 h-8 mb-2 text-gray-400" />
+                            <FiImage className="w-8 h-8 mb-2 text-gray-400" />
                             <p className="text-sm text-gray-400">
                               <span className="font-semibold">Click or drag videos</span>
                             </p>
@@ -1187,8 +1319,22 @@ const handleProductSubmit = async (e: React.FormEvent) => {
                       </div>
 
                       <div className="grid grid-cols-4 gap-2">
+                        {/* Existing videos */}
+                        {productForm.videos.map((video, index) => {
+                          const videoUrl = getVideoUrl(video);
+                          return videoUrl ? (
+                            <div key={`exist-video-${index}`} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden">
+                              <video src={videoUrl} className="w-full h-full object-cover" muted />
+                              <button type="button" onClick={() => setProductForm(prev => ({...prev, videos: prev.videos.filter((_, i) => i !== index)}))} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-white">
+                                <FiX size={12} />
+                              </button>
+                            </div>
+                          ) : null;
+                        })}
+                        
+                        {/* New video previews */}
                         {videoPreviewUrls.map((url, index) => (
-                          <div key={index} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden">
+                          <div key={`new-video-${index}`} className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden">
                             <video src={url} className="w-full h-full object-cover" muted />
                             <button type="button" onClick={() => removeVideo(index)} className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 text-white">
                               <FiX size={12} />

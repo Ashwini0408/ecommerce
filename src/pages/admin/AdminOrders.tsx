@@ -931,17 +931,17 @@ const AdminOrders = () => {
     }
   };
 
-  const handleDeleteOrder = async (orderId: number) => {
-    if (window.confirm('Are you sure you want to delete this order?')) {
-      try {
-        await orderApi.deleteOrder(orderId);
-        toast.success('Order deleted successfully');
-        fetchOrders();
-      } catch (error: any) {
-        toast.error('Failed to delete order');
-      }
-    }
-  };
+  // const handleDeleteOrder = async (orderId: number) => {
+  //   if (window.confirm('Are you sure you want to delete this order?')) {
+  //     try {
+  //       await orderApi.deleteOrder(orderId);
+  //       toast.success('Order deleted successfully');
+  //       fetchOrders();
+  //     } catch (error: any) {
+  //       toast.error('Failed to delete order');
+  //     }
+  //   }
+  // };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -1159,13 +1159,13 @@ const AdminOrders = () => {
                       >
                         <FiEdit2 size={16} />
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => handleDeleteOrder(order.id)}
                         className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
                         title="Delete"
                       >
                         <FiTrash2 size={16} />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
