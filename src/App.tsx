@@ -321,7 +321,7 @@ function App() {
           }
         />
 
-       // In your App.tsx
+{/* Admin Routes */}
 <Route
   path="/admin/*"
   element={
@@ -330,6 +330,7 @@ function App() {
     </ProtectedRoute>
   }
 >
+
   <Route index element={<AdminDashboard />} />
   <Route path="products" element={<AdminProducts />} />
   <Route path="orders" element={<AdminOrders />} />

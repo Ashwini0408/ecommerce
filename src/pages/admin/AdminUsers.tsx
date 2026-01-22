@@ -3598,6 +3598,1148 @@
 // export default AdminUsers;
 
 
+// import { useEffect, useMemo, useState } from "react";
+// import { motion, AnimatePresence } from "framer-motion";
+// import {
+//   FiEye,
+//   FiTrash,
+//   FiX,
+//   FiSearch,
+//   FiPackage,
+//   FiCalendar,
+//   FiMapPin,
+//   FiCreditCard,
+//   FiTruck,
+//   FiCalendar as CalendarIcon,
+//   FiEdit2,
+//   FiPlay,
+//   FiPause,
+//   FiChevronLeft,
+//   FiChevronRight,
+//   FiChevronsLeft,
+//   FiChevronsRight,
+// } from "react-icons/fi";
+// import { format } from "date-fns";
+// import { userApi, type User } from "../../api/userApi";
+// import orderApi from "../../api/orderApi";
+// import appointmentApi from "../../api/appointmentApi";
+// import toast from "react-hot-toast";
+
+// interface OrderItem {
+//   id: number;
+//   productId: number;
+//   productName: string;
+//   productImage: string;
+//   quantity: number;
+//   unitPrice: number;
+//   totalPrice: number;
+//   selectedSize: string;
+//   selectedColor: string;
+// }
+
+// interface Order {
+//   id: number;
+//   userId: number;
+//   status: string;
+//   paymentStatus: string;
+//   totalAmount: number;
+//   discount: number | null;
+//   tax: number | null;
+//   trackingNumber: string | null;
+//   shippingAddress: string;
+//   createdAt: string;
+//   updatedAt: string;
+//   items: OrderItem[];
+// }
+
+// const AdminUsers = () => {
+//   const [users, setUsers] = useState<User[]>([]);
+//   const [totalUsers, setTotalUsers] = useState(0);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+  
+//   // Column filters
+//   const [columnFilters, setColumnFilters] = useState({
+//     id: '',
+//     name: '',
+//     email: '',
+//     phone: '',
+//     status: '',
+//     date: ''
+//   });
+
+//   // View modal
+//   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+//   const [showViewModal, setShowViewModal] = useState(false);
+
+//   // Orders modal
+//   const [showOrdersModal, setShowOrdersModal] = useState(false);
+//   const [ordersLoading, setOrdersLoading] = useState(false);
+//   const [userOrders, setUserOrders] = useState<Order[]>([]);
+
+//   // Order detail modal
+//   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+//   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+//   // Appointments modal
+//   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
+//   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+//   const [userAppointments, setUserAppointments] = useState<any[]>([]);
+
+//   // Pagination
+//   const [page, setPage] = useState(1);
+//   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+//   const rowsPerPageOptions = [5, 10, 20, 50, 100];
+
+//   const mockProductImages = [
+//     "/api/placeholder/400/400",
+//   ];
+
+//   const getProductImageUrl = (imagePath: string | undefined, fallbackIndex: number = 0) => {
+//     if (!imagePath) return mockProductImages[fallbackIndex];
+    
+//     if (imagePath.startsWith('http')) {
+//       return imagePath;
+//     }
+    
+//     const backendBaseUrl = '';
+    
+//     if (!imagePath.startsWith('/') && !imagePath.startsWith('uploads/')) {
+//       return `${backendBaseUrl}/uploads/${imagePath}`;
+//     }
+    
+//     return `${backendBaseUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+//   };
+
+//   // Fetch users
+//   useEffect(() => {
+//     const fetchUsers = async () => {
+//       try {
+//         setLoading(true);
+//         const offset = (page - 1) * rowsPerPage;
+//         const res = await userApi.getCustomers(offset, rowsPerPage);
+//         setUsers(res.content);
+//         setTotalUsers(res.totalElements);
+//       } catch {
+//         setError("Failed to load users");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchUsers();
+//   }, [page, rowsPerPage]);
+
+//   const handleColumnFilterChange = (column: string, value: string) => {
+//     setColumnFilters(prev => ({
+//       ...prev,
+//       [column]: value
+//     }));
+//     setPage(1);
+//   };
+
+//   // Filtered users
+//   const filteredUsers = useMemo(() => {
+//     if (!users || !Array.isArray(users)) return [];
+    
+//     return users.filter(user => {
+//       const matchesId = user.id.toString().includes(columnFilters.id);
+//       const matchesName = (user.name || '').toLowerCase().includes(columnFilters.name.toLowerCase());
+//       const matchesEmail = (user.email || '').toLowerCase().includes(columnFilters.email.toLowerCase());
+//       const matchesPhone = (user.phone || '').includes(columnFilters.phone);
+//       const matchesStatus = 
+//         columnFilters.status === '' || 
+//         (columnFilters.status === 'ACTIVE' && user.isActive) || 
+//         (columnFilters.status === 'INACTIVE' && !user.isActive);
+//       const matchesDate = 
+//         columnFilters.date === '' || 
+//         format(new Date(user.createdAt), 'yyyy-MM-dd').includes(columnFilters.date);
+      
+//       return matchesId && matchesName && matchesEmail && matchesPhone && matchesStatus && matchesDate;
+//     });
+//   }, [users, columnFilters]);
+
+//   const totalPages = Math.ceil(totalUsers / rowsPerPage);
+
+//   const handleStatusChange = async (user: User) => {
+//     try {
+//       const updatedUser = user.isActive
+//         ? await userApi.deactivateUser(user.id)
+//         : await userApi.activateUser(user.id);
+
+//       setUsers((prev) =>
+//         prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+//       );
+
+//       toast.success(
+//         updatedUser.isActive ? "User activated" : "User deactivated"
+//       );
+//     } catch (err) {
+//       toast.error("Failed to update user status");
+//     }
+//   };
+
+//   // Get status color using your theme
+//   const getStatusColor = (status: string) => {
+//     switch (status.toUpperCase()) {
+//       case "PENDING":
+//         return "bg-yellow-100 text-yellow-800";
+//       case "PROCESSING":
+//         return "bg-blue-100 text-blue-800";
+//       case "SHIPPED":
+//         return "bg-purple-100 text-purple-800";
+//       case "DELIVERED":
+//         return "bg-green-100 text-green-800";
+//       case "CANCELLED":
+//         return "bg-red-100 text-red-800";
+//       default:
+//         return "bg-gray-100 text-gray-800";
+//     }
+//   };
+
+//   // Get payment status color
+//   const getPaymentStatusColor = (status: string) => {
+//     switch (status.toUpperCase()) {
+//       case "PAID":
+//         return "text-green-700";
+//       case "PENDING":
+//         return "text-yellow-700";
+//       case "FAILED":
+//         return "text-red-700";
+//       default:
+//         return "text-gray-700";
+//     }
+//   };
+
+//   // Orders modal
+//   const openOrdersModal = async (user: User) => {
+//     setSelectedUser(user);
+//     setShowOrdersModal(true);
+//     setOrdersLoading(true);
+
+//     try {
+//       const res = await orderApi.getUserOrders(user.id, 0, 50);
+      
+//       if (!res || !res.content) {
+//         setUserOrders([]);
+//         return;
+//       }
+
+//       const transformedOrders: Order[] = res.content.map((order: any, index: number) => {
+//         const fallbackImage = mockProductImages[0];
+        
+//         const hasItems = order.items && Array.isArray(order.items) && order.items.length > 0;
+        
+//         return {
+//           id: order.id || index,
+//           userId: order.userId || user.id,
+//           status: order.status || "PENDING",
+//           paymentStatus: order.paymentStatus || "PENDING",
+//           totalAmount: order.totalAmount || 0,
+//           discount: order.discount || null,
+//           tax: order.tax || null,
+//           trackingNumber: order.trackingNumber || null,
+//           shippingAddress: order.shippingAddress || "Address not specified",
+//           createdAt: order.createdAt || new Date().toISOString(),
+//           updatedAt: order.updatedAt || new Date().toISOString(),
+//           items: hasItems 
+//             ? order.items.map((item: any, itemIndex: number) => ({
+//                 id: item.id || itemIndex,
+//                 productId: item.productId || 0,
+//                 productName: item.productName || `Product ${itemIndex + 1}`,
+//                 productImage: item.productImage || item.imageUrl || '',
+//                 quantity: item.quantity || 1,
+//                 unitPrice: item.unitPrice || item.price || 0,
+//                 totalPrice: item.totalPrice || (item.quantity || 1) * (item.unitPrice || item.price || 0),
+//                 selectedSize: item.selectedSize || item.size || "M",
+//                 selectedColor: item.selectedColor || item.color || "Black",
+//               }))
+//             : [{
+//                 id: 0,
+//                 productId: order.id || 0,
+//                 productName: order.productName || "Unknown Product",
+//                 productImage: fallbackImage,
+//                 quantity: 1,
+//                 unitPrice: order.totalAmount || 0,
+//                 totalPrice: order.totalAmount || 0,
+//                 selectedSize: "M",
+//                 selectedColor: "Black",
+//               }],
+//         };
+//       });
+      
+//       setUserOrders(transformedOrders);
+//     } catch (error) {
+//       console.error("Error loading orders:", error);
+//       toast.error("Failed to load orders");
+//       setUserOrders([]);
+//     } finally {
+//       setOrdersLoading(false);
+//     }
+//   };
+
+//   const openAppointmentsModal = async (user: User) => {
+//     setSelectedUser(user);
+//     setShowAppointmentsModal(true);
+//     setAppointmentsLoading(true);
+
+//     try {
+//       const res = await appointmentApi.getUserAppointments(user.id, 0, 50);
+//       setUserAppointments(res.content || []);
+//     } catch (err) {
+//       console.error(err);
+//       toast.error("Failed to load appointments");
+//     } finally {
+//       setAppointmentsLoading(false);
+//     }
+//   };
+
+//   const openOrderDetail = (order: Order) => {
+//     setSelectedOrder(order);
+//     setShowOrderDetailModal(true);
+//   };
+
+//   const renderOrderItem = (order: Order) => {
+//     if (!order.items || order.items.length === 0) {
+//       return {
+//         productImage: mockProductImages[0],
+//         productName: "Unknown Product",
+//         productId: order.id,
+//         itemsLength: 0
+//       };
+//     }
+    
+//     const firstItem = order.items[0];
+//     return {
+//       productImage: getProductImageUrl(firstItem.productImage),
+//       productName: firstItem.productName || "Unknown Product",
+//       productId: firstItem.productId || order.id,
+//       itemsLength: order.items.length
+//     };
+//   };
+
+//   return (
+//     <div className="space-y-6">
+//       {/* --- HEADER --- */}
+//       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+//         <div>
+//           <h2 className="text-2xl font-bold text-dark-900">User Management</h2>
+//           <p className="text-dark-600 mt-1">{totalUsers} users total</p>
+//         </div>
+        
+//         {/* Export Button */}
+//         <div className="flex space-x-3">
+//           <motion.button
+//             whileHover={{ scale: 1.05 }}
+//             whileTap={{ scale: 0.95 }}
+//             className="px-4 py-2 rounded-xl flex items-center space-x-2 glass-card text-dark-800 ring-1 ring-[#8FAE8B] hover:bg-primary-50"
+//           >
+//             Export all users
+//           </motion.button>
+//         </div>
+//       </div>
+
+//       {/* --- TABLE WITH COLUMN FILTERS --- */}
+//       <div className="bg-white rounded-lg shadow overflow-hidden">
+//         <div className="overflow-x-auto">
+//           <div className="inline-block min-w-full align-middle">
+//             <div className="overflow-hidden">
+//               <table className="min-w-full divide-y divide-dark-200">
+//                 <thead className="bg-dark-50">
+//                   <tr>
+//                     {/* ID Column with filter - Fixed width */}
+//                     <th className="w-24 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>ID</span>
+//                         <input
+//                           type="text"
+//                           placeholder="ID"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white w-full"
+//                           value={columnFilters.id}
+//                           onChange={(e) => handleColumnFilterChange('id', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+                    
+//                     {/* NAME Column with filter - Fixed width */}
+//                     <th className="w-64 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>NAME</span>
+//                         <input
+//                           type="text"
+//                           placeholder="Search Name"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+//                           value={columnFilters.name}
+//                           onChange={(e) => handleColumnFilterChange('name', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+                    
+//                     {/* EMAIL Column with filter - Fixed width */}
+//                     <th className="w-80 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>EMAIL</span>
+//                         <input
+//                           type="text"
+//                           placeholder="Search Email"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+//                           value={columnFilters.email}
+//                           onChange={(e) => handleColumnFilterChange('email', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+                    
+//                     {/* PHONE Column with filter - Fixed width */}
+//                     <th className="w-48 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>PHONE</span>
+//                         <input
+//                           type="text"
+//                           placeholder="Search Phone"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+//                           value={columnFilters.phone}
+//                           onChange={(e) => handleColumnFilterChange('phone', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+                    
+//                     {/* STATUS Column with filter - Fixed width */}
+//                     <th className="w-40 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>STATUS</span>
+//                         <select
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+//                           value={columnFilters.status}
+//                           onChange={(e) => handleColumnFilterChange('status', e.target.value)}
+//                         >
+//                           <option value="">All</option>
+//                           <option value="ACTIVE">Active</option>
+//                           <option value="INACTIVE">Inactive</option>
+//                         </select>
+//                       </div>
+//                     </th>
+                    
+//                     {/* CREATED AT Column with filter - Fixed width */}
+//                     <th className="w-48 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       <div className="flex flex-col">
+//                         <span>CREATED AT</span>
+//                         <input
+//                           type="text"
+//                           placeholder="YYYY-MM-DD"
+//                           className="mt-1 px-2 py-1 text-xs border border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 bg-white"
+//                           value={columnFilters.date}
+//                           onChange={(e) => handleColumnFilterChange('date', e.target.value)}
+//                         />
+//                       </div>
+//                     </th>
+                    
+//                     {/* ACTIONS Column - Fixed width */}
+//                     <th className="w-40 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+//                       ACTIONS
+//                     </th>
+//                   </tr>
+//                 </thead>
+                
+//                 <tbody className="bg-white divide-y divide-dark-200 max-h-[400px] overflow-y-auto">
+//                   {loading ? (
+//                     <tr>
+//                       <td colSpan={7} className="px-6 py-12 text-center text-dark-500">
+//                         Loading users...
+//                       </td>
+//                     </tr>
+//                   ) : filteredUsers.length === 0 ? (
+//                     <tr>
+//                       <td colSpan={7} className="px-6 py-12 text-center text-dark-500">
+//                         No users found
+//                       </td>
+//                     </tr>
+//                   ) : (
+//                     filteredUsers.map((user) => (
+//                       <tr key={user.id} className="hover:bg-dark-50">
+//                         {/* ID Column - Fixed width */}
+//                         <td className="w-24 px-3 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           #{user.id}
+//                         </td>
+                        
+//                         {/* NAME Column - Fixed width with ellipsis */}
+//                         <td className="w-64 px-3 py-4">
+//                           <div className="text-sm font-medium text-dark-900 truncate max-w-[240px]" title={user.name}>
+//                             {user.name}
+//                           </div>
+//                         </td>
+                        
+//                         {/* EMAIL Column - Fixed width with ellipsis */}
+//                         <td className="w-80 px-3 py-4">
+//                           <div className="text-sm text-dark-900 truncate max-w-[300px]" title={user.email}>
+//                             {user.email}
+//                           </div>
+//                         </td>
+                        
+//                         {/* PHONE Column - Fixed width */}
+//                         <td className="w-48 px-3 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           <div className="truncate max-w-[180px]" title={user.phone || 'N/A'}>
+//                             {user.phone || 'N/A'}
+//                           </div>
+//                         </td>
+                        
+//                         {/* STATUS Column - Fixed width */}
+//                         <td className="w-40 px-3 py-4 whitespace-nowrap">
+//                           <div className="flex items-center gap-2">
+//                             <button
+//                               onClick={() => handleStatusChange(user)}
+//                               className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
+//                                 user.isActive ? "bg-green-500" : "bg-red-500"
+//                               }`}
+//                             >
+//                               <span
+//                                 className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+//                                   user.isActive ? "translate-x-6" : "translate-x-1"
+//                                 }`}
+//                               />
+//                             </button>
+//                             <span className={`text-xs font-medium ${
+//                               user.isActive ? "text-green-700" : "text-red-700"
+//                             }`}>
+//                               {user.isActive ? "ACTIVE" : "INACTIVE"}
+//                             </span>
+//                           </div>
+//                         </td>
+                        
+//                         {/* CREATED AT Column - Fixed width */}
+//                         <td className="w-48 px-3 py-4 whitespace-nowrap text-sm text-dark-900">
+//                           {format(new Date(user.createdAt), "MMM dd, yyyy")}
+//                         </td>
+                        
+//                         {/* ACTIONS Column - Fixed width */}
+//                         <td className="w-40 px-3 py-4 whitespace-nowrap text-sm font-medium">
+//                           <div className="flex space-x-2">
+//                             <button
+//                               onClick={() => {
+//                                 setSelectedUser(user);
+//                                 setShowViewModal(true);
+//                               }}
+//                               className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded"
+//                               title="View Details"
+//                             >
+//                               <FiEye size={16} />
+//                             </button>
+//                             <button
+//                               onClick={() => openOrdersModal(user)}
+//                               className="p-1 text-primary-600 hover:text-primary-900 hover:bg-primary-50 rounded"
+//                               title="View Orders"
+//                             >
+//                               <FiPackage size={16} />
+//                             </button>
+//                             <button
+//                               onClick={() => openAppointmentsModal(user)}
+//                               className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded"
+//                               title="View Appointments"
+//                             >
+//                               <FiCalendar size={16} />
+//                             </button>
+//                             <button
+//                               onClick={async () => {
+//                                 if (!window.confirm(`Delete ${user.name}?`)) return;
+//                                 try {
+//                                   const res = await userApi.deleteUser(user.id);
+//                                   toast.success(res.message || "User deleted");
+//                                   setUsers((prev) => prev.filter((u) => u.id !== user.id));
+//                                 } catch (err: any) {
+//                                   toast.error(
+//                                     err?.response?.data?.message ||
+//                                       "Cannot delete user. Deactivate instead."
+//                                   );
+//                                 }
+//                               }}
+//                               className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
+//                               title="Delete"
+//                             >
+//                               <FiTrash size={16} />
+//                             </button>
+//                           </div>
+//                         </td>
+//                       </tr>
+//                     ))
+//                   )}
+//                 </tbody>
+//               </table>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* --- PAGINATION & ROWS PER PAGE --- */}
+//       <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-dark-200 sm:px-6">
+//         <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+//           <div className="flex items-center space-x-2">
+//             <span className="text-sm text-dark-700">Rows per page:</span>
+//             <select
+//               className="text-sm border border-dark-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+//               value={rowsPerPage}
+//               onChange={(e) => {
+//                 setRowsPerPage(Number(e.target.value));
+//                 setPage(1);
+//               }}
+//             >
+//               {rowsPerPageOptions.map(option => (
+//                 <option key={option} value={option}>{option}</option>
+//               ))}
+//             </select>
+//           </div>
+//           <div>
+//             <p className="text-sm text-dark-700">
+//               Showing <span className="font-medium">{(page - 1) * rowsPerPage + 1}</span> to{' '}
+//               <span className="font-medium">{Math.min(page * rowsPerPage, totalUsers)}</span>{' '}
+//               of <span className="font-medium">{totalUsers}</span> results
+//             </p>
+//           </div>
+//         </div>
+        
+//         <div>
+//           <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+//             <button
+//               onClick={() => setPage(prev => Math.max(1, prev - 1))}
+//               disabled={page === 1}
+//               className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-dark-300 bg-white text-sm font-medium text-dark-500 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//             >
+//               Previous
+//             </button>
+//             {[...Array(totalPages)].map((_, i) => (
+//               <button
+//                 key={i}
+//                 onClick={() => setPage(i + 1)}
+//                 className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+//                   page === i + 1
+//                     ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
+//                     : 'bg-white border-dark-300 text-dark-500 hover:bg-dark-50'
+//                 }`}
+//               >
+//                 {i + 1}
+//               </button>
+//             ))}
+//             <button
+//               onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+//               disabled={page === totalPages}
+//               className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-dark-300 bg-white text-sm font-medium text-dark-500 hover:bg-dark-50 disabled:opacity-50 disabled:cursor-not-allowed"
+//             >
+//               Next
+//             </button>
+//           </nav>
+//         </div>
+//       </div>
+
+//       {/* ================= VIEW USER MODAL ================= */}
+//       <AnimatePresence>
+//         {showViewModal && selectedUser && (
+//           <>
+//             <motion.div
+//               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+//               onClick={() => setShowViewModal(false)}
+//             />
+//             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//               <motion.div className="glass-card rounded-3xl p-8 max-w-xl w-full">
+//                 <div className="flex justify-between mb-6">
+//                   <div>
+//                     <h2 className="text-2xl font-bold text-foreground">
+//                       {selectedUser.name}
+//                     </h2>
+//                     <p className="text-sm text-muted-foreground">
+//                       User ID: #{selectedUser.id}
+//                     </p>
+//                   </div>
+//                   <FiX
+//                     className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+//                     onClick={() => setShowViewModal(false)}
+//                   />
+//                 </div>
+
+//                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm">
+//                   <div>
+//                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+//                       Email
+//                     </p>
+//                     <p className="text-base font-semibold text-foreground break-all">
+//                       {selectedUser.email}
+//                     </p>
+//                   </div>
+
+//                   <div>
+//                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+//                       Phone
+//                     </p>
+//                     <p className="text-base font-semibold text-foreground break-all">
+//                       {selectedUser.phone}
+//                     </p>
+//                   </div>
+
+//                   <div>
+//                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+//                       Status
+//                     </p>
+//                     <span
+//                       className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+//                         selectedUser.isActive
+//                           ? "bg-green-100 text-green-800"
+//                           : "bg-red-100 text-red-800"
+//                       }`}
+//                     >
+//                       {selectedUser.isActive ? "ACTIVE" : "INACTIVE"}
+//                     </span>
+//                   </div>
+
+//                   <div>
+//                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+//                       Created At
+//                     </p>
+//                     <p className="text-base font-semibold text-foreground break-all">
+//                       {format(new Date(selectedUser.createdAt), "MMM dd, yyyy")}
+//                     </p>
+//                   </div>
+//                 </div>
+
+//                 <div className="my-6 border-t border-border" />
+
+//                 <div className="grid grid-cols-2 gap-4">
+//                   <div className="glass-card p-4 rounded-xl text-center">
+//                     <p className="text-3xl font-bold text-foreground">
+//                       {selectedUser.orderCount ?? 0}
+//                     </p>
+//                     <p className="text-xs text-muted-foreground mt-1">Total Orders</p>
+//                   </div>
+
+//                   <div className="glass-card p-4 rounded-xl text-center">
+//                     <p className="text-3xl font-bold text-foreground">
+//                       {selectedUser.appointmentCount ?? 0}
+//                     </p>
+//                     <p className="text-xs text-muted-foreground mt-1">Appointments</p>
+//                   </div>
+//                 </div>
+
+//                 <div className="flex justify-end mt-8">
+//                   <button
+//                     onClick={() => setShowViewModal(false)}
+//                     className="bg-primary text-primary-foreground py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all duration-300"
+//                   >
+//                     Close
+//                   </button>
+//                 </div>
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+
+//       {/* ================= ENHANCED ORDERS MODAL ================= */}
+//       <AnimatePresence>
+//         {showOrdersModal && selectedUser && (
+//           <>
+//             <motion.div
+//               initial={{ opacity: 0 }}
+//               animate={{ opacity: 1 }}
+//               exit={{ opacity: 0 }}
+//               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+//               onClick={() => setShowOrdersModal(false)}
+//             />
+//             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//               <motion.div
+//                 initial={{ opacity: 0, scale: 0.95 }}
+//                 animate={{ opacity: 1, scale: 1 }}
+//                 exit={{ opacity: 0, scale: 0.95 }}
+//                 className="bg-card border border-border rounded-3xl shadow-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+//               >
+//                 <div className="flex justify-between items-center mb-6">
+//                   <div className="flex items-center gap-3">
+//                     <div className="w-10 h-10 rounded-xl bg-gradient-sage flex items-center justify-center">
+//                       <FiPackage className="text-white" size={20} />
+//                     </div>
+//                     <div>
+//                       <h2 className="text-xl font-bold text-foreground">
+//                         Customer Orders
+//                       </h2>
+//                       <p className="text-sm text-muted-foreground">
+//                         {userOrders.length} total orders • {selectedUser.name}
+//                       </p>
+//                     </div>
+//                   </div>
+//                   <button
+//                     onClick={() => setShowOrdersModal(false)}
+//                     className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center transition-colors"
+//                   >
+//                     <FiX className="text-muted-foreground" size={20} />
+//                   </button>
+//                 </div>
+
+//                 {ordersLoading ? (
+//                   <p className="text-center text-muted-foreground py-10">Loading orders…</p>
+//                 ) : userOrders.length === 0 ? (
+//                   <p className="text-center text-muted-foreground py-10">
+//                     No orders found for this user
+//                   </p>
+//                 ) : (
+//                   <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+//                     {userOrders.map((order) => {
+//                       const firstItem = renderOrderItem(order);
+                      
+//                       return (
+//                         <motion.div
+//                           key={order.id}
+//                           initial={{ opacity: 0, y: 20 }}
+//                           animate={{ opacity: 1, y: 0 }}
+//                           className="bg-gradient-to-br from-background to-secondary/50 rounded-2xl border border-border hover:border-primary/50 transition-all duration-300 overflow-hidden group hover:shadow-lg"
+//                         >
+//                           <div className="p-5 flex gap-5">
+//                             <div className="relative flex-shrink-0">
+//                               <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted border-2 border-border group-hover:border-primary/50 transition-colors">
+//                                 <img
+//                                   src={firstItem.productImage}
+//                                   alt={firstItem.productName}
+//                                   className="w-full h-full object-cover"
+//                                   onError={(e) => {
+//                                     e.currentTarget.src = mockProductImages[0];
+//                                   }}
+//                                 />
+//                               </div>
+//                               {firstItem.itemsLength > 1 && (
+//                                 <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg">
+//                                   +{firstItem.itemsLength - 1}
+//                                 </div>
+//                               )}
+//                             </div>
+
+//                             <div className="flex-1 min-w-0">
+//                               <div className="flex items-start justify-between gap-4 mb-3">
+//                                 <div>
+//                                   <h3 className="text-base font-bold text-foreground mb-1">
+//                                     {firstItem.productName}
+//                                   </h3>
+//                                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
+//                                     <span className="font-medium">
+//                                       Product ID: #{firstItem.productId}
+//                                     </span>
+//                                     <span className="w-1 h-1 bg-border rounded-full"></span>
+//                                     <span>Order ID: #{order.id}</span>
+//                                   </div>
+//                                 </div>
+//                                 <span
+//                                   className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(
+//                                     order.status
+//                                   )}`}
+//                                 >
+//                                   {order.status}
+//                                 </span>
+//                               </div>
+
+//                               <div className="flex items-center gap-4 mb-3">
+//                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+//                                   <CalendarIcon className="text-muted-foreground" size={14} />
+//                                   <span>
+//                                     {format(new Date(order.createdAt), "MMM dd, yyyy")}
+//                                   </span>
+//                                 </div>
+//                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+//                                   <FiCreditCard className="text-muted-foreground" size={14} />
+//                                   <span className="font-semibold text-foreground">
+//                                     ${order.totalAmount.toFixed(2)}
+//                                   </span>
+//                                 </div>
+//                                 {order.trackingNumber && (
+//                                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
+//                                     <FiTruck className="text-muted-foreground" size={14} />
+//                                     <span className="text-xs">{order.trackingNumber}</span>
+//                                   </div>
+//                                 )}
+//                               </div>
+
+//                               <button
+//                                 onClick={() => openOrderDetail(order)}
+//                                 className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-sage text-white rounded-lg font-semibold text-xs transition-all duration-300 shadow-md hover:shadow-lg hover:opacity-90"
+//                               >
+//                                 <FiPackage size={14} />
+//                                 View Details
+//                               </button>
+//                             </div>
+//                           </div>
+//                         </motion.div>
+//                       );
+//                     })}
+//                   </div>
+//                 )}
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+
+//       {/* ================= ORDER DETAIL MODAL ================= */}
+//       <AnimatePresence>
+//         {showOrderDetailModal && selectedOrder && (
+//           <>
+//             <motion.div
+//               initial={{ opacity: 0 }}
+//               animate={{ opacity: 1 }}
+//               exit={{ opacity: 0 }}
+//               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+//               onClick={() => setShowOrderDetailModal(false)}
+//             />
+//             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+//               <motion.div
+//                 initial={{ opacity: 0, scale: 0.95 }}
+//                 animate={{ opacity: 1, scale: 1 }}
+//                 exit={{ opacity: 0, scale: 0.95 }}
+//                 className="bg-card border border-border rounded-3xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+//               >
+//                 <div className="bg-gradient-sage px-6 py-5 flex justify-between items-center">
+//                   <div>
+//                     <h2 className="text-xl font-bold text-white">Order Details</h2>
+//                     <p className="text-white/80 text-sm">
+//                       Order #{selectedOrder.id}
+//                     </p>
+//                   </div>
+//                   <button
+//                     onClick={() => setShowOrderDetailModal(false)}
+//                     className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-colors"
+//                   >
+//                     <FiX className="text-white" size={20} />
+//                   </button>
+//                 </div>
+
+//                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
+//                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//                     <div className="bg-gradient-to-br from-secondary/50 to-secondary rounded-xl p-4 border border-border">
+//                       <div className="flex items-center gap-3 mb-2">
+//                         <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+//                           <FiPackage className="text-white" size={16} />
+//                         </div>
+//                         <div>
+//                           <p className="text-xs text-primary font-semibold uppercase tracking-wide">
+//                             Status
+//                           </p>
+//                           <p className="text-base font-bold text-foreground">
+//                             {selectedOrder.status}
+//                           </p>
+//                         </div>
+//                       </div>
+//                     </div>
+
+//                     <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 border border-border">
+//                       <div className="flex items-center gap-3 mb-2">
+//                         <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+//                           <FiCreditCard className="text-white" size={16} />
+//                         </div>
+//                         <div>
+//                           <p className="text-xs text-green-600 dark:text-green-400 font-semibold uppercase tracking-wide">
+//                             Payment
+//                           </p>
+//                           <p className={`text-base font-bold ${getPaymentStatusColor(selectedOrder.paymentStatus)}`}>
+//                             {selectedOrder.paymentStatus}
+//                           </p>
+//                         </div>
+//                       </div>
+//                     </div>
+
+//                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 border border-border">
+//                       <div className="flex items-center gap-3 mb-2">
+//                         <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+//                           <CalendarIcon className="text-white" size={16} />
+//                         </div>
+//                         <div>
+//                           <p className="text-xs text-purple-600 dark:text-purple-400 font-semibold uppercase tracking-wide">
+//                             Order Date
+//                           </p>
+//                           <p className="text-base font-bold text-foreground">
+//                             {format(new Date(selectedOrder.createdAt), "MMM dd, yyyy")}
+//                           </p>
+//                         </div>
+//                       </div>
+//                     </div>
+//                   </div>
+
+//                   <div className="bg-gradient-to-br from-secondary/50 to-secondary rounded-xl p-5 border border-border">
+//                     <div className="flex items-center gap-3 mb-3">
+//                       <FiMapPin className="text-primary" size={18} />
+//                       <h3 className="text-base font-bold text-foreground">
+//                         Shipping Address
+//                       </h3>
+//                     </div>
+//                     <p className="text-foreground text-sm leading-relaxed">
+//                       {selectedOrder.shippingAddress}
+//                     </p>
+//                     {selectedOrder.trackingNumber && (
+//                       <div className="mt-3 pt-3 border-t border-border">
+//                         <div className="flex items-center gap-2">
+//                           <FiTruck className="text-primary" size={16} />
+//                           <span className="text-sm text-muted-foreground">Tracking Number:</span>
+//                           <span className="text-sm font-bold text-foreground">
+//                             {selectedOrder.trackingNumber}
+//                           </span>
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
+
+//                   <div>
+//                     <h3 className="text-base font-bold text-foreground mb-3">
+//                       Order Items
+//                     </h3>
+//                     <div className="space-y-3">
+//                       {selectedOrder.items?.map((item, index) => {
+//                         const imageUrl = getProductImageUrl(item.productImage);
+//                         return (
+//                           <div
+//                             key={item.id || index}
+//                             className="bg-background rounded-xl border border-border p-4 flex gap-4 hover:border-primary/50 transition-colors"
+//                           >
+//                             <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
+//                               <img
+//                                 src={imageUrl}
+//                                 alt={item.productName}
+//                                 className="w-full h-full object-cover"
+//                                 onError={(e) => {
+//                                   e.currentTarget.src = mockProductImages[0];
+//                                 }}
+//                               />
+//                             </div>
+//                             <div className="flex-1">
+//                               <h4 className="text-base font-bold text-foreground mb-1">
+//                                 {item.productName || "Unknown Product"}
+//                               </h4>
+//                               <p className="text-xs text-muted-foreground mb-2">
+//                                 Product ID: #{item.productId || "N/A"}
+//                               </p>
+//                               <div className="flex items-center gap-3 text-xs">
+//                                 {item.selectedSize && (
+//                                   <div className="flex items-center gap-1.5">
+//                                     <span className="text-muted-foreground">Size:</span>
+//                                     <span className="font-semibold text-foreground">
+//                                       {item.selectedSize}
+//                                     </span>
+//                                   </div>
+//                                 )}
+//                                 {item.selectedColor && (
+//                                   <div className="flex items-center gap-1.5">
+//                                     <span className="text-muted-foreground">Color:</span>
+//                                     <span className="font-semibold text-foreground">
+//                                       {item.selectedColor}
+//                                     </span>
+//                                   </div>
+//                                 )}
+//                                 <div className="flex items-center gap-1.5">
+//                                   <span className="text-muted-foreground">Qty:</span>
+//                                   <span className="font-semibold text-foreground">
+//                                     {item.quantity || 1}
+//                                   </span>
+//                                 </div>
+//                               </div>
+//                             </div>
+//                             <div className="text-right">
+//                               <p className="text-xs text-muted-foreground mb-1">Price</p>
+//                               <p className="text-lg font-bold text-foreground">
+//                                 ${(item.totalPrice || 0).toFixed(2)}
+//                               </p>
+//                             </div>
+//                           </div>
+//                         );
+//                       })}
+//                     </div>
+//                   </div>
+
+//                   <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-5 border border-border">
+//                     <h3 className="text-base font-bold text-foreground mb-3">
+//                       Order Summary
+//                     </h3>
+//                     <div className="space-y-2">
+//                       {selectedOrder.discount && selectedOrder.discount > 0 && (
+//                         <div className="flex justify-between text-sm">
+//                           <span className="text-muted-foreground">Discount</span>
+//                           <span className="font-semibold text-green-600">
+//                             -${selectedOrder.discount.toFixed(2)}
+//                           </span>
+//                         </div>
+//                       )}
+//                       {selectedOrder.tax && selectedOrder.tax > 0 && (
+//                         <div className="flex justify-between text-sm">
+//                           <span className="text-muted-foreground">Tax</span>
+//                           <span className="font-semibold text-foreground">
+//                             ${selectedOrder.tax.toFixed(2)}
+//                           </span>
+//                         </div>
+//                       )}
+//                       <div className="pt-3 border-t-2 border-primary flex justify-between">
+//                         <span className="text-base font-bold text-foreground">
+//                           Total Amount
+//                         </span>
+//                         <span className="text-xl font-bold text-primary">
+//                           ${selectedOrder.totalAmount.toFixed(2)}
+//                         </span>
+//                       </div>
+//                     </div>
+//                   </div>
+//                 </div>
+
+//                 <div className="bg-secondary/50 px-6 py-4 flex justify-end gap-3 border-t border-border">
+//                   <button
+//                     onClick={() => setShowOrderDetailModal(false)}
+//                     className="px-5 py-2 bg-background hover:bg-secondary text-foreground font-semibold rounded-lg border border-border transition-colors text-sm"
+//                   >
+//                     Close
+//                   </button>
+//                 </div>
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+
+//       {/* ================= APPOINTMENTS MODAL ================= */}
+//       <AnimatePresence>
+//         {showAppointmentsModal && selectedUser && (
+//           <>
+//             <motion.div
+//               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+//               onClick={() => setShowAppointmentsModal(false)}
+//             />
+//             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//               <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
+//                 <div className="flex justify-between mb-4">
+//                   <h2 className="text-xl font-bold text-foreground">
+//                     Appointments – {selectedUser.name}
+//                   </h2>
+//                   <FiX
+//                     className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+//                     onClick={() => setShowAppointmentsModal(false)}
+//                   />
+//                 </div>
+
+//                 {appointmentsLoading ? (
+//                   <p className="text-center text-muted-foreground">Loading…</p>
+//                 ) : userAppointments.length === 0 ? (
+//                   <p className="text-center text-muted-foreground">No appointments found</p>
+//                 ) : (
+//                   <div className="space-y-3 max-h-[60vh] overflow-auto">
+//                     {userAppointments.map((a) => (
+//                       <div key={a.id} className="glass-card p-4 rounded-xl">
+//                         <p className="font-semibold text-foreground">{a.serviceType}</p>
+//                         <p className="text-sm text-muted-foreground">
+//                           {a.appointmentDate} • {a.appointmentTime}
+//                         </p>
+//                         <p className="text-sm text-muted-foreground">Status: {a.status}</p>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 )}
+//               </motion.div>
+//             </div>
+//           </>
+//         )}
+//       </AnimatePresence>
+//     </div>
+//   );
+// };
+
+// export default AdminUsers;
+
+
+
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -3692,24 +4834,48 @@ const AdminUsers = () => {
 
   const rowsPerPageOptions = [5, 10, 20, 50, 100];
 
+  const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
+  
+  // Better mock images that will actually display
   const mockProductImages = [
-    "/api/placeholder/400/400",
+    "https://via.placeholder.com/400x400/8FAE8B/FFFFFF?text=Product+Image",
+    "https://via.placeholder.com/400x400/7E9F7A/FFFFFF?text=Product+Image",
+    "https://via.placeholder.com/400x400/6D8F6A/FFFFFF?text=Product+Image",
   ];
 
   const getProductImageUrl = (imagePath: string | undefined, fallbackIndex: number = 0) => {
-    if (!imagePath) return mockProductImages[fallbackIndex];
+    // If no image path, return a placeholder
+    if (!imagePath) {
+      return mockProductImages[fallbackIndex % mockProductImages.length];
+    }
     
-    if (imagePath.startsWith('http')) {
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith('http') || imagePath.startsWith('blob:')) {
       return imagePath;
     }
     
-    const backendBaseUrl = '';
-    
-    if (!imagePath.startsWith('/') && !imagePath.startsWith('uploads/')) {
-      return `${backendBaseUrl}/uploads/${imagePath}`;
+    // If it's a placeholder URL, return as is
+    if (imagePath.includes('via.placeholder.com') || imagePath.includes('placeholder')) {
+      return imagePath;
     }
     
-    return `${backendBaseUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    // Otherwise, construct the full URL using your server URL
+    // Remove any leading slash if present
+    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+    
+    // Check if the path already contains 'uploads'
+    if (cleanPath.includes('uploads/')) {
+      return `${SERVER_URL}/${cleanPath}`;
+    }
+    
+    // Otherwise, assume it's in uploads folder
+    return `${SERVER_URL}/uploads/${cleanPath}`;
+  };
+
+  const getMediaUrl = (path?: string) => {
+    if (!path) return mockProductImages[0];
+    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+    return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
 
   // Fetch users
@@ -3721,8 +4887,13 @@ const AdminUsers = () => {
         const res = await userApi.getCustomers(offset, rowsPerPage);
         setUsers(res.content);
         setTotalUsers(res.totalElements);
-      } catch {
-        setError("Failed to load users");
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            error.message || 
+                            'Failed to load users';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -3774,8 +4945,12 @@ const AdminUsers = () => {
       toast.success(
         updatedUser.isActive ? "User activated" : "User deactivated"
       );
-    } catch (err) {
-      toast.error("Failed to update user status");
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error || 
+                          err.message || 
+                          'Failed to update user status';
+      toast.error(errorMessage);
     }
   };
 
@@ -3826,7 +5001,7 @@ const AdminUsers = () => {
       }
 
       const transformedOrders: Order[] = res.content.map((order: any, index: number) => {
-        const fallbackImage = mockProductImages[0];
+        const fallbackImage = mockProductImages[index % mockProductImages.length];
         
         const hasItems = order.items && Array.isArray(order.items) && order.items.length > 0;
         
@@ -3869,9 +5044,13 @@ const AdminUsers = () => {
       });
       
       setUserOrders(transformedOrders);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading orders:", error);
-      toast.error("Failed to load orders");
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Failed to load orders';
+      toast.error(errorMessage);
       setUserOrders([]);
     } finally {
       setOrdersLoading(false);
@@ -3886,9 +5065,13 @@ const AdminUsers = () => {
     try {
       const res = await appointmentApi.getUserAppointments(user.id, 0, 50);
       setUserAppointments(res.content || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Failed to load appointments");
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error || 
+                          err.message || 
+                          'Failed to load appointments';
+      toast.error(errorMessage);
     } finally {
       setAppointmentsLoading(false);
     }
@@ -3901,8 +5084,9 @@ const AdminUsers = () => {
 
   const renderOrderItem = (order: Order) => {
     if (!order.items || order.items.length === 0) {
+      const fallbackIndex = order.id % mockProductImages.length;
       return {
-        productImage: mockProductImages[0],
+        productImage: mockProductImages[fallbackIndex],
         productName: "Unknown Product",
         productId: order.id,
         itemsLength: 0
@@ -3911,7 +5095,7 @@ const AdminUsers = () => {
     
     const firstItem = order.items[0];
     return {
-      productImage: getProductImageUrl(firstItem.productImage),
+      productImage: getProductImageUrl(firstItem.productImage, order.id % mockProductImages.length),
       productName: firstItem.productName || "Unknown Product",
       productId: firstItem.productId || order.id,
       itemsLength: order.items.length
@@ -4145,10 +5329,11 @@ const AdminUsers = () => {
                                   toast.success(res.message || "User deleted");
                                   setUsers((prev) => prev.filter((u) => u.id !== user.id));
                                 } catch (err: any) {
-                                  toast.error(
-                                    err?.response?.data?.message ||
-                                      "Cannot delete user. Deactivate instead."
-                                  );
+                                  const errorMessage = err.response?.data?.message || 
+                                                      err.response?.data?.error || 
+                                                      err.message || 
+                                                      'Cannot delete user. Deactivate instead.';
+                                  toast.error(errorMessage);
                                 }
                               }}
                               className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
@@ -4395,7 +5580,7 @@ const AdminUsers = () => {
                                   alt={firstItem.productName}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
-                                    e.currentTarget.src = mockProductImages[0];
+                                    e.currentTarget.src = mockProductImages[order.id % mockProductImages.length];
                                   }}
                                 />
                               </div>
@@ -4583,7 +5768,7 @@ const AdminUsers = () => {
                     </h3>
                     <div className="space-y-3">
                       {selectedOrder.items?.map((item, index) => {
-                        const imageUrl = getProductImageUrl(item.productImage);
+                        const imageUrl = getProductImageUrl(item.productImage, index % mockProductImages.length);
                         return (
                           <div
                             key={item.id || index}
@@ -4595,7 +5780,7 @@ const AdminUsers = () => {
                                 alt={item.productName}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  e.currentTarget.src = mockProductImages[0];
+                                  e.currentTarget.src = mockProductImages[index % mockProductImages.length];
                                 }}
                               />
                             </div>

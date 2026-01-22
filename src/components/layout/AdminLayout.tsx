@@ -111,7 +111,7 @@
 // export default AdminLayout;
 
 
-import { Outlet, useLocation, Link } from 'react-router-dom';
+import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FiHome,
@@ -120,9 +120,11 @@ import {
   FiUsers,
   FiCalendar,
   FiLogOut,
+  FiExternalLink,
 } from 'react-icons/fi';
 import useAuth from '../../hooks/useAuth';
 import logo from '../../assets/logo.png';
+
 
 // Add your logo import - replace with your actual logo
 // import Logo from '../../assets/logo.svg';
@@ -130,7 +132,7 @@ import logo from '../../assets/logo.png';
 const AdminLayout = () => {
   const location = useLocation();
   const { user, dispatch } = useAuth();
-
+const navigate = useNavigate();
   // Main navigation items
   const mainMenuItems = [
     { name: 'Dashboard', path: '/admin', icon: FiHome },
@@ -138,7 +140,9 @@ const AdminLayout = () => {
     { name: 'Order Management', path: '/admin/orders', icon: FiShoppingBag },
     { name: 'Users Management', path: '/admin/users', icon: FiUsers },
     { name: 'Appointments', path: '/admin/appointments', icon: FiCalendar },
-    { name: 'Log Out', path: '/auth/LoginPage', icon: FiLogOut, onClick: true },
+      { name: 'Visit Site', path: '/', icon: FiExternalLink, external: true },
+  // Auth
+  { name: 'Log Out', icon: FiLogOut, onClick: true },
   ];
 
   const isActive = (path: string) => {
@@ -148,10 +152,28 @@ const AdminLayout = () => {
     return location.pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
-    // Add your logout logic here
-    console.log('Logout clicked');
-  };
+const handleLogout = () => {
+  dispatch({ type: 'LOGOUT' });
+
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+
+  navigate('/login', {
+    replace: true,
+    state: { logout: true },
+  });
+};
+const getInitials = (name?: string) => {
+  if (!name) return 'A';
+
+  const words = name.trim().split(' ');
+  if (words.length === 1) return words[0][0].toUpperCase();
+
+  return (
+    words[0][0].toUpperCase() +
+    words[words.length - 1][0].toUpperCase()
+  );
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -177,8 +199,8 @@ const AdminLayout = () => {
           {mainMenuItems.map((item, index) => {
             const Icon = item.icon;
             const active = isActive(item.path);
-            const isLogout = item.onClick;
-
+            const isLogout = item.onClick === true;
+const isExternal = item.external === true;
             return (
               <div key={`${item.name}-${index}`}>
                 {isLogout ? (
@@ -223,17 +245,27 @@ const AdminLayout = () => {
         {/* User Info at Bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-[#8FAE8B] rounded-full flex items-center justify-center text-white font-semibold">
-              {user?.name?.charAt(0) || 'A'}
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">
-                {user?.name || 'Admin User'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {user?.email || 'admin@example.com'}
-              </p>
-            </div>
+<div className="
+  w-10 h-10 
+  rounded-full 
+  bg-[#8FAE8B]
+  flex items-center justify-center
+  text-white 
+  font-semibold 
+  text-sm
+  leading-none
+  shrink-0
+">
+  {getInitials(user?.name)}
+</div>
+           <div className="min-w-0">
+  <p className="text-sm font-medium text-gray-900 truncate">
+    {user?.name || 'Admin User'}
+  </p>
+  <p className="text-xs text-gray-500 truncate">
+    {user?.email || 'admin@example.com'}
+  </p>
+</div>
           </div>
         </div>
       </div>

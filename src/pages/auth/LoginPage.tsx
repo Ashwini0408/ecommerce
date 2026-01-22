@@ -1201,13 +1201,14 @@
 
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import { login } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
 import logo from '../../assets/logo.png';
+
 
 /* ================== ANIMATIONS (TS SAFE) ================== */
 const cardVariants: Variants = {
@@ -1253,7 +1254,6 @@ const itemVariants: Variants = {
   },
 };
 /* ========================================================== */
-
 const FullPageLoader = () => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -1305,19 +1305,18 @@ const LoginPage = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
-  // Effect to redirect after successful authentication
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      if (isAdmin) {
-        console.log('Admin detected, redirecting to /admin');
-        navigate('/admin', { replace: true });
-      } else {
-        console.log('Regular user, redirecting to /');
-        navigate('/', { replace: true });
-      }
-    }
-  }, [isAuthenticated, isAdmin, isLoading, navigate]);
+  if (!loginSuccess || isLoading) return;
+
+  if (isAdmin) {
+    navigate('/admin', { replace: true });
+  } else {
+    navigate('/', { replace: true });
+  }
+}, [loginSuccess, isAdmin, isLoading, navigate]);
+
 
   /* ================== VALIDATION RULES ================== */
   const validationRules = {
@@ -1393,7 +1392,8 @@ const LoginPage = () => {
     try {
       // Dispatch login action
       await dispatch(login(formData)).unwrap();
-      toast.success('Login successful!');
+toast.success('Login successful!');
+setLoginSuccess(true); // ✅ ADD THIS LINE
       
       // Navigation will be handled by the useEffect above
       // Don't navigate here - let the useEffect handle it
