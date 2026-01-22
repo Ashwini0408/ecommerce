@@ -1,4 +1,4 @@
-import type{ ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 // ==================== USER & AUTH ====================
 export interface User {
@@ -34,6 +34,7 @@ export interface SignUpRequest {
 
 // ==================== PRODUCT ====================
 export interface ProductAttribute {
+  key: string;
   type: string;
   value: string;
 }

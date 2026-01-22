@@ -34,7 +34,7 @@
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 65 23% 34%;
-    
+
     /* Navy/Indigo for awards section */
     --navy: 240 50% 25%;
     --gold: 40 60% 50%;
@@ -46,13 +46,13 @@
     --sage-light: 67 28% 55%;
     --sage-dark: 65 23% 28%;
     --sage-muted: 67 20% 68%;
-    
+
     /* Dusty Rose & Blush (from #b97a68, #d7a999, #e7d0ca) */
     --rose: 13 36% 57%;
     --rose-dark: 13 30% 45%;
     --blush: 17 40% 72%;
     --blush-light: 17 37% 92%;
-    
+
     /* Neutrals */
     --cream: 17 37% 92%;
     --cream-dark: 17 30% 85%;
@@ -95,48 +95,48 @@
     /* Dark theme using: #666b43 (primary), #e7d0ca (secondary) */
     --background: 65 20% 12%;
     --foreground: 17 37% 92%;
-    
+
     --card: 65 18% 16%;
     --card-foreground: 17 37% 92%;
-    
+
     --popover: 65 18% 16%;
     --popover-foreground: 17 37% 92%;
-    
+
     --primary: 67 28% 55%;
     --primary-foreground: 65 20% 12%;
-    
+
     --secondary: 13 28% 25%;
     --secondary-foreground: 17 37% 92%;
-    
+
     --muted: 65 15% 22%;
     --muted-foreground: 17 30% 70%;
-    
+
     --accent: 67 28% 55%;
     --accent-foreground: 65 20% 12%;
-    
+
     --destructive: 0 65% 50%;
     --destructive-foreground: 0 0% 100%;
-    
+
     --border: 65 15% 22%;
     --input: 65 15% 22%;
     --ring: 67 28% 55%;
-    
+
     /* Custom tokens - Dark theme */
     --sage: 65 23% 34%;
     --sage-light: 67 28% 55%;
     --sage-dark: 65 23% 28%;
     --sage-muted: 67 20% 45%;
-    
+
     --rose: 13 36% 57%;
     --rose-dark: 13 30% 45%;
     --blush: 17 40% 72%;
     --blush-light: 17 37% 92%;
-    
+
     --cream: 17 37% 92%;
     --cream-dark: 17 30% 75%;
     --charcoal: 65 20% 12%;
     --slate: 65 15% 45%;
-    
+
     --sidebar-background: 65 18% 14%;
     --sidebar-foreground: 17 37% 92%;
     --sidebar-primary: 67 28% 55%;
@@ -149,9 +149,10 @@
 }
 
 @layer base {
-  * {
+  /* REMOVED the problematic line causing the error */
+  /* * {
     @apply border-border;
-  }
+  } */
 
   body {
     @apply bg-background text-foreground antialiased;
@@ -160,10 +161,20 @@
     letter-spacing: 0.01em;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 400;
     letter-spacing: 0.02em;
+  }
+
+  /* Add border styling without @apply */
+  * {
+    border-color: hsl(var(--border));
   }
 }
 
@@ -224,7 +235,7 @@
   .link-underline {
     position: relative;
   }
-  
+
   .link-underline::after {
     content: '';
     position: absolute;
@@ -237,7 +248,7 @@
     transform-origin: right;
     transition: transform 0.3s ease;
   }
-  
+
   .link-underline:hover::after {
     transform: scaleX(1);
     transform-origin: left;
@@ -284,6 +295,7 @@
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -294,6 +306,7 @@
       opacity: 0;
       transform: translateY(30px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -305,6 +318,7 @@
       opacity: 0;
       transform: translateX(30px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -316,6 +330,7 @@
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -323,9 +338,12 @@
   }
 
   @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translateY(0px);
     }
+
     50% {
       transform: translateY(-20px);
     }
@@ -336,9 +354,12 @@
   }
 
   @keyframes pulse-glow {
-    0%, 100% {
+
+    0%,
+    100% {
       box-shadow: 0 0 20px hsl(65, 23%, 34%, 0.3);
     }
+
     50% {
       box-shadow: 0 0 40px hsl(65, 23%, 34%, 0.5);
     }
@@ -351,25 +372,22 @@
 
 @layer components {
   .glass-card {
-    @apply bg-card text-card-foreground border border-border rounded-xl shadow-lg;
+    /* Fixed: removed border-border reference */
+    @apply bg-card text-card-foreground border rounded-xl shadow-lg;
+    border-color: hsl(var(--border));
   }
 
   .input-field {
-    @apply w-full bg-background text-foreground
-    border border-input rounded-lg px-4 py-3
-    focus:outline-none focus:ring-2 focus:ring-primary/30
-    transition-all duration-300;
+    @apply w-full bg-background text-foreground border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all duration-300;
+    border-color: hsl(var(--input));
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground
-    py-3 rounded-lg font-medium
-    hover:opacity-90 transition-all duration-300;
+    @apply bg-primary text-primary-foreground py-3 rounded-lg font-medium hover:opacity-90 transition-all duration-300;
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-sage to-sage-dark
-    bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-sage to-sage-dark bg-clip-text text-transparent;
   }
 }
 
@@ -378,6 +396,7 @@
   color: hsl(var(--muted-foreground));
   opacity: 0.8;
 }
+
 @media (max-width: 640px) {
   .input-field::placeholder {
     font-size: 0.8rem;
