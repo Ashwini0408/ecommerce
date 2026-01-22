@@ -1,7 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import { type ReactNode } from 'react'; // 👈 Use 'type' for verbatimModuleSyntax
 
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
+interface ProtectedRouteProps {
+  children: ReactNode;
+  requireAdmin?: boolean;
+}
+
+const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const location = useLocation();
 

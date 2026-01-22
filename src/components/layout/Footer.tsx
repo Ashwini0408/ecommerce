@@ -147,7 +147,7 @@
 
 import { Link } from "react-router-dom";
 import { Instagram, Facebook, Phone, Mail, MapPin, Clock } from "lucide-react";
-
+import logo from "../../assets/logo.png"
 const footerLinks = {
   services: [
     { name: "Bespoke Tailoring", href: "/services" },
@@ -185,7 +185,7 @@ export const Footer = () => {
   <Link to="/" className="inline-flex items-center gap-4 mb-6">
     {/* LOGO */}
     <img
-      src="./src/assets/logo.png"
+      src={logo}
       alt="Styliste Couturier Logo"
       className="w-20 h-12 object-contain"
     />

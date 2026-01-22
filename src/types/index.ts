@@ -1,3 +1,5 @@
+import type{ ReactNode } from 'react';
+
 // ==================== USER & AUTH ====================
 export interface User {
   id: number;

@@ -196,7 +196,7 @@
 
 
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
@@ -286,7 +286,7 @@ const FullPageLoader = () => (
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, dispatch } = useAuth();
+  const { isLoading, dispatch } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",

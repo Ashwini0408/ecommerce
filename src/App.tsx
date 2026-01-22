@@ -113,7 +113,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { WhatsAppButton } from './pages/public/WhatsAppButton';
 import SustainabilityComingSoon from './pages/public/SustainabilityComingSoon';
-import ComingSoon from './pages/public/ShippingCommingSoon';
+// import ComingSoon from './pages/public/ShippingCommingSoon';
 import ShippingCommingSoon from './pages/public/ShippingCommingSoon';
 import ReturnCommingSoon from './pages/public/ReturnCommingSoon';
 
