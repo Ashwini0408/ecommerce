@@ -294,16 +294,16 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 // ---------------- SERVICE UI DATA ----------------
 
-const timeSlots = [
-  "10:00 AM",
-  "11:00 AM",
-  "12:00 PM",
-  "2:00 PM",
-  "3:00 PM",
-  "4:00 PM",
-  "5:00 PM",
-  "6:00 PM",
-];
+// const timeSlots = [
+//   "10:00 AM",
+//   "11:00 AM",
+//   "12:00 PM",
+//   "2:00 PM",
+//   "3:00 PM",
+//   "4:00 PM",
+//   "5:00 PM",
+//   "6:00 PM",
+// ];
 
 export default function AppointmentBooking() {
   const [selectedService, setSelectedService] = useState("");

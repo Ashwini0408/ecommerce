@@ -2,7 +2,7 @@ import axiosInstance from './axios';
 import type {
   Product,
   // CreateProductRequest,
-  UpdateProductRequest,
+  // UpdateProductRequest,
   ProductFilterRequest,
   PaginatedResponse,
 } from '../types';

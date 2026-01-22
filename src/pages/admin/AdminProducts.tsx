@@ -9013,7 +9013,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiImage, FiFolder, FiGrid, FiPause, FiPlay, FiEye, FiSearch } from 'react-icons/fi';
 import { productApi } from '../../api/productApi';
 import { categoryApi, type Category } from '../../api/categoryApi';
-import type { Product, CreateProductRequest, ProductAttribute } from '../../types';
+// 2. FIXED: Removed unused 'ProductAttribute' to clear warning
+import type { Product, CreateProductRequest } from '../../types';
 import toast from 'react-hot-toast';
 
 // --- CONFIGURATION ---
@@ -9393,23 +9394,18 @@ const AdminProducts = () => {
   };
 
   // --- FORM SUBMIT HANDLERS ---
-  const handleProductSubmit = async (e: React.FormEvent) => {
+const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const t = toast.loading(editingProduct ? 'Updating product...' : 'Creating product...');
+    
     try {
       const formData = new FormData();
-      
       const updatedAttributes: any[] = [];
       
-      // Add sizes as attributes
-      sizeTags.forEach(size => {
-        updatedAttributes.push({ type: 'Size', value: size });
-      });
-      
-      // Add colors as attributes
-      colorTags.forEach(color => {
-        updatedAttributes.push({ type: 'Color', value: color });
-      });
-      
+      // 3. FIXED: Using 'sizeTags' and 'colorTags' arrays instead of missing string inputs
+      sizeTags.forEach(size => updatedAttributes.push({ type: 'Size', value: size }));
+      colorTags.forEach(color => updatedAttributes.push({ type: 'Color', value: color }));
+
       const productData = {
         name: productForm.name,
         description: productForm.description,
@@ -9419,22 +9415,24 @@ const AdminProducts = () => {
         category: productForm.category,
         subcategory: productForm.subcategory,
         images: productForm.images,
-        videos: productForm.videos || [],
-        attributes: updatedAttributes
+        videos: productForm.videos || [], // FIXED: Added fallback for undefined
+        attributes: updatedAttributes,
+        isActive: editingProduct ? editingProduct.isActive : true
       };
-      
+
       const productBlob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
       formData.append('product', productBlob);
-      
+
       selectedFiles.forEach((file) => formData.append('imageFiles', file));
       selectedVideos.forEach((video) => formData.append('videoFiles', video));
 
       if (editingProduct) {
-        await productApi.updateProduct(editingProduct.id, productData);
-        toast.success('Product updated');
+        // 4. FIXED: Pass 'formData' instead of 'productData' for the Update API
+        await productApi.updateProduct(editingProduct.id, formData);
+        toast.success('Product updated successfully', { id: t });
       } else {
         await productApi.createProduct(formData);
-        toast.success('Product created!');
+        toast.success('Product created successfully', { id: t });
       }
 
       closeModal();
