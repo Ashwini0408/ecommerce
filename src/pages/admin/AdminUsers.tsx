@@ -6042,6 +6042,15 @@ const AdminUsers = () => {
     if (path.startsWith('http') || path.startsWith('blob:')) return path;
     return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
   };
+// format currency as Indian Rupees
+const formatCurrency = (amount?: number | null) => {
+  const val = Number(amount ?? 0);
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+  }).format(val); // e.g. "₹1,234.00"
+};
 
   // Fetch users
   useEffect(() => {
@@ -6294,7 +6303,7 @@ const AdminUsers = () => {
                 <thead className="bg-dark-50">
                   <tr>
                     {/* ID Column with filter - Fixed width */}
-                    <th className="w-24 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                    <th className="w-28 px-3 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
                       <div className="flex flex-col">
                         <span>ID</span>
                         <input
@@ -6790,7 +6799,7 @@ const AdminUsers = () => {
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   <FiCreditCard className="text-muted-foreground" size={14} />
                                   <span className="font-semibold text-foreground">
-                                    ${order.totalAmount.toFixed(2)}
+                                    {formatCurrency(order.totalAmount)}
                                   </span>
                                 </div>
                                 {order.trackingNumber && (
@@ -6988,7 +6997,7 @@ const AdminUsers = () => {
                             <div className="text-right">
                               <p className="text-xs text-muted-foreground mb-1">Price</p>
                               <p className="text-lg font-bold text-foreground">
-                                ${(item.totalPrice || 0).toFixed(2)}
+                                {formatCurrency(item.totalPrice)}
                               </p>
                             </div>
                           </div>
@@ -7006,7 +7015,7 @@ const AdminUsers = () => {
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Discount</span>
                           <span className="font-semibold text-green-600">
-                            -${selectedOrder.discount.toFixed(2)}
+                            -{formatCurrency(selectedOrder.discount)}
                           </span>
                         </div>
                       )}
@@ -7014,7 +7023,7 @@ const AdminUsers = () => {
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Tax</span>
                           <span className="font-semibold text-foreground">
-                            ${selectedOrder.tax.toFixed(2)}
+                            {formatCurrency(selectedOrder.tax)}
                           </span>
                         </div>
                       )}
@@ -7023,7 +7032,7 @@ const AdminUsers = () => {
                           Total Amount
                         </span>
                         <span className="text-xl font-bold text-primary">
-                          ${selectedOrder.totalAmount.toFixed(2)}
+                          {formatCurrency(selectedOrder.totalAmount)}
                         </span>
                       </div>
                     </div>
