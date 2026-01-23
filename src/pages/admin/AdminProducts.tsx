@@ -10609,7 +10609,7 @@ const AdminProducts = () => {
 
   // --- FORMS STATE ---
   const [productForm, setProductForm] = useState<CreateProductRequest>({
-    name: '', description: '', price: 0, salePrice: 0, stock: 0,
+    name: '', description: '', price: '', salePrice: '', stock: '',
     category: '', subcategory: '', images: [], videos: [], attributes: [],
   });
 
@@ -10769,9 +10769,9 @@ const AdminProducts = () => {
       setProductForm({
         name: product.name || '',
         description: product.description || '',
-        price: product.price || 0,
-        salePrice: product.salePrice || 0,
-        stock: product.stock || 0,
+        price: product.price != null ? String(product.price) : '',
+  salePrice: product.salePrice ? String(product.salePrice) : '',
+  stock: product.stock != null ? String(product.stock) : '',
         category: product.category || '',
         subcategory: product.subcategory || '',
         images: product.images || [],
@@ -10793,7 +10793,7 @@ const AdminProducts = () => {
     } else {
       setEditingProduct(null);
       setProductForm({
-        name: '', description: '', price: 0, salePrice: 0, stock: 0,
+        name: '', description: '', price: '', salePrice: '', stock: '',
         category: '', subcategory: '', images: [], videos: [], attributes: [],
       });
       setSizeTags([]);
@@ -10872,8 +10872,14 @@ const AdminProducts = () => {
   // --- FORM SUBMIT HANDLERS ---
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const t = toast.loading(editingProduct ? 'Updating product...' : 'Creating product...');
     
+  if (productForm.salePrice === '0') {
+    toast.error('Sale price cannot be 0');
+    return;
+  }
+    const t = toast.loading(
+    editingProduct ? 'Updating product...' : 'Creating product...'
+  );
     try {
       const formData = new FormData();
       const updatedAttributes: any[] = [];
@@ -10883,18 +10889,18 @@ const AdminProducts = () => {
       colorTags.forEach(color => updatedAttributes.push({ type: 'Color', value: color }));
 
       const productData = {
-        name: productForm.name,
-        description: productForm.description,
-        price: productForm.price,
-        salePrice: productForm.salePrice,
-        stock: productForm.stock,
-        category: productForm.category,
-        subcategory: productForm.subcategory,
-        images: productForm.images,
-        videos: productForm.videos || [], // FIXED: Added fallback for undefined
-        attributes: updatedAttributes,
-        isActive: editingProduct ? editingProduct.isActive : true
-      };
+  name: productForm.name,
+  description: productForm.description,
+  price: productForm.price ? Number(productForm.price) : null,
+  salePrice: productForm.salePrice ? Number(productForm.salePrice) : null,
+  stock: productForm.stock ? Number(productForm.stock) : 0,
+  category: productForm.category,
+  subcategory: productForm.subcategory,
+  images: productForm.images,
+  videos: productForm.videos || [],
+  attributes: updatedAttributes,
+  isActive: editingProduct ? editingProduct.isActive : true,
+};
 
       const productBlob = new Blob([JSON.stringify(productData)], { type: 'application/json' });
       formData.append('product', productBlob);
@@ -11134,17 +11140,26 @@ const AdminProducts = () => {
   };
 
   // --- INPUT HANDLERS ---
-  const handleProductInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    if (name === 'category') {
-      setProductForm(prev => ({ ...prev, category: value, subcategory: '' }));
-    } else {
-      setProductForm(prev => ({
-        ...prev,
-        [name]: ['price', 'salePrice', 'stock'].includes(name) ? Number(value) : value,
-      }));
-    }
-  };
+  const handleProductInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+
+  if (name === 'category') {
+    setProductForm(prev => ({
+      ...prev,
+      category: value,
+      subcategory: '',
+    }));
+    return;
+  }
+
+  setProductForm(prev => ({
+    ...prev,
+    [name]: value === '' ? '' : value,
+  }));
+};
+
 
   // --- COLUMN FILTER HANDLER ---
   const handleColumnFilterChange = (column: string, value: string) => {
@@ -11232,7 +11247,16 @@ const AdminProducts = () => {
       {/* --- SEARCH BAR (LIKE REFERENCE IMAGE) --- */}
       {(activeTab === 'CATEGORY' || activeTab === 'SUBCATEGORY') && (
         <div className="mb-6">
-          <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+          <div className="
+  flex items-center space-x-2 p-3
+  bg-white
+  border-2 border-slate-400
+  rounded-lg
+  shadow-sm
+  focus-within:border-[#8FAE8B]
+  focus-within:ring-2 focus-within:ring-[#8FAE8B]/30
+">
+
             <FiSearch className="text-gray-500" size={20} />
             <input
               type="text"
@@ -11427,12 +11451,12 @@ const AdminProducts = () => {
                             <div className="flex flex-col">
                               <span className="mb-1">Category</span>
                               <input
-                                type="text"
-                                placeholder="Search Category"
-                                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#8FAE8B] focus:border-[#8FAE8B]"
-                                value={columnFilters.category}
-                                onChange={(e) => handleColumnFilterChange('category', e.target.value)}
-                              />
+  type="text"
+  placeholder="Search Category"
+  className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#8FAE8B] focus:border-[#8FAE8B]"
+  value={columnFilters.category}
+  onChange={(e) => handleColumnFilterChange('category', e.target.value)}
+/>
                             </div>
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">
@@ -11495,10 +11519,14 @@ const AdminProducts = () => {
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-900">
                                 <div className="flex flex-col">
-                                  <div className="font-semibold">₹{product.price.toFixed(2)}</div>
-                                  {product.salePrice > 0 && (
-                                    <div className="text-xs text-red-600 line-through">₹{product.salePrice.toFixed(2)}</div>
-                                  )}
+                                  <div className="font-semibold">
+  ₹{product.price != null ? product.price.toFixed(2) : '0.00'}
+</div>
+                                  {product.salePrice != null && product.salePrice > 0 && (
+  <div className="text-xs text-red-600 line-through">
+    ₹{product.salePrice.toFixed(2)}
+  </div>
+)}
                                 </div>
                               </td>
                               <td className="px-4 py-3">
@@ -11677,12 +11705,16 @@ const AdminProducts = () => {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="label">Price</label>
-                              <div className="input-field bg-gray-50">₹{viewingProduct.price.toFixed(2)}</div>
+                              <div className="input-field bg-gray-50">
+  ₹{viewingProduct.price != null ? viewingProduct.price.toFixed(2) : '0.00'}
+</div>
                             </div>
                             <div>
                               <label className="label">Sale Price</label>
                               <div className="input-field bg-gray-50 break-words">
-                                {viewingProduct.salePrice > 0 ? `₹${viewingProduct.salePrice.toFixed(2)}` : 'Not on sale'}
+                                {viewingProduct.salePrice != null && viewingProduct.salePrice > 0
+  ? `₹${viewingProduct.salePrice.toFixed(2)}`
+  : 'Not on sale'}
                               </div>
                             </div>
                           </div>
@@ -11827,12 +11859,29 @@ const AdminProducts = () => {
                           <input type="number" name="stock" value={productForm.stock} onChange={handleProductInputChange} className="input-field" required min="0"/>
                         </div>
                         <div>
-                          <label className="label">Price *</label>
-                          <input type="number" name="price" value={productForm.price} onChange={handleProductInputChange} className="input-field" required min="0" step="0.01"/>
+                         <label className="label">Price *</label>
+<input
+  type="number"
+  name="price"
+  value={productForm.price}
+  onChange={handleProductInputChange}
+  className="input-field"
+  min="0"
+  step="0.01"
+  required
+/>
                         </div>
                         <div>
                           <label className="label">Sale Price</label>
-                          <input type="number" name="salePrice" value={productForm.salePrice} onChange={handleProductInputChange} className="input-field" min="0" step="0.01"/>
+                        <input
+  type="number"
+  name="salePrice"
+  value={productForm.salePrice}
+  onChange={handleProductInputChange}
+  className="input-field"
+  min="0.01"
+  step="0.01"
+/>
                         </div>
                     </div>
                     
@@ -11858,7 +11907,9 @@ const AdminProducts = () => {
                     </div>
                     
                     <div>
-                        <label className="label">Images</label>
+                        <label className="label">
+  Images <span className="text-red-500">*</span>
+</label>
                         <div className="flex items-center justify-center w-full mb-4">
                             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                                 <div className="flex flex-col items-center justify-center pt-5 pb-6">

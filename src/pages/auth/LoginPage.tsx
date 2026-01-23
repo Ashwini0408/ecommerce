@@ -1319,30 +1319,23 @@ const LoginPage = () => {
 
 
   /* ================== VALIDATION RULES ================== */
-  const validationRules = {
-    email: (value: string) => {
-      if (!value) return 'Email is required';
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
-      return '';
-    },
-    password: (value: string) => {
-      if (!value) return 'Password is required';
-      if (value.length < 6) return 'Password must be at least 6 characters';
-      return '';
-    },
-  };
+ const validationRules = {
+  email: (value: string) => {
+    if (!value) return 'Email is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+      return 'Please enter a valid email address';
+    return '';
+  },
+};
 
   /* ================== VALIDATION CHECKS ================== */
-  const validateField = (name: keyof typeof formData, value: string) => {
-    switch (name) {
-      case 'email':
-        return validationRules.email(value);
-      case 'password':
-        return validationRules.password(value);
-      default:
-        return '';
-    }
-  };
+ const validateField = (name: keyof typeof formData, value: string) => {
+  if (name === 'email') {
+    return validationRules.email(value);
+  }
+  return '';
+};
+
 
   /* ================== INPUT HANDLERS ================== */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1375,7 +1368,7 @@ const LoginPage = () => {
     // Validate all fields
     const newErrors = {
       email: validationRules.email(formData.email),
-      password: validationRules.password(formData.password),
+      password: '',
     };
     
     setErrors(newErrors);
@@ -1477,44 +1470,28 @@ setLoginSuccess(true); // ✅ ADD THIS LINE
             </motion.div>
 
             {/* Password */}
-            <motion.div variants={itemVariants}>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  onBlur={() => handleBlur('password')}
-                  placeholder="Enter Password"
-                  className={`input-field pl-10 pr-10 focus:scale-[1.01] ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
-                  required
-                />
-                <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                  <FiX size={12} /> {errors.password}
-                </p>
-              )}
-              {formData.password && !errors.password && formData.password.length >= 6 && (
-                <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
-                  <FiCheck size={12} /> Password is valid
-                </p>
-              )}
-              {formData.password && formData.password.length < 6 && !errors.password && (
-                <p className="text-yellow-500 text-xs mt-1">
-                  Minimum 6 characters required
-                </p>
-              )}
-            </motion.div>
-
+            {/* Password */}
+<motion.div variants={itemVariants}>
+  <div className="relative">
+    <input
+      type={showPassword ? 'text' : 'password'}
+      name="password"
+      value={formData.password}
+      onChange={handleInputChange}
+      placeholder="Enter Password"
+      className="input-field pl-10 pr-10 focus:scale-[1.01]"
+      required
+    />
+    <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+    >
+      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+    </button>
+  </div>
+</motion.div>
             {/* Forgot Password Link */}
             <motion.div variants={itemVariants} className="text-right">
               <Link

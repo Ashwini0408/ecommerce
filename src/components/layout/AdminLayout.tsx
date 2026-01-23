@@ -125,7 +125,6 @@ import {
 import useAuth from '../../hooks/useAuth';
 import logo from '../../assets/logo.png';
 
-
 // Add your logo import - replace with your actual logo
 // import Logo from '../../assets/logo.svg';
 

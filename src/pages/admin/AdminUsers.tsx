@@ -6283,7 +6283,7 @@ const formatCurrency = (amount?: number | null) => {
         </div>
         
         {/* Export Button */}
-        <div className="flex space-x-3">
+        {/* <div className="flex space-x-3">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -6291,7 +6291,7 @@ const formatCurrency = (amount?: number | null) => {
           >
             Export all users
           </motion.button>
-        </div>
+        </div> */}
       </div>
 
       {/* --- TABLE WITH COLUMN FILTERS --- */}
