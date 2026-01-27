@@ -84,6 +84,9 @@ export interface ProductFilterRequest {
 }
 
 export interface PaginatedResponse<T> {
+  data: boolean;
+  total: number;
+  orders(orders: any): unknown;
   content: T[];
   totalElements: number;
   totalPages: number;

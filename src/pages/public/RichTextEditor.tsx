@@ -136,12 +136,31 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
   };
 
   // Clear all formatting
-  const clearFormatting = () => {
-    document.execCommand('removeFormat');
-    document.execCommand('unlink'); // Also remove links if any
-    editorRef.current?.focus();
-    setTimeout(handleInput, 0);
-  };
+const clearFormatting = () => {
+  if (!editorRef.current) return;
+
+  const editor = editorRef.current;
+
+  // Get plain text (keeps line breaks)
+  const text = editor.innerText;
+
+  // Reset editor to clean paragraphs
+  editor.innerHTML = text
+    .split('\n')
+    .map(line => `<p>${line || '<br>'}</p>`)
+    .join('');
+
+  // Reset formats state
+  setActiveFormats({
+    bold: false,
+    italic: false,
+    underline: false,
+    list: 'none',
+  });
+
+  editor.focus();
+  onChange(editor.innerHTML);
+};
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
@@ -214,14 +233,14 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
         </select>
 
         {/* Clear Formatting */}
-        <button
+        {/* <button
           type="button"
           onClick={clearFormatting}
           className="ml-auto p-2 text-gray-700 hover:bg-gray-200 rounded"
           title="Clear Formatting"
         >
           Clear
-        </button>
+        </button> */}
       </div>
 
       {/* Editor Area */}

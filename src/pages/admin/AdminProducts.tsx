@@ -13503,58 +13503,67 @@ const AdminProducts = () => {
                 className="bg-white rounded-xl p-6 shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar border border-gray-200"
               >
                 {/* PRODUCT VIEW MODAL */}
-                {activeModal === "PRODUCT_VIEW" && viewingProduct && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-bold text-gray-900">
-                        Product Details
-                      </h2>
-                      <button type="button" onClick={closeModal}>
-                        <FiX
-                          size={24}
-                          className="text-gray-400 hover:text-gray-900"
-                        />
-                      </button>
-                    </div>
+                {/* PRODUCT VIEW MODAL */}
+{activeModal === "PRODUCT_VIEW" && viewingProduct && (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-2xl font-bold text-gray-900">
+        Product Details
+      </h2>
+      <button type="button" onClick={closeModal}>
+        <FiX
+          size={24}
+          className="text-gray-400 hover:text-gray-900"
+        />
+      </button>
+    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-lg font-semibold mb-2">
-                          Product Information
-                        </h3>
-                        <div className="space-y-3">
-                          <div>
-                            <label className="label">Product Name</label>
-                            <div className="input-field bg-gray-50 break-words">
-                              {viewingProduct.name}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="label">Description</label>
-                            <div
-                              className="input-field bg-gray-50 min-h-[100px] break-words overflow-auto rich-text-content"
-                              dangerouslySetInnerHTML={{
-                                __html: viewingProduct.description || "",
-                              }}
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="label">Category</label>
-                              <div className="input-field bg-gray-50 break-words">
-                                {viewingProduct.category}
-                              </div>
-                            </div>
-                            <div>
-                              <label className="label">Subcategory</label>
-                              <div className="input-field bg-gray-50 break-words">
-                                {viewingProduct.subcategory}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">
+          Product Information
+        </h3>
+        <div className="space-y-3">
+          <div>
+            <label className="label">Product Name</label>
+            <div className="input-field bg-gray-50 break-words">
+              {viewingProduct.name}
+            </div>
+          </div>
+          <div>
+  <label className="label">Description</label>
 
+  <div
+    className="input-field bg-gray-50 min-h-[100px] p-3 overflow-auto rich-text-content"
+    style={{
+      maxHeight: "300px",
+      lineHeight: "1.6",
+      fontFamily: "inherit",
+    }}
+    dangerouslySetInnerHTML={{
+      __html: viewingProduct.description || "<span class='text-gray-400'>No description</span>",
+    }}
+  />
+</div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Category</label>
+              <div className="input-field bg-gray-50 break-words">
+                {viewingProduct.category}
+              </div>
+            </div>
+            <div>
+              <label className="label">Subcategory</label>
+              <div className="input-field bg-gray-50 break-words">
+                {viewingProduct.subcategory}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Rest of your view modal code remains the same... */}
                       <div>
                         <h3 className="text-lg font-semibold mb-2">
                           Pricing & Stock
@@ -13723,21 +13732,6 @@ const AdminProducts = () => {
                             </div>
                           </div>
                         )}
-                    </div>
-
-                    <div className="flex gap-3 pt-6">
-                      <button
-                        onClick={() => {
-                          closeModal();
-                          openProductEditModal(viewingProduct);
-                        }}
-                        className="btn-primary flex-1"
-                      >
-                        Edit Product
-                      </button>
-                      <button onClick={closeModal} className="btn-ghost flex-1">
-                        Close
-                      </button>
                     </div>
                   </div>
                 )}
