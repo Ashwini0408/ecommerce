@@ -549,32 +549,38 @@ const Services = () => {
           </div>
 
           {/* ================= HOVER ================= */}
-          <div className="absolute inset-0 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out">
-            {/* Image */}
-            <img
-              src={service.bgImage}
-              alt={service.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+{/* ================= HOVER ================= */}
+<div className="absolute inset-0 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out">
+  
+  {/* IMAGE WRAPPER (IMPORTANT) */}
+  <div className="absolute inset-0 overflow-hidden">
+    <img
+      src={service.bgImage}
+      alt={service.title}
+      className="
+        w-full h-full object-cover
+        scale-110 blur-[3px]
+      "
+    />
+  </div>
 
-            {/* Light overlay (NOT DARK) */}
-            <div className="absolute inset-0 bg-white/20" />
+  {/* Gradient overlay */}
+  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10" />
 
-            {/* Content */}
-            <div className="relative z-10 h-full flex flex-col justify-end p-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-300">
-              {/* Icon STILL visible */}
-              <div className="w-14 h-14 mb-4 rounded-full bg-white/90 flex items-center justify-center">
-                <service.icon className="w-6 h-6 text-sage" strokeWidth={1} />
-              </div>
+  {/* Content */}
+  <div className="relative z-10 h-full flex flex-col justify-end p-8 text-white">
+    <div className="w-14 h-14 mb-4 rounded-full bg-white/90 flex items-center justify-center">
+      <service.icon className="w-6 h-6 text-sage" strokeWidth={1} />
+    </div>
 
-              <h3 className="font-serif text-2xl mb-2">
-                {service.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-white/90">
-                {service.description}
-              </p>
-            </div>
-          </div>
+    <h3 className="font-serif text-2xl mb-2">
+      {service.title}
+    </h3>
+    <p className="text-sm leading-relaxed text-white/90">
+      {service.description}
+    </p>
+  </div>
+</div>
         </motion.div>
       ))}
     </div>
