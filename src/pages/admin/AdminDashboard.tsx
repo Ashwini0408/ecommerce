@@ -284,10 +284,9 @@
 
 
 import { useState, useEffect } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  FiHome,
   FiPackage,
   FiShoppingBag,
   FiUsers,

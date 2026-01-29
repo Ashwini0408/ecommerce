@@ -360,7 +360,7 @@ interface ProductCardProps {
 const ProductCard = ({ product }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const slideshowIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // --- HELPER: Resolve Image URL ---
   const getImageUrl = (path?: string) => {
