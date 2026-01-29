@@ -4,6 +4,8 @@ import { Mail, Phone, MapPin, Clock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
+import ContactApi from "../../api/contactApi";
+
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -12,12 +14,40 @@ const Contact = () => {
     subject: "",
     message: "",
   });
+const [loading, setLoading] = useState(false);
+const [submitted, setSubmitted] = useState(false);
+const [successMessage, setSuccessMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Your message has been sent. We'll be in touch soon.");
-    setFormData({ name: "", email: "", subject: "", message: "" });
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    setLoading(true);
+
+    const responseMessage = await ContactApi.sendMessage(formData);
+
+    setSuccessMessage(
+      typeof responseMessage === "string"
+        ? responseMessage
+        : "Your form was submitted successfully."
+    );
+
+    setSubmitted(true);
+
+    setFormData({
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    });
+  } catch (error: any) {
+    toast.error(
+      error?.response?.data || "Failed to send message. Please try again."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -25,8 +55,8 @@ const Contact = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
- const inputClass =
-  "w-full bg-[#fafafa] border border-[#e5e5e5] text-[#1f1f1f] placeholder:text-[#9ca3af] focus:border-sage focus:ring-1 focus:ring-sage/30 outline-none rounded-md transition-all";
+const inputClass =
+  "w-full bg-white border border-[#e5e5e5] text-[#1f1f1f] placeholder:text-[#9ca3af] focus:border-sage focus:ring-1 focus:ring-sage/30 outline-none rounded-md transition-all text-sm";
 
   return (
     <div className="bg-background text-foreground">
@@ -78,10 +108,58 @@ const Contact = () => {
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
+              className="relative min-h-[600px]"
             >
-              <h2 className="font-serif text-3xl mb-8">Send a Message</h2>
+             <div className="relative bg-sage/10 rounded-2xl p-8 max-w-xl min-h-[420px] flex flex-col justify-center">
+  <h2 className="font-serif text-3xl mb-6">Send a Message</h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+{submitted && (
+  <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/30 rounded-md">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-10 text-center"
+    >
+      {/* Check Icon */}
+      <div className="flex justify-center mb-6">
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+          <svg
+            className="w-8 h-8 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+      </div>
+
+      <h3 className="font-serif text-2xl mb-3 text-[#3b3b2c]">
+        Submitted Successfully
+      </h3>
+
+      <p className="text-muted-foreground mb-8">
+        {successMessage}
+      </p>
+
+      <button
+        onClick={() => setSubmitted(false)}
+        className="px-8 py-3 bg-sage text-white rounded-md hover:bg-sage/90 transition"
+      >
+        Go Back
+      </button>
+    </motion.div>
+  </div>
+)}
+
+  <div className={submitted ? "opacity-30 pointer-events-none" : ""}>
+  <form onSubmit={handleSubmit} className="space-y-4">
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="text-xs uppercase tracking-[0.15em] text-[#1f1f1f] mb-3 block">
@@ -93,7 +171,7 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="Your name"
                       required
-                      className={`${inputClass} h-14 px-5`}
+                      className={`${inputClass} h-11 px-4`}
                     />
                   </div>
 
@@ -108,7 +186,7 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="your@email.com"
                       required
-                      className={`${inputClass} h-14 px-5`}
+                      className={`${inputClass} h-11 px-4`}
                     />
                   </div>
                 </div>
@@ -123,7 +201,7 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="How can we help?"
                     required
-                    className={`${inputClass} h-14 px-5`}
+                    className={`${inputClass} h-11 px-4`}
                   />
                 </div>
 
@@ -135,21 +213,27 @@ const Contact = () => {
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    rows={6}
+                    rows={4}
                     placeholder="Tell us more..."
                     required
-                    className={`${inputClass} px-5 py-4 resize-none`}
+                    className={`${inputClass} px-4 py-3 resize-none`}
                   />
                 </div>
 
                 <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-sage text-primary-foreground hover:bg-sage/90 transition-all rounded-md group"
-                >
-                  Send Message
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </button>
+  type="submit"
+  disabled={loading}
+  className={`inline-flex items-center gap-2 px-8 py-4 bg-sage text-primary-foreground transition-all rounded-md group
+    ${loading ? "opacity-60 cursor-not-allowed" : "hover:bg-sage/90"}`}
+>
+  {loading ? "Sending..." : "Send Message"}
+  {!loading && (
+    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+  )}
+</button>
               </form>
+              </div>
+</div>
             </motion.div>
 
             {/* ========== CONTACT INFO ========== */}
@@ -221,14 +305,16 @@ const Contact = () => {
               </div>
 
               {/* Map */}
-              <div className="mt-10 aspect-video bg-secondary overflow-hidden rounded-md">
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767.5!2d72.97!3d19.22!5e0!3m2!1sen!2sin"
-                  className="w-full h-full opacity-80"
-                  loading="lazy"
-                  title="Styliste Couturier Location"
-                />
-              </div>
+             <div className="mt-10 aspect-video bg-secondary overflow-hidden rounded-md">
+  <iframe
+    src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d7535.1426258730435!2d72.9638102669468!3d19.21391739277337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sstyliste%20couturier!5e0!3m2!1sen!2sin!4v1769664608496!5m2!1sen!2sin"
+    className="w-full h-full border-0"
+    loading="lazy"
+    referrerPolicy="no-referrer-when-downgrade"
+    allowFullScreen
+    title="Styliste Couturier Location"
+  />
+</div>                 
             </motion.div>
 
           </div>

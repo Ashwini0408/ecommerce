@@ -66,6 +66,7 @@ axiosInstance.interceptors.response.use(
     url.includes("/appointments") ||
     url.includes("/products") ||
     url.includes("/cart");
+    url.includes("/contact");
 
   // 🚫 DO NOT clear auth for public APIs
   if (!isPublicApi) {
@@ -77,8 +78,6 @@ axiosInstance.interceptors.response.use(
     }
   }
 }
-
-
       // Handle 403 Forbidden
       if (status === 403) {
         console.warn('Forbidden - Insufficient permissions');

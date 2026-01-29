@@ -885,7 +885,7 @@ const isBlockAllowed = (date: Date) => {
   const today = new Date();
   today.setHours(0,0,0,0);
   const max = new Date(today);
-  max.setDate(today.getDate() + 7);
+  max.setDate(today.getDate() + 15);
   return date >= today && date <= max;
 };
 
@@ -1324,7 +1324,7 @@ export default function AdminAppointment() {
 
   const openModal = (d: Date) => {
     if (!isBlockAllowed(d)) {
-      toast.error("You can block only today → next 7 days.");
+      toast.error("You can block only today → next 15 days.");
       return;
     }
     setModalDateIso(format(d, "yyyy-MM-dd"));
