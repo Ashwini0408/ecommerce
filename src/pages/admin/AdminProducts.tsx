@@ -12079,7 +12079,7 @@ import { productApi } from "../../api/productApi";
 import { categoryApi, type Category } from "../../api/categoryApi";
 import type { Product, CreateProductRequest } from "../../types";
 import toast from "react-hot-toast";
-import RichTextEditor from "../public/RichTextEditor" // <-- IMPORT ADDED
+import RichTextEditor from "../public/RichTextEditor"; // <-- IMPORT ADDED
 
 // --- CONFIGURATION ---
 const SERVER_URL =
@@ -12093,6 +12093,19 @@ type ModalType =
   | "SUBCATEGORY"
   | "PRODUCT_VIEW";
 type AdminTab = "CATEGORY" | "SUBCATEGORY" | "PRODUCT";
+
+type ProductFormState = {
+  name: string;
+  description: string;
+  price: string;
+  salePrice: string;
+  stock: string;
+  category: string;
+  subcategory: string;
+  images: string[];
+  videos: string[];
+  attributes: any[];
+};
 
 // Tag component for sizes and colors
 interface TagProps {
@@ -12205,7 +12218,7 @@ const AdminProducts = () => {
   const [editingSubCategory, setEditingSubCategory] = useState<any>(null);
 
   // --- FORMS STATE ---
-  const [productForm, setProductForm] = useState<CreateProductRequest>({
+  const [productForm, setProductForm] = useState<ProductFormState>({
     name: "",
     description: "",
     price: "",
@@ -13504,66 +13517,68 @@ const AdminProducts = () => {
               >
                 {/* PRODUCT VIEW MODAL */}
                 {/* PRODUCT VIEW MODAL */}
-{activeModal === "PRODUCT_VIEW" && viewingProduct && (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center mb-6">
-      <h2 className="text-2xl font-bold text-gray-900">
-        Product Details
-      </h2>
-      <button type="button" onClick={closeModal}>
-        <FiX
-          size={24}
-          className="text-gray-400 hover:text-gray-900"
-        />
-      </button>
-    </div>
+                {activeModal === "PRODUCT_VIEW" && viewingProduct && (
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Product Details
+                      </h2>
+                      <button type="button" onClick={closeModal}>
+                        <FiX
+                          size={24}
+                          className="text-gray-400 hover:text-gray-900"
+                        />
+                      </button>
+                    </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-2">
-          Product Information
-        </h3>
-        <div className="space-y-3">
-          <div>
-            <label className="label">Product Name</label>
-            <div className="input-field bg-gray-50 break-words">
-              {viewingProduct.name}
-            </div>
-          </div>
-          <div>
-  <label className="label">Description</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Product Information
+                        </h3>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="label">Product Name</label>
+                            <div className="input-field bg-gray-50 break-words">
+                              {viewingProduct.name}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="label">Description</label>
 
-  <div
-    className="input-field bg-gray-50 min-h-[100px] p-3 overflow-auto rich-text-content"
-    style={{
-      maxHeight: "300px",
-      lineHeight: "1.6",
-      fontFamily: "inherit",
-    }}
-    dangerouslySetInnerHTML={{
-      __html: viewingProduct.description || "<span class='text-gray-400'>No description</span>",
-    }}
-  />
-</div>
+                            <div
+                              className="input-field bg-gray-50 min-h-[100px] p-3 overflow-auto rich-text-content"
+                              style={{
+                                maxHeight: "300px",
+                                lineHeight: "1.6",
+                                fontFamily: "inherit",
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  viewingProduct.description ||
+                                  "<span class='text-gray-400'>No description</span>",
+                              }}
+                            />
+                          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">Category</label>
-              <div className="input-field bg-gray-50 break-words">
-                {viewingProduct.category}
-              </div>
-            </div>
-            <div>
-              <label className="label">Subcategory</label>
-              <div className="input-field bg-gray-50 break-words">
-                {viewingProduct.subcategory}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Rest of your view modal code remains the same... */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="label">Category</label>
+                              <div className="input-field bg-gray-50 break-words">
+                                {viewingProduct.category}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="label">Subcategory</label>
+                              <div className="input-field bg-gray-50 break-words">
+                                {viewingProduct.subcategory}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rest of your view modal code remains the same... */}
                       <div>
                         <h3 className="text-lg font-semibold mb-2">
                           Pricing & Stock
