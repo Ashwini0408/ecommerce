@@ -251,6 +251,7 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAppointment from './pages/admin/AdminAppointment';
+import ContactMessages from './pages/admin/ContactMessages';
 
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { WhatsAppButton } from './pages/public/WhatsAppButton';
@@ -336,6 +337,7 @@ function App() {
   <Route path="orders" element={<AdminOrders />} />
   <Route path="users" element={<AdminUsers />} />
   <Route path="appointments" element={<AdminAppointment />} />
+  <Route path="contacts" element={<ContactMessages />} />
   <Route path="reports" element={<div className="p-6">Reports Page</div>} />
   <Route path="settings" element={<div className="p-6">Settings Page</div>} />
 </Route>

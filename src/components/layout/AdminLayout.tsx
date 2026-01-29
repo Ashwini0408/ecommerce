@@ -121,10 +121,10 @@ import {
   FiCalendar,
   FiLogOut,
   FiExternalLink,
+  FiMail,
 } from 'react-icons/fi';
 import useAuth from '../../hooks/useAuth';
 import logo from '../../assets/logo.png';
-
 
 // Add your logo import - replace with your actual logo
 // import Logo from '../../assets/logo.svg';
@@ -141,6 +141,9 @@ const navigate = useNavigate();
     { name: 'Users Management', path: '/admin/users', icon: FiUsers },
     { name: 'Appointments', path: '/admin/appointments', icon: FiCalendar },
       { name: 'Visit Site', path: '/', icon: FiExternalLink, external: true },
+      { name: 'Contact Messages', path: '/admin/contacts', icon: FiMail },
+
+      
   // Auth
   { name: 'Log Out', icon: FiLogOut, onClick: true },
   ];

@@ -1112,6 +1112,7 @@ const AvailabilityModal: React.FC<{
   const removeSlot = (idx:number) => setSlots(prev => prev.filter((_,i)=>i!==idx));
 
   return (
+    
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg w-full max-w-2xl p-6">
         <div className="flex items-center justify-between mb-3">
@@ -1340,7 +1341,17 @@ export default function AdminAppointment() {
   if (loading) return <div className="p-8 text-center">Loading…</div>;
 
   return (
+
     <>
+    {/* PAGE HEADER */}
+    <div className="mb-8">
+      <h1 className="text-4xl font-display font-bold text-darkC-dark-900 mb-2">
+        Appointment Management
+      </h1>
+      <p className="text-dark-600">
+        Manage bookings, availability, and customer appointments
+      </p>
+    </div>
       <AvailabilityModal
         open={modalOpen}
         dateIso={modalDateIso}

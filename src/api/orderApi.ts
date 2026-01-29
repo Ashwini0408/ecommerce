@@ -48,11 +48,35 @@ export const orderApi = {
     return response.data;
   },
 
-  // Update order status (Admin only)
-  updateOrderStatus: async (id: number, statusData: UpdateOrderStatusRequest): Promise<Order> => {
-    const response = await axiosInstance.put<Order>(`/orders/${id}/status`, statusData);
-    return response.data;
-  },
+// Update order status (Admin only)
+updateOrderStatus: async (
+  id: number,
+  statusData: UpdateOrderStatusRequest
+): Promise<Order> => {
+  const response = await axiosInstance.patch<Order>(
+    `/orders/${id}/status`,
+    statusData
+  );
+  return response.data;
+},
+// Fetch order timeline (User / Admin)
+getOrderTimeline: async (id: number): Promise<
+  {
+    status: string;
+    message: string;
+    timestamp: string;
+  }[]
+> => {
+  const response = await axiosInstance.get<
+    {
+      status: string;
+      message: string;
+      timestamp: string;
+    }[]
+  >(`/orders/${id}/timeline`);
+  return response.data;
+},
+
 
   // Get order statistics (Admin only)
   getOrderStatistics: async (): Promise<OrderStatistics> => {
