@@ -349,6 +349,8 @@ import { Link } from 'react-router-dom';
 import { FiHeart } from 'react-icons/fi';
 import type { Product } from '../../types';
 import { formatINR } from "../../utils/currency";
+import { useNavigate } from "react-router-dom";
+import { wishlistApi } from "../../api/wishlistApi";
 
 // --- CONFIGURATION ---
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
@@ -363,6 +365,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const slideshowIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+const [wishlistLoading, setWishlistLoading] = useState(false);
+const navigate = useNavigate();
+useEffect(() => {
+  if (product.isWishlisted !== undefined) {
+    setIsWishlisted(product.isWishlisted);
+  }
+}, [product.id]);
+
+// example: token-based auth
+const isLoggedIn = Boolean(localStorage.getItem("authToken"));
 
   // --- HELPER: Resolve Image URL ---
   const getImageUrl = (path?: string) => {
@@ -377,6 +390,33 @@ const ProductCard = ({ product }: ProductCardProps) => {
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return `${SERVER_URL}${cleanPath}`;
   };
+const handleWishlistClick = async (
+  e: React.MouseEvent<HTMLButtonElement>
+) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!isLoggedIn) {
+    navigate("/login");
+    return;
+  }
+
+  if (wishlistLoading) return;
+
+  try {
+    setWishlistLoading(true);
+
+    const response = await wishlistApi.toggleWishlist(product.id);
+
+    // ✅ toggle UI based on API result
+    setIsWishlisted(response.isWishlisted ?? !isWishlisted);
+
+  } catch (error) {
+    console.error("Wishlist toggle failed", error);
+  } finally {
+    setWishlistLoading(false);
+  }
+};
 
   const images = product.images?.map(getImageUrl) || [getImageUrl()];
   const displayImage = images[currentImageIndex];
@@ -451,9 +491,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
           )}
           
           {/* Wishlist Button - Top Right */}
-          <button className="absolute top-3 right-3 p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm">
-            <FiHeart size={18} className="text-gray-600" />
-          </button>
+          <button
+  onClick={handleWishlistClick}
+  className="absolute top-3 right-3 p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm z-10"
+>
+  <FiHeart size={18} className={isWishlisted ? "text-red-500 fill-red-500" : "text-gray-600"} />
+</button>
+
 
           {/* Out of Stock Badge */}
           {product.stock === 0 && (

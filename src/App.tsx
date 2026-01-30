@@ -240,6 +240,7 @@ import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import TermsOfService from './pages/public/TermsAndConditions';
 import RefundPolicy from './pages/public/RefundPolicy';
 import Testimonial from './pages/public/Testimonial';
+import Wishlist from './pages/public/WishlistPage';
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
@@ -311,6 +312,7 @@ function App() {
         <Route path="/sustainability" element={<SustainabilityComingSoon />} />
         <Route path="/shipping" element={<ShippingCommingSoon />} />
         <Route path="/returns" element={<ReturnCommingSoon />} />
+        <Route path="/wishlist" element={<Wishlist />} />
 
         {/* Protected User Routes */}
         <Route

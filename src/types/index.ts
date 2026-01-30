@@ -52,6 +52,7 @@ export interface Product {
   videos?: string[];
   attributes: ProductAttribute[];
   isActive: boolean;
+  isWishlisted?: boolean;
 }
 
 export interface CreateProductRequest {

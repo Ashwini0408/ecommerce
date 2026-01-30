@@ -573,7 +573,7 @@ import {
   FiMenu,
   FiX,
   FiLogOut,
-  FiSearch,
+  FiHeart,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
 import { useAppSelector } from "../../hooks/useAuth";
@@ -698,10 +698,10 @@ useEffect(() => {
   <motion.button
     whileHover={{ scale: 1.1 }}
     whileTap={{ scale: 0.9 }}
-    onClick={() => navigate("/products")}
+    onClick={() => navigate("/wishlist")}
     className="p-2 text-white/80 hover:text-white"
   >
-    <FiSearch size={22} />
+    <FiHeart size={22} />
   </motion.button>
 )}
              {!isAdmin && (

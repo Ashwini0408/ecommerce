@@ -12442,21 +12442,16 @@ const AdminProducts = () => {
         attributes: product.attributes || [],
       });
 
-      // Extract sizes and colors from attributes to tags
       const sizes =
-        product.attributes
-          ?.filter((attr: any) => attr.type === "Size" || attr.type === "size")
-          .map((attr: any) => attr.value) || [];
+  product.attributes
+    ?.filter((attr: any) => attr.type === "SIZE")
+    .map((attr: any) => attr.value) || [];
 
-      const colors =
-        product.attributes
-          ?.filter(
-            (attr: any) =>
-              attr.type === "Color" ||
-              attr.type === "color" ||
-              attr.type === "Colour",
-          )
-          .map((attr: any) => attr.value) || [];
+const colors =
+  product.attributes
+    ?.filter((attr: any) => attr.type === "COLOR")
+    .map((attr: any) => attr.value) || [];
+
 
       setSizeTags(sizes);
       setColorTags(colors);
@@ -12567,12 +12562,19 @@ const AdminProducts = () => {
       const formData = new FormData();
       const updatedAttributes: any[] = [];
 
-      sizeTags.forEach((size) =>
-        updatedAttributes.push({ type: "Size", value: size }),
-      );
-      colorTags.forEach((color) =>
-        updatedAttributes.push({ type: "Color", value: color }),
-      );
+     sizeTags.forEach((size) =>
+  updatedAttributes.push({
+    type: "SIZE",
+    value: size.trim().toUpperCase(),
+  }),
+);
+
+colorTags.forEach((color) =>
+  updatedAttributes.push({
+    type: "COLOR",
+    value: color.trim().toUpperCase(),
+  }),
+);
 
       const productData = {
         name: productForm.name,
@@ -13634,12 +13636,8 @@ const AdminProducts = () => {
                                   </label>
                                   <div className="flex flex-wrap gap-2">
                                     {viewingProduct.attributes
-                                      ?.filter(
-                                        (attr: any) =>
-                                          attr.type === "Size" ||
-                                          attr.type === "size",
-                                      )
-                                      .map((attr: any, index: number) => (
+  ?.filter((attr: any) => attr.type === "SIZE")
+  .map((attr: any, index: number) => (
                                         <div
                                           key={index}
                                           className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#8FAE8B]/10 text-[#8FAE8B] rounded-full text-sm font-medium border border-[#8FAE8B]/30"
@@ -13647,11 +13645,9 @@ const AdminProducts = () => {
                                           {attr.value}
                                         </div>
                                       ))}
-                                    {viewingProduct.attributes?.filter(
-                                      (attr: any) =>
-                                        attr.type === "Size" ||
-                                        attr.type === "size",
-                                    ).length === 0 && (
+                                   {viewingProduct.attributes?.filter(
+  (attr: any) => attr.type === "SIZE",
+).length === 0 && (
                                       <span className="text-gray-400 text-sm">
                                         No sizes specified
                                       </span>
@@ -13664,13 +13660,8 @@ const AdminProducts = () => {
                                   </label>
                                   <div className="flex flex-wrap gap-2">
                                     {viewingProduct.attributes
-                                      ?.filter(
-                                        (attr: any) =>
-                                          attr.type === "Color" ||
-                                          attr.type === "color" ||
-                                          attr.type === "Colour",
-                                      )
-                                      .map((attr: any, index: number) => (
+  ?.filter((attr: any) => attr.type === "COLOR")
+  .map((attr: any, index: number) => (
                                         <div
                                           key={index}
                                           className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#8FAE8B]/10 text-[#8FAE8B] rounded-full text-sm font-medium border border-[#8FAE8B]/30"
@@ -13679,11 +13670,9 @@ const AdminProducts = () => {
                                         </div>
                                       ))}
                                     {viewingProduct.attributes?.filter(
-                                      (attr: any) =>
-                                        attr.type === "Color" ||
-                                        attr.type === "color" ||
-                                        attr.type === "Colour",
-                                    ).length === 0 && (
+  (attr: any) => attr.type === "COLOR",
+).length === 0 && (
+
                                       <span className="text-gray-400 text-sm">
                                         No colors specified
                                       </span>
