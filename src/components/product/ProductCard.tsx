@@ -355,6 +355,8 @@ const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
 
 interface ProductCardProps {
   product: Product;
+  compact?: boolean;   // 👈 ADD THIS LINE
+  className?: string;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {

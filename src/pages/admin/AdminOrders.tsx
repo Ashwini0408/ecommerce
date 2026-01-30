@@ -3300,16 +3300,16 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const Spinner = () => (
-  <div className="flex justify-center items-center p-12">
-    <FiLoader className="animate-spin text-sage" size={40} />
-  </div>
-);
+// const Spinner = () => (
+//   <div className="flex justify-center items-center p-12">
+//     <FiLoader className="animate-spin text-sage" size={40} />
+//   </div>
+// );
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalLoading, setModalLoading] = useState(false);
+  const [_modalLoading, setModalLoading] = useState(false);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderTimeline, setOrderTimeline] = useState<TimelineEvent[]>([]);

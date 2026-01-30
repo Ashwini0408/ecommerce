@@ -12077,7 +12077,7 @@ import {
 } from "react-icons/fi";
 import { productApi } from "../../api/productApi";
 import { categoryApi, type Category } from "../../api/categoryApi";
-import type { Product, CreateProductRequest } from "../../types";
+import type { Product } from "../../types";
 import toast from "react-hot-toast";
 import RichTextEditor from "../public/RichTextEditor"; // <-- IMPORT ADDED
 
@@ -13276,7 +13276,7 @@ const AdminProducts = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {paginatedProducts && paginatedProducts.length > 0 ? (
-                          paginatedProducts.map((product, index) => (
+                          paginatedProducts.map((product) => (
                             <tr key={product.id} className="hover:bg-gray-50">
                               <td className="px-4 py-3">
                                 <div className="flex items-center">
