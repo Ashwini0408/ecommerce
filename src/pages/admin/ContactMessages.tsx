@@ -525,7 +525,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiEye, FiTrash2, FiX, FiSearch } from "react-icons/fi";
+import { FiEye, FiTrash2, FiX } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { ContactAdminApi, type ContactMessage } from "../../api/contactAdminApi";
 
@@ -547,7 +547,7 @@ const AdminContactMessages = () => {
 
   // --- PAGINATION ---
   const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, _setRowsPerPage] = useState(10);
 
   // --- FETCH ---
   const fetchMessages = async () => {

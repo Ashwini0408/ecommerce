@@ -308,7 +308,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiFilter, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiSearch, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import Navbar from '../../components/layout/Navbar';
 import ProductCard from '../../components/product/ProductCard';

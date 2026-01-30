@@ -7115,13 +7115,13 @@ import {
   FiCreditCard,
   FiTruck,
   FiCalendar as CalendarIcon,
-  FiEdit2,
-  FiPlay,
-  FiPause,
-  FiChevronLeft,
-  FiChevronRight,
-  FiChevronsLeft,
-  FiChevronsRight,
+  // FiEdit2,
+  // FiPlay,
+  // FiPause,
+  // FiChevronLeft,
+  // FiChevronRight,
+  // FiChevronsLeft,
+  // FiChevronsRight,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { userApi, type User } from "../../api/userApi";
@@ -7160,7 +7160,7 @@ const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [_error, setError] = useState("");
   
   // Column filters
   const [columnFilters, setColumnFilters] = useState({
@@ -7222,11 +7222,11 @@ const AdminUsers = () => {
     return `${SERVER_URL}/${cleanPath}`;
   };
 
-  const getMediaUrl = (path?: string) => {
-    if (!path) return null;
-    if (path.startsWith('http') || path.startsWith('blob:')) return path;
-    return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
+  // const getMediaUrl = (path?: string) => {
+  //   if (!path) return null;
+  //   if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  //   return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  // };
 
   // format currency as Indian Rupees
   const formatCurrency = (amount?: number | null) => {

@@ -62,7 +62,7 @@
 //           {menuItems.map((item) => {
 //             const Icon = item.icon;
 //             const active = isActive(item.path);
-            
+
 //             return (
 //               <Link
 //                 key={item.name}
@@ -110,9 +110,8 @@
 
 // export default AdminLayout;
 
-
-import { Outlet, useLocation, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   FiHome,
   FiPackage,
@@ -122,9 +121,9 @@ import {
   FiLogOut,
   FiExternalLink,
   FiMail,
-} from 'react-icons/fi';
-import useAuth from '../../hooks/useAuth';
-import logo from '../../assets/logo.png';
+} from "react-icons/fi";
+import useAuth from "../../hooks/useAuth";
+import logo from "../../assets/logo.png";
 
 // Add your logo import - replace with your actual logo
 // import Logo from '../../assets/logo.svg';
@@ -132,78 +131,73 @@ import logo from '../../assets/logo.png';
 const AdminLayout = () => {
   const location = useLocation();
   const { user, dispatch } = useAuth();
-const navigate = useNavigate();
+  const navigate = useNavigate();
   // Main navigation items
   const mainMenuItems = [
-    { name: 'Dashboard', path: '/admin', icon: FiHome },
-    { name: 'Product Management', path: '/admin/products', icon: FiPackage },
-    { name: 'Order Management', path: '/admin/orders', icon: FiShoppingBag },
-    { name: 'Users Management', path: '/admin/users', icon: FiUsers },
-    { name: 'Appointments', path: '/admin/appointments', icon: FiCalendar },
-      { name: 'Visit Site', path: '/', icon: FiExternalLink, external: true },
-      { name: 'Contact Messages', path: '/admin/contacts', icon: FiMail },
+    { name: "Dashboard", path: "/admin", icon: FiHome },
+    { name: "Product Management", path: "/admin/products", icon: FiPackage },
+    { name: "Order Management", path: "/admin/orders", icon: FiShoppingBag },
+    { name: "Users Management", path: "/admin/users", icon: FiUsers },
+    { name: "Appointments", path: "/admin/appointments", icon: FiCalendar },
+    { name: "Visit Site", path: "/", icon: FiExternalLink, external: true },
+    { name: "Contact Messages", path: "/admin/contacts", icon: FiMail },
 
-      
-  // Auth
-  { name: 'Log Out', icon: FiLogOut, onClick: true },
+    // Auth
+    { name: "Log Out", icon: FiLogOut, onClick: true },
   ];
 
   const isActive = (path: string) => {
-    if (path === '/admin') {
+    if (path === "/admin") {
       return location.pathname === path;
     }
     return location.pathname.startsWith(path);
   };
 
-const handleLogout = () => {
-  dispatch({ type: 'LOGOUT' });
+  const handleLogout = () => {
+    dispatch({ type: "LOGOUT" });
 
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-  navigate('/login', {
-    replace: true,
-    state: { logout: true },
-  });
-};
-const getInitials = (name?: string) => {
-  if (!name) return 'A';
+    navigate("/login", {
+      replace: true,
+      state: { logout: true },
+    });
+  };
+  const getInitials = (name?: string) => {
+    if (!name) return "A";
 
-  const words = name.trim().split(' ');
-  if (words.length === 1) return words[0][0].toUpperCase();
+    const words = name.trim().split(" ");
+    if (words.length === 1) return words[0][0].toUpperCase();
 
-  return (
-    words[0][0].toUpperCase() +
-    words[words.length - 1][0].toUpperCase()
-  );
-};
+    return words[0][0].toUpperCase() + words[words.length - 1][0].toUpperCase();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Static Sidebar */}
       <div className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-white to-gray-50 text-gray-800 shadow-lg z-40 border-r border-gray-200">
-       {/* Logo/Header */}
-<div className="p-6 bg-[#5E6E54] border-b border-[#4F5D47]">
-  <div className="flex justify-center items-center">
-    <img
-      src={logo}
-      alt="Styliste Couturier Logo"
-      className="w-12.5 h-14 object-contain mr-3 bg"
-    />
-    <div>
-      {/* <p className="text-xs text-gray-500">Admin Panel</p> */}
-    </div>
-  </div>
-</div>
-
+        {/* Logo/Header */}
+        <div className="p-6 bg-[#5E6E54] border-b border-[#4F5D47]">
+          <div className="flex justify-center items-center">
+            <img
+              src={logo}
+              alt="Styliste Couturier Logo"
+              className="w-12.5 h-14 object-contain mr-3 bg"
+            />
+            <div>
+              {/* <p className="text-xs text-gray-500">Admin Panel</p> */}
+            </div>
+          </div>
+        </div>
 
         {/* Navigation Menu */}
         <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-180px)]">
           {mainMenuItems.map((item, index) => {
             const Icon = item.icon;
-            const active = isActive(item.path);
             const isLogout = item.onClick === true;
-const isExternal = item.external === true;
+            const active = item.path ? isActive(item.path) : false;
+
             return (
               <div key={`${item.name}-${index}`}>
                 {isLogout ? (
@@ -216,22 +210,21 @@ const isExternal = item.external === true;
                   </button>
                 ) : (
                   <Link
-                    to={item.path}
+                    to={item.path!}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                       active
-                        ? 'bg-[#8FAE8B]/10 text-[#8FAE8B] border-l-4 border-[#8FAE8B]'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                        ? "bg-[#8FAE8B]/10 text-[#8FAE8B] border-l-4 border-[#8FAE8B]"
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                     }`}
                   >
-                    {Icon ? (
-                      <Icon 
-                        size={20} 
-                        className={active ? 'text-[#8FAE8B]' : 'text-gray-500'} 
+                    {Icon && (
+                      <Icon
+                        size={20}
+                        className={active ? "text-[#8FAE8B]" : "text-gray-500"}
                       />
-                    ) : (
-                      <span className="w-5"></span>
                     )}
                     <span className="font-medium">{item.name}</span>
+
                     {active && (
                       <motion.div
                         layoutId="activeTab"
@@ -248,7 +241,8 @@ const isExternal = item.external === true;
         {/* User Info at Bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <div className="flex items-center">
-<div className="
+            <div
+              className="
   w-10 h-10 
   rounded-full 
   bg-[#8FAE8B]
@@ -258,17 +252,18 @@ const isExternal = item.external === true;
   text-sm
   leading-none
   shrink-0
-">
-  {getInitials(user?.name)}
-</div>
-           <div className="min-w-0">
-  <p className="text-sm font-medium text-gray-900 truncate">
-    {user?.name || 'Admin User'}
-  </p>
-  <p className="text-xs text-gray-500 truncate">
-    {user?.email || 'admin@example.com'}
-  </p>
-</div>
+"
+            >
+              {getInitials(user?.name)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user?.name || "Admin User"}
+              </p>
+              <p className="text-xs text-gray-500 truncate">
+                {user?.email || "admin@example.com"}
+              </p>
+            </div>
           </div>
         </div>
       </div>

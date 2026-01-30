@@ -6,7 +6,6 @@ import {
   FiShoppingCart,
   FiPackage,
   FiShoppingBag,
-  FiUsers,
   FiCalendar,
   FiTrendingUp,
   FiXCircle,

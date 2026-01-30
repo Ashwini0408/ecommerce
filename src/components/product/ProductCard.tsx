@@ -355,12 +355,14 @@ const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
 
 interface ProductCardProps {
   product: Product;
+  compact?: boolean;   // 👈 ADD THIS LINE
+  className?: string;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const slideshowIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // --- HELPER: Resolve Image URL ---
   const getImageUrl = (path?: string) => {

@@ -3161,36 +3161,35 @@
 
 // export default AdminOrders;
 
-
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiEye,
   FiEdit2,
-  FiTrash2,
+  // FiTrash2,
   FiX,
-  FiSearch,
+  // FiSearch,
   FiPackage,
   FiTruck,
-  FiChevronLeft,
-  FiChevronRight,
-  FiChevronsLeft,
-  FiChevronsRight,
+  // FiChevronLeft,
+  // FiChevronRight,
+  // FiChevronsLeft,
+  // FiChevronsRight,
   FiLoader,
-  FiUser,
-  FiMail,
-  FiPhone,
+  // FiUser,
+  // FiMail,
+  // FiPhone,
   FiClock,
   FiCheckCircle,
-  FiAlertCircle,
-  FiInfo,
+  // FiAlertCircle,
+  // FiInfo,
   FiRefreshCw,
   FiList,
   FiCheck,
   FiXCircle,
-  FiAlertTriangle,
+  // FiAlertTriangle,
   FiRotateCcw,
-  FiDollarSign,
+  // FiDollarSign,
   FiImage,
 } from "react-icons/fi";
 import { orderApi } from "../../api/orderApi";
@@ -3217,7 +3216,7 @@ const ORDER_FLOW = [
   "OUT_FOR_DELIVERY",
   "DELIVERED",
   "CANCELLED",
-  "RETURNED"
+  "RETURNED",
 ] as const;
 
 // Status configuration with icons and colors
@@ -3301,16 +3300,16 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const Spinner = () => (
-  <div className="flex justify-center items-center p-12">
-    <FiLoader className="animate-spin text-sage" size={40} />
-  </div>
-);
+// const Spinner = () => (
+//   <div className="flex justify-center items-center p-12">
+//     <FiLoader className="animate-spin text-sage" size={40} />
+//   </div>
+// );
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalLoading, setModalLoading] = useState(false);
+  const [_modalLoading, setModalLoading] = useState(false);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderTimeline, setOrderTimeline] = useState<TimelineEvent[]>([]);
@@ -3344,7 +3343,7 @@ const AdminOrders = () => {
     if (!order) return [];
 
     const currentStatus = order.status || "PENDING";
-    
+
     // Create map of actual timeline events
     const timelineMap = new Map();
     timelineEvents.forEach((event) => {
@@ -3355,37 +3354,53 @@ const AdminOrders = () => {
     });
 
     // Define the normal flow sequence
-    const NORMAL_FLOW = ["PENDING", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"];
-    
+    const NORMAL_FLOW = [
+      "PENDING",
+      "PROCESSING",
+      "SHIPPED",
+      "OUT_FOR_DELIVERY",
+      "DELIVERED",
+    ];
+
     // Check for special statuses in timeline
-    const hasCancelledEvent = timelineEvents.some(event => event.status === "CANCELLED");
-    const hasReturnedEvent = timelineEvents.some(event => event.status === "RETURNED");
-    const hasDeliveredEvent = timelineEvents.some(event => event.status === "DELIVERED");
-    
+    const hasCancelledEvent = timelineEvents.some(
+      (event) => event.status === "CANCELLED",
+    );
+    const hasReturnedEvent = timelineEvents.some(
+      (event) => event.status === "RETURNED",
+    );
+    const hasDeliveredEvent = timelineEvents.some(
+      (event) => event.status === "DELIVERED",
+    );
+
     // Determine which statuses to show
     let statusesToShow: string[] = [];
-    
+
     if (hasCancelledEvent) {
       // For cancelled orders, show only statuses that occurred before cancellation
-      const cancelledEvent = timelineEvents.find(event => event.status === "CANCELLED");
-      
+      const cancelledEvent = timelineEvents.find(
+        (event) => event.status === "CANCELLED",
+      );
+
       if (cancelledEvent?.timestamp) {
         // Get events that happened before cancellation
-        const eventsBeforeCancellation = timelineEvents.filter(event => {
+        const eventsBeforeCancellation = timelineEvents.filter((event) => {
           if (!event.timestamp) return true;
           return new Date(event.timestamp) < new Date(cancelledEvent.timestamp);
         });
-        
+
         // Get unique statuses that occurred before cancellation
-        const occurredStatuses = new Set(eventsBeforeCancellation.map(e => e.status));
-        
+        const occurredStatuses = new Set(
+          eventsBeforeCancellation.map((e) => e.status),
+        );
+
         // Add statuses in normal flow order
-        NORMAL_FLOW.forEach(status => {
+        NORMAL_FLOW.forEach((status) => {
           if (occurredStatuses.has(status)) {
             statusesToShow.push(status);
           }
         });
-        
+
         // Add CANCELLED at the end
         statusesToShow.push("CANCELLED");
       } else {
@@ -3399,22 +3414,28 @@ const AdminOrders = () => {
         statusesToShow = [...NORMAL_FLOW, "RETURNED"];
       } else {
         // Returned without delivery - show what actually happened
-        const returnedEvent = timelineEvents.find(event => event.status === "RETURNED");
-        
+        const returnedEvent = timelineEvents.find(
+          (event) => event.status === "RETURNED",
+        );
+
         if (returnedEvent?.timestamp) {
-          const eventsBeforeReturn = timelineEvents.filter(event => {
+          const eventsBeforeReturn = timelineEvents.filter((event) => {
             if (!event.timestamp) return true;
-            return new Date(event.timestamp) < new Date(returnedEvent.timestamp);
+            return (
+              new Date(event.timestamp) < new Date(returnedEvent.timestamp)
+            );
           });
-          
-          const occurredStatuses = new Set(eventsBeforeReturn.map(e => e.status));
-          
-          NORMAL_FLOW.forEach(status => {
+
+          const occurredStatuses = new Set(
+            eventsBeforeReturn.map((e) => e.status),
+          );
+
+          NORMAL_FLOW.forEach((status) => {
             if (occurredStatuses.has(status)) {
               statusesToShow.push(status);
             }
           });
-          
+
           statusesToShow.push("RETURNED");
         } else {
           statusesToShow = [...NORMAL_FLOW, "RETURNED"];
@@ -3429,85 +3450,87 @@ const AdminOrders = () => {
     }
 
     // Map statuses to timeline items
-    return statusesToShow.map((status) => {
-      const config = STATUS_CONFIG[status];
-      if (!config) return null;
+    return statusesToShow
+      .map((status) => {
+        const config = STATUS_CONFIG[status];
+        if (!config) return null;
 
-      const hasOccurred = timelineMap.has(status);
-      const isCurrentStatus = status === currentStatus;
-      
-      // Determine if this status should be marked as completed
-      let isCompleted = false;
-      let isFuture = false;
-      
-      if (hasCancelledEvent) {
-        // For cancelled orders, all statuses before CANCELLED are completed
-        const cancelledIndex = statusesToShow.indexOf("CANCELLED");
-        const statusIndex = statusesToShow.indexOf(status);
-        isCompleted = statusIndex < cancelledIndex;
-        isFuture = statusIndex > cancelledIndex;
-      } else if (hasReturnedEvent) {
-        // For returned orders
-        if (hasDeliveredEvent) {
-          // Delivered then returned - all normal flow steps are completed
-          const returnedIndex = statusesToShow.indexOf("RETURNED");
+        const hasOccurred = timelineMap.has(status);
+        const isCurrentStatus = status === currentStatus;
+
+        // Determine if this status should be marked as completed
+        let isCompleted = false;
+        let isFuture = false;
+
+        if (hasCancelledEvent) {
+          // For cancelled orders, all statuses before CANCELLED are completed
+          const cancelledIndex = statusesToShow.indexOf("CANCELLED");
           const statusIndex = statusesToShow.indexOf(status);
-          isCompleted = statusIndex < returnedIndex;
-          isFuture = statusIndex > returnedIndex;
+          isCompleted = statusIndex < cancelledIndex;
+          isFuture = statusIndex > cancelledIndex;
+        } else if (hasReturnedEvent) {
+          // For returned orders
+          if (hasDeliveredEvent) {
+            // Delivered then returned - all normal flow steps are completed
+            const returnedIndex = statusesToShow.indexOf("RETURNED");
+            const statusIndex = statusesToShow.indexOf(status);
+            isCompleted = statusIndex < returnedIndex;
+            isFuture = statusIndex > returnedIndex;
+          } else {
+            // Returned without delivery
+            const returnedIndex = statusesToShow.indexOf("RETURNED");
+            const statusIndex = statusesToShow.indexOf(status);
+            isCompleted = statusIndex < returnedIndex;
+            isFuture = statusIndex > returnedIndex;
+          }
+        } else if (hasDeliveredEvent) {
+          // Delivered orders - all steps are completed
+          isCompleted = true;
         } else {
-          // Returned without delivery
-          const returnedIndex = statusesToShow.indexOf("RETURNED");
-          const statusIndex = statusesToShow.indexOf(status);
-          isCompleted = statusIndex < returnedIndex;
-          isFuture = statusIndex > returnedIndex;
+          // Ongoing order
+          const currentIndex = NORMAL_FLOW.indexOf(currentStatus as any);
+          const statusIndex = NORMAL_FLOW.indexOf(status as any);
+
+          if (currentIndex !== -1 && statusIndex !== -1) {
+            isCompleted = statusIndex < currentIndex;
+            isFuture = statusIndex > currentIndex;
+          }
         }
-      } else if (hasDeliveredEvent) {
-        // Delivered orders - all steps are completed
-        isCompleted = true;
-      } else {
-        // Ongoing order
-        const currentIndex = NORMAL_FLOW.indexOf(currentStatus as any);
-        const statusIndex = NORMAL_FLOW.indexOf(status as any);
-        
-        if (currentIndex !== -1 && statusIndex !== -1) {
-          isCompleted = statusIndex < currentIndex;
-          isFuture = statusIndex > currentIndex;
+
+        let state: "completed" | "active" | "pending" = "pending";
+        if (isCurrentStatus) {
+          state = "active";
+        } else if (isCompleted) {
+          state = "completed";
         }
-      }
 
-      let state: "completed" | "active" | "pending" = "pending";
-      if (isCurrentStatus) {
-        state = "active";
-      } else if (isCompleted) {
-        state = "completed";
-      }
+        const event = timelineMap.get(status);
 
-      const event = timelineMap.get(status);
-
-      return {
-        status,
-        label: config.label,
-        icon: state === "completed" ? config.completedIcon : config.icon,
-        message: event?.message || config.defaultMessage,
-        timestamp: event?.timestamp,
-        state,
-        isFuture,
-        colorClass:
-          state === "completed"
-            ? "text-green-700 bg-green-100"
-            : state === "active"
-              ? config.activeColor
-              : "text-gray-500 bg-gray-100",
-        iconColor:
-          state === "completed"
-            ? "text-green-500"
-            : state === "active"
-              ? "text-current"
-              : "text-gray-400",
-        showMessage: hasOccurred || isCurrentStatus,
-        showTimestamp: event?.timestamp,
-      };
-    }).filter(Boolean);
+        return {
+          status,
+          label: config.label,
+          icon: state === "completed" ? config.completedIcon : config.icon,
+          message: event?.message || config.defaultMessage,
+          timestamp: event?.timestamp,
+          state,
+          isFuture,
+          colorClass:
+            state === "completed"
+              ? "text-green-700 bg-green-100"
+              : state === "active"
+                ? config.activeColor
+                : "text-gray-500 bg-gray-100",
+          iconColor:
+            state === "completed"
+              ? "text-green-500"
+              : state === "active"
+                ? "text-current"
+                : "text-gray-400",
+          showMessage: hasOccurred || isCurrentStatus,
+          showTimestamp: event?.timestamp,
+        };
+      })
+      .filter((step): step is NonNullable<typeof step> => step !== null);
   };
 
   const getProductImageUrl = (imagePath: string | null) => {
@@ -3573,17 +3596,17 @@ const AdminOrders = () => {
 
       // Handle different API response structures
       if (Array.isArray(response)) {
-        filteredOrders = response;
+        filteredOrders = response as Order[];
         totalCount = response.length;
       } else if (response.content && Array.isArray(response.content)) {
-        filteredOrders = response.content;
+        filteredOrders = response.content as Order[];
         totalCount =
           response.totalElements || response.total || response.content.length;
       } else if (response.orders && Array.isArray(response.orders)) {
-        filteredOrders = response.orders;
+        filteredOrders = response.orders as unknown as Order[];
         totalCount = response.total || response.orders.length;
       } else if (response.data && Array.isArray(response.data)) {
-        filteredOrders = response.data;
+        filteredOrders = response.data as Order[];
         totalCount = response.total || response.data.length;
       } else {
         console.error("Unexpected API response structure:", response);
@@ -4353,13 +4376,17 @@ const AdminOrders = () => {
                                 {/* Message and details */}
                                 <div className="mt-3">
                                   {step.showMessage ? (
-                                    <p className="text-dark-700">{step.message}</p>
+                                    <p className="text-dark-700">
+                                      {step.message}
+                                    </p>
                                   ) : isPending ? (
                                     <p className="text-gray-500 italic">
                                       This step will be updated when it occurs
                                     </p>
                                   ) : (
-                                    <p className="text-dark-700">{step.message}</p>
+                                    <p className="text-dark-700">
+                                      {step.message}
+                                    </p>
                                   )}
                                   {step.showTimestamp && step.timestamp && (
                                     <div className="flex items-center gap-2 mt-2 text-sm text-dark-500">

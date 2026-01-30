@@ -1201,7 +1201,7 @@
 
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
@@ -1286,7 +1286,7 @@ const FullPageLoader = () => (
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { isLoading, dispatch, isAuthenticated, isAdmin } = useAuth(); // Added isAuthenticated and isAdmin
+  const { isLoading, dispatch, isAdmin } = useAuth(); // Added isAuthenticated and isAdmin
 
   const [formData, setFormData] = useState({
     email: "",

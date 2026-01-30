@@ -136,31 +136,31 @@ const RichTextEditor = ({ value, onChange, placeholder = "Enter description..." 
   };
 
   // Clear all formatting
-const clearFormatting = () => {
-  if (!editorRef.current) return;
+// const clearFormatting = () => {
+//   if (!editorRef.current) return;
 
-  const editor = editorRef.current;
+//   const editor = editorRef.current;
 
-  // Get plain text (keeps line breaks)
-  const text = editor.innerText;
+//   // Get plain text (keeps line breaks)
+//   const text = editor.innerText;
 
-  // Reset editor to clean paragraphs
-  editor.innerHTML = text
-    .split('\n')
-    .map(line => `<p>${line || '<br>'}</p>`)
-    .join('');
+//   // Reset editor to clean paragraphs
+//   editor.innerHTML = text
+//     .split('\n')
+//     .map(line => `<p>${line || '<br>'}</p>`)
+//     .join('');
 
-  // Reset formats state
-  setActiveFormats({
-    bold: false,
-    italic: false,
-    underline: false,
-    list: 'none',
-  });
+//   // Reset formats state
+//   setActiveFormats({
+//     bold: false,
+//     italic: false,
+//     underline: false,
+//     list: 'none',
+//   });
 
-  editor.focus();
-  onChange(editor.innerHTML);
-};
+//   editor.focus();
+//   onChange(editor.innerHTML);
+// };
 
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">

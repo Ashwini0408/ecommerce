@@ -246,7 +246,7 @@ import UserDashboard from './pages/user/UserDashboard';
 
 // Admin Components
 import AdminLayout from './components/layout/AdminLayout';
-import AdminDashboardContent from './pages/admin/AdminDashboardContent'; // We'll create this
+// import AdminDashboardContent from './pages/admin/AdminDashboardContent'; // We'll create this
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
