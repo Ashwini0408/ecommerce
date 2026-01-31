@@ -365,6 +365,7 @@ import type { Product } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
+import { wishlistApi } from "../../api/wishlistApi";
 
 // ----------------------------------------------------------------------
 // 1. HELPER: Fix Image URLs
@@ -387,6 +388,7 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
     if (id) {

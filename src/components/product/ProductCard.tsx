@@ -350,7 +350,9 @@ import { FiHeart } from 'react-icons/fi';
 import type { Product } from '../../types';
 import { formatINR } from "../../utils/currency";
 import { useNavigate } from "react-router-dom";
-import { wishlistApi } from "../../api/wishlistApi";
+// import { wishlistApi } from "../../api/wishlistApi";
+import { useWishlist } from "../../context/WishlistContext";
+
 
 // --- CONFIGURATION ---
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
@@ -359,20 +361,18 @@ interface ProductCardProps {
   product: Product;
   compact?: boolean;   // 👈 ADD THIS LINE
   className?: string;
+  //  isWishlisted: boolean;
+  // onWishlistToggle: (productId: number, added: boolean) => void;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+
   const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const slideshowIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-const [wishlistLoading, setWishlistLoading] = useState(false);
 const navigate = useNavigate();
-useEffect(() => {
-  if (product.isWishlisted !== undefined) {
-    setIsWishlisted(product.isWishlisted);
-  }
-}, [product.id]);
+const { wishlistIds, toggleWishlist } = useWishlist();
+const isWishlisted = wishlistIds.includes(product.id);
 
 // example: token-based auth
 const isLoggedIn = Boolean(localStorage.getItem("authToken"));
@@ -401,22 +401,13 @@ const handleWishlistClick = async (
     return;
   }
 
-  if (wishlistLoading) return;
-
   try {
-    setWishlistLoading(true);
-
-    const response = await wishlistApi.toggleWishlist(product.id);
-
-    // ✅ toggle UI based on API result
-    setIsWishlisted(response.isWishlisted ?? !isWishlisted);
-
+    await toggleWishlist(product.id);
   } catch (error) {
     console.error("Wishlist toggle failed", error);
-  } finally {
-    setWishlistLoading(false);
   }
 };
+
 
   const images = product.images?.map(getImageUrl) || [getImageUrl()];
   const displayImage = images[currentImageIndex];

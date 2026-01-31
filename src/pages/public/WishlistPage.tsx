@@ -256,8 +256,9 @@ import Navbar from "../../components/layout/Navbar";
 import {Footer} from "../../components/layout/Footer";
 import { wishlistApi } from "../../api/wishlistApi";
 import { cartApi } from "../../api/cartApi";
-
-
+import { productApi } from "../../api/productApi";
+import { useAppDispatch } from "../../hooks/useAuth";
+import { addToCart as addToCartRedux } from "../../store/slices/cartSlice";
 // Mock wishlist data - replace with actual API data
 const IMAGE_BASE_URL =
   import.meta.env.VITE_API_IMG_URL || "http://localhost:8090";
@@ -266,6 +267,15 @@ const IMAGE_BASE_URL =
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showVariantModal, setShowVariantModal] = useState(false);
+const [activeProductId, setActiveProductId] = useState<number | null>(null);
+
+const [sizes, setSizes] = useState<string[]>([]);
+const [colors, setColors] = useState<string[]>([]);
+
+const [selectedSize, setSelectedSize] = useState("");
+const [selectedColor, setSelectedColor] = useState("");
+const dispatch = useAppDispatch();
 
   // Remove item from wishlist
 const handleRemoveItem = async (id: number) => {
@@ -276,26 +286,78 @@ const handleRemoveItem = async (id: number) => {
     console.error("Failed to remove item from wishlist", error);
   }
 };
-
- const handleAddToCart = async (productId: number) => {
+const openAddToCartModal = async (productId: number) => {
   try {
+    setActiveProductId(productId);
+    setSelectedSize("");
+    setSelectedColor("");
+
+    // 🔥 USE YOUR API HERE
+    const product = await productApi.getProductById(productId);
+
+const backendSizes =
+  product.attributes
+    ?.filter((attr: any) => attr.type?.toUpperCase() === "SIZE")
+    .map((attr: any) => attr.value) || [];
+
+const backendColors =
+  product.attributes
+    ?.filter((attr: any) => attr.type?.toUpperCase() === "COLOR")
+    .map((attr: any) => attr.value) || [];
+
+
+    setSizes(backendSizes);
+    setColors(backendColors);
+
+    setShowVariantModal(true);
+  } catch (error) {
+    console.error("Failed to load product variants", error);
+  }
+};
+const confirmAddToCart = async () => {
+  if (!activeProductId || !selectedSize || !selectedColor) return;
+
+  const product = wishlistItems.find(p => p.id === activeProductId);
+  if (!product) return;
+
+  try {
+    // 1️⃣ BACKEND CART
     await cartApi.addToCart({
-      productId,
+      productId: activeProductId,
       quantity: 1,
-      selectedSize: "L",      // default for now
-      selectedColor: "Black", // default for now
+      selectedSize,
+      selectedColor,
     });
 
-    // OPTIONAL: remove item from wishlist after adding to cart
-    await wishlistApi.toggleWishlist(productId);
-    setWishlistItems(prev =>
-      prev.filter(item => item.id !== productId)
+    // 2️⃣ FRONTEND CART (THIS WAS MISSING ❌)
+    dispatch(
+      addToCartRedux({
+        productId: product.id,
+        name: product.name,
+        price: product.originalPrice,
+        salePrice: product.discountedPrice,
+        quantity: 1,
+        selectedSize,
+        selectedColor,
+        image: product.image,
+        stock: 99, // or product.stock if you have it
+      })
     );
 
-    console.log("✅ Product added to cart");
+    // 3️⃣ REMOVE FROM WISHLIST (BACKEND + UI)
+    await wishlistApi.toggleWishlist(activeProductId);
+    setWishlistItems(prev =>
+      prev.filter(item => item.id !== activeProductId)
+    );
+
+    // 4️⃣ RESET MODAL
+    setShowVariantModal(false);
+    setSelectedSize("");
+    setSelectedColor("");
+    setActiveProductId(null);
 
   } catch (error) {
-    console.error("❌ Failed to add to cart", error);
+    console.error("Failed to add to cart", error);
   }
 };
 
@@ -415,7 +477,7 @@ setWishlistItems(formattedItems);
                     
                     {/* Cancel Icon (Top Right) */}
                     <button
-                      onClick={() => handleRemoveItem(item.id)}
+                     onClick={() => handleRemoveItem(item.id)}
                       className="absolute top-1 right-1 w-5 h-5 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-sm transition-colors"
                       aria-label="Remove from wishlist"
                     >
@@ -449,7 +511,7 @@ setWishlistItems(formattedItems);
 
                     {/* ADD TO CART Button - Even smaller */}
                     <button
-                      onClick={() => handleAddToCart(item.id)}
+                     onClick={() => openAddToCartModal(item.id)}
                       className="w-full py-1 text-[10px] font-medium rounded border border-gray-900 hover:bg-gray-50 transition-colors flex items-center justify-center" /* py-1.5 to py-1, text-xs to text-[10px] */
                     >
                       <span>ADD TO CART</span>
@@ -483,7 +545,78 @@ setWishlistItems(formattedItems);
           </div>
         )}
       </main>
+{showVariantModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="bg-white rounded-lg p-5 w-full max-w-sm">
 
+      <h3 className="text-lg font-semibold mb-4">
+        Select Size & Color
+      </h3>
+
+      {/* COLORS FROM BACKEND */}
+      {colors.length > 0 && (
+        <div className="mb-4">
+          <p className="text-sm font-medium mb-2">Color</p>
+          <div className="flex gap-2 flex-wrap">
+            {colors.map(color => (
+              <button
+                key={color}
+                onClick={() => setSelectedColor(color)}
+                className={`px-3 py-1 border rounded text-sm ${
+                  selectedColor === color
+                    ? "border-black bg-gray-100"
+                    : "border-gray-300"
+                }`}
+              >
+                {color}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* SIZES FROM BACKEND */}
+      {sizes.length > 0 && (
+        <div className="mb-4">
+          <p className="text-sm font-medium mb-2">Size</p>
+          <div className="flex gap-2 flex-wrap">
+            {sizes.map(size => (
+              <button
+                key={size}
+                onClick={() => setSelectedSize(size)}
+                className={`px-3 py-1 border rounded text-sm ${
+                  selectedSize === size
+                    ? "border-black bg-gray-100"
+                    : "border-gray-300"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ACTIONS */}
+      <div className="flex justify-end gap-3 mt-4">
+        <button
+          onClick={() => setShowVariantModal(false)}
+          className="px-4 py-2 border rounded text-sm"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={confirmAddToCart}
+          disabled={!selectedSize || !selectedColor}
+          className="px-4 py-2 bg-black text-white rounded text-sm disabled:opacity-50"
+        >
+          Add to Cart
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {/* Fixed Footer */}
       <Footer />
 
