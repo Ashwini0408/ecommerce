@@ -574,7 +574,7 @@ const isWishlisted = wishlistIds.includes(product.id);
     animate={{ opacity: 1 }}
     className="flex-shrink-0"
   >
-    <div className="w-[380px] aspect-[6/7] rounded-xl overflow-hidden border bg-white p-2">
+    <div className="w-[450px] aspect-[6/7] rounded-xl overflow-hidden ">
       <img
         src={getImageUrl(product.images[selectedImage])}
         alt={product.name}
