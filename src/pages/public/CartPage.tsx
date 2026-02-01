@@ -4,6 +4,8 @@ import { FiTrash2, FiPlus, FiMinus, FiShoppingBag } from 'react-icons/fi';
 import Navbar from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { useAppSelector, useAppDispatch } from '../../hooks/useAuth';
+import cartApi from '../../api/cartApi';
+
 import {
   removeFromCart,
   incrementQuantity,
@@ -17,18 +19,55 @@ const CartPage = () => {
   const dispatch = useAppDispatch();
   const { items, totalPrice, totalItems } = useAppSelector((state) => state.cart);
 
-  const handleRemoveItem = (productId: number, selectedSize?: string, selectedColor?: string) => {
+const handleRemoveItem = async (
+  itemId: number,
+  productId: number,
+  selectedSize?: string,
+  selectedColor?: string
+) => {
+  try {
+    await cartApi.removeItem(itemId);
+
     dispatch(removeFromCart({ productId, selectedSize, selectedColor }));
     toast.success('Item removed from cart');
-  };
+  } catch (error) {
+    toast.error('Failed to remove item');
+  }
+};
 
-  const handleIncrement = (productId: number, selectedSize?: string, selectedColor?: string) => {
+const handleIncrement = async (
+  itemId: number,
+  productId: number,
+  quantity: number,
+  selectedSize?: string,
+  selectedColor?: string
+) => {
+  try {
+    await cartApi.updateQuantity(itemId, quantity + 1);
+
     dispatch(incrementQuantity({ productId, selectedSize, selectedColor }));
-  };
+  } catch (error) {
+    toast.error('Failed to update quantity');
+  }
+};
 
-  const handleDecrement = (productId: number, selectedSize?: string, selectedColor?: string) => {
+const handleDecrement = async (
+  itemId: number,
+  productId: number,
+  quantity: number,
+  selectedSize?: string,
+  selectedColor?: string
+) => {
+  if (quantity === 1) return;
+
+  try {
+    await cartApi.updateQuantity(itemId, quantity - 1);
+
     dispatch(decrementQuantity({ productId, selectedSize, selectedColor }));
-  };
+  } catch (error) {
+    toast.error('Failed to update quantity');
+  }
+};
 
   const handleClearCart = () => {
     dispatch(clearCart());
@@ -137,9 +176,16 @@ const CartPage = () => {
                         <div className="flex items-center space-x-3">
                           <motion.button
                             whileTap={{ scale: 0.9 }}
-                            onClick={() =>
-                              handleDecrement(item.productId, item.selectedSize, item.selectedColor)
-                            }
+                          onClick={() =>
+  handleDecrement(
+    item.itemId,
+    item.productId,
+    item.quantity,
+    item.selectedSize,
+    item.selectedColor
+  )
+}
+
                             disabled={item.quantity === 1}
                             className="w-8 h-8 flex items-center justify-center glass-card rounded-lg font-bold disabled:opacity-50"
                           >
@@ -148,9 +194,16 @@ const CartPage = () => {
                           <span className="w-8 text-center font-semibold">{item.quantity}</span>
                           <motion.button
                             whileTap={{ scale: 0.9 }}
-                            onClick={() =>
-                              handleIncrement(item.productId, item.selectedSize, item.selectedColor)
-                            }
+                          onClick={() =>
+  handleIncrement(
+    item.itemId,
+    item.productId,
+    item.quantity,
+    item.selectedSize,
+    item.selectedColor
+  )
+}
+
                             disabled={item.quantity >= item.stock}
                             className="w-8 h-8 flex items-center justify-center glass-card rounded-lg font-bold disabled:opacity-50"
                           >
@@ -177,8 +230,14 @@ const CartPage = () => {
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() =>
-                        handleRemoveItem(item.productId, item.selectedSize, item.selectedColor)
-                      }
+  handleRemoveItem(
+    item.itemId,
+    item.productId,
+    item.selectedSize,
+    item.selectedColor
+  )
+}
+
                       className="text-red-400 hover:text-red-300 transition-colors"
                     >
                       <FiTrash2 size={20} />

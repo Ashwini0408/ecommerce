@@ -322,27 +322,28 @@ const confirmAddToCart = async () => {
 
   try {
     // 1️⃣ BACKEND CART
-    await cartApi.addToCart({
-      productId: activeProductId,
-      quantity: 1,
-      selectedSize,
-      selectedColor,
-    });
+ const response = await cartApi.addToCart({
+  productId: activeProductId,
+  quantity: 1,
+  selectedSize,
+  selectedColor,
+});
 
-    // 2️⃣ FRONTEND CART (THIS WAS MISSING ❌)
-    dispatch(
-      addToCartRedux({
-        productId: product.id,
-        name: product.name,
-        price: product.originalPrice,
-        salePrice: product.discountedPrice,
-        quantity: 1,
-        selectedSize,
-        selectedColor,
-        image: product.image,
-        stock: 99, // or product.stock if you have it
-      })
-    );
+
+ dispatch(
+  addToCartRedux({
+    itemId: response.itemId,          // ✅ backend cart item id
+    productId: response.productId,
+    name: response.name,
+    price: response.price,
+    salePrice: response.salePrice,
+    quantity: response.quantity,
+    selectedSize: response.selectedSize,
+    selectedColor: response.selectedColor,
+    image: response.image,            // ✅ lowercase response
+    stock: response.stock,
+  })
+);
 
     // 3️⃣ REMOVE FROM WISHLIST (BACKEND + UI)
     await wishlistApi.toggleWishlist(activeProductId);

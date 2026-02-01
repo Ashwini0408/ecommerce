@@ -99,6 +99,7 @@ export interface PaginatedResponse<T> {
 
 // ==================== CART ====================
 export interface CartItem {
+  itemId: number; 
   productId: number;
   name: string;
   price: number;
