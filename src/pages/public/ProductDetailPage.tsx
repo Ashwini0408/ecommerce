@@ -356,7 +356,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiShoppingCart, FiTruck, FiShield, FiArrowLeft, FiStar } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft, FiStar } from 'react-icons/fi';
 import { FaFacebookF, FaTwitter, FaPinterestP } from 'react-icons/fa';
 import Navbar from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
@@ -366,9 +366,6 @@ import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
 import { wishlistApi } from "../../api/wishlistApi";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
-import { useWishlist } from "../../context/WishlistContext";
-import { formatINR } from "../../utils/currency";
 
 // ----------------------------------------------------------------------
 // 1. HELPER: Fix Image URLs
@@ -391,9 +388,7 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
-  // const [isWishlisted, setIsWishlisted] = useState(false);
-  const { toggleWishlist, wishlistIds } = useWishlist();
-
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -405,7 +400,8 @@ const ProductDetailPage = () => {
     try {
       const data = await productApi.getProductById(Number(id));
       setProduct(data);
-   // Auto-select first available options
+
+      // Auto-select first available options
       const sizes = data.attributes.filter((a) => a.type === 'Size');
       const colors = data.attributes.filter((a) => a.type === 'Color');
       if (sizes.length > 0) setSelectedSize(sizes[0].value);
@@ -441,19 +437,6 @@ const ProductDetailPage = () => {
     );
     toast.success('Added to cart!');
   };
-const handleWishlistToggle = async () => {
-  if (!localStorage.getItem("authToken")) {
-    navigate("/login");
-    return;
-  }
-
-  try {
-    await toggleWishlist(product!.id);
-  } catch {
-    toast.error("Failed to update wishlist");
-  }
-};
-
 
   const handleBuyNow = () => {
     handleAddToCart();
@@ -489,7 +472,6 @@ const handleWishlistToggle = async () => {
   }
 
   if (!product) return null;
-const isWishlisted = wishlistIds.includes(product.id);
 
   const discount = product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
@@ -506,10 +488,10 @@ const isWishlisted = wishlistIds.includes(product.id);
   };
 
   return (
-    <div className="pl-8 pr-8 min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <div className="pt-5 pb-3 px-4 sm:px-6 lg:px-8 mx-auto max-w-8xl">
+      <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 mx-auto max-w-6xl">
         {/* Back Button - Smaller */}
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -574,7 +556,7 @@ const isWishlisted = wishlistIds.includes(product.id);
     animate={{ opacity: 1 }}
     className="flex-shrink-0"
   >
-    <div className="w-[450px] aspect-[6/7] rounded-xl overflow-hidden ">
+    <div className="w-[380px] aspect-[6/7] rounded-xl overflow-hidden border bg-white p-2">
       <img
         src={getImageUrl(product.images[selectedImage])}
         alt={product.name}
@@ -583,8 +565,31 @@ const isWishlisted = wishlistIds.includes(product.id);
     </div>
   </motion.div>
 
-</div>
-
+            {/* Thumbnails - Smaller */}
+            {product.images.length > 1 && (
+              <div className="grid grid-cols-5 gap-2">
+                {product.images.map((image, index) => (
+                  <motion.button
+                    key={index}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedImage(index)}
+                    className={`aspect-square rounded-lg overflow-hidden border ${
+                      selectedImage === index
+                        ? 'border-sage ring-1 ring-sage'
+                        : 'border-transparent'
+                    }`}
+                  >
+                    <img
+                      src={getImageUrl(image)}
+                      alt={`${product.name} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Right Column - Product Info - Smaller */}
           <div className="space-y-4">
@@ -636,10 +641,10 @@ const isWishlisted = wishlistIds.includes(product.id);
               {product.salePrice ? (
                 <>
                   <span className="text-2xl font-bold text-foreground">
-                     {formatINR(product.salePrice)}
+                    ${product.salePrice.toFixed(2)}
                   </span>
                   <span className="text-lg text-muted-foreground line-through">
-                     {formatINR(product.price)}
+                    ${product.price.toFixed(2)}
                   </span>
                   <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs font-bold rounded">
                     -{discount}%
@@ -647,7 +652,7 @@ const isWishlisted = wishlistIds.includes(product.id);
                 </>
               ) : (
                 <span className="text-2xl font-bold text-foreground">
-                  {formatINR(product.price)}
+                  ${product.price.toFixed(2)}
                 </span>
               )}
             </div>
@@ -718,7 +723,7 @@ const isWishlisted = wishlistIds.includes(product.id);
             )}
 
             {/* SKU and Clear */}
-            {/* <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>SKU: <span className="font-semibold text-foreground">GHT95245AAA</span></span>
               <button 
                 onClick={handleClearSelection}
@@ -726,7 +731,7 @@ const isWishlisted = wishlistIds.includes(product.id);
               >
                 Clear
               </button>
-            </div> */}
+            </div>
 
             {/* Quantity and Actions - Smaller */}
             <div className="space-y-3">
@@ -756,44 +761,71 @@ const isWishlisted = wishlistIds.includes(product.id);
               </div>
 
               {/* Action Buttons - Smaller */}
-             <div className="flex gap-3 mt-2">
-  {/* ADD TO CART */}
-  <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={handleAddToCart}
-    disabled={product.stock === 0}
-    className="flex-1 flex items-center justify-center gap-2 h-12 rounded-lg bg-sage text-white font-medium hover:opacity-90 disabled:opacity-50"
-  >
-    <FiShoppingCart className="w-4 h-4" />
-    Add to Cart
-  </motion.button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleAddToCart}
+                  disabled={product.stock === 0}
+                  className="col-span-2 btn-ghost flex items-center justify-center space-x-1 disabled:opacity-50 h-11 text-sm"
+                >
+                  <FiShoppingCart className="w-4 h-4" />
+                  <span>Add to Cart</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleBuyNow}
+                  disabled={product.stock === 0}
+                  className="btn-primary disabled:opacity-50 h-11 text-sm"
+                >
+                  Buy Now
+                </motion.button>
+              </div>
 
-  {/* WISHLIST */}
-  <motion.button
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={handleWishlistToggle}
-    className="w-12 h-12 flex items-center justify-center rounded-lg bg-sage text-white hover:opacity-90"
-  >
-    {isWishlisted ? (
-      <FaHeart className="w-4 h-4" />
-    ) : (
-      <FaRegHeart className="w-4 h-4" />
-    )}
-  </motion.button>
+              {/* Wishlist Button - Smaller */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full flex items-center justify-center space-x-1 py-2 text-sm glass-card rounded-lg hover:bg-accent/10"
+              >
+                <FiHeart className="w-4 h-4" />
+                <span className="font-medium">Add to Wishlist</span>
+              </motion.button>
+            </div>
 
-  {/* BUY NOW */}
-  <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={handleBuyNow}
-    disabled={product.stock === 0}
-    className="flex-1 h-12 rounded-lg bg-sage text-white font-medium hover:opacity-90 disabled:opacity-50"
-  >
-    Buy Now
-  </motion.button>
-</div>
+            {/* Tags and Share - Smaller */}
+            <div className="pt-4 border-t border-border space-y-3">
+              {/* Tags */}
+              <div>
+                <span className="text-xs font-semibold text-muted-foreground">Tags: </span>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {['Women', 'Coat', 'Fashion', 'Jacket'].map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 text-xs glass-card rounded-full hover:bg-accent/20 cursor-pointer"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Share - Smaller */}
+              <div className="flex items-center space-x-3">
+                <span className="text-xs font-semibold text-muted-foreground">Share:</span>
+                <div className="flex space-x-2">
+                  <button className="w-7 h-7 rounded-full bg-[#3b5998] flex items-center justify-center text-white hover:opacity-90">
+                    <FaFacebookF className="w-3 h-3" />
+                  </button>
+                  <button className="w-7 h-7 rounded-full bg-[#1da1f2] flex items-center justify-center text-white hover:opacity-90">
+                    <FaTwitter className="w-3 h-3" />
+                  </button>
+                  <button className="w-7 h-7 rounded-full bg-[#e60023] flex items-center justify-center text-white hover:opacity-90">
+                    <FaPinterestP className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Features - Smaller */}
