@@ -46,6 +46,7 @@ export const cartApi = {
   ------------------------- */
   getCart: async () => {
     const response = await axiosInstance.get("/cart");
+    console.log('GET /cart response:', response.data);
     return response.data;
   },
 
@@ -55,6 +56,7 @@ export const cartApi = {
   ------------------------- */
   addToCart: async (payload: AddToCartPayload) => {
     const response = await axiosInstance.post("/cart/item", payload);
+    console.log('POST /cart/item response:', response.data); // Debug log
     return response.data;
   },
 

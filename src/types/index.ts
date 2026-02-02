@@ -34,6 +34,7 @@ export interface SignUpRequest {
 
 // ==================== PRODUCT ====================
 export interface ProductAttribute {
+  id: Key | null | undefined;
   key: string;
   type: string;
   value: string;

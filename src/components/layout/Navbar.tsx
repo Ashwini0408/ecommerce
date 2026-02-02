@@ -581,6 +581,11 @@ import { logout } from "../../store/slices/authSlice";
 import toast from "react-hot-toast";
 import logo from "../../assets/logo.png";
 import { useWishlist } from "../../context/WishlistContext";
+// import { logout } from "../../store/slices/authSlice";
+import { clearCart } from "../../store/slices/cartSlice";
+import type { AsyncThunkAction, AsyncThunkConfig } from "@reduxjs/toolkit";
+import { useAppDispatch } from "../../hooks/useAuth";
+
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -589,6 +594,7 @@ const Navbar = () => {
   const { wishlistIds } = useWishlist();
 const location = useLocation();
 const isActive = (path: string) => location.pathname === path;
+const reduxDispatch = useAppDispatch(); // ✅ for cart actions
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -614,12 +620,17 @@ useEffect(() => {
   return () => window.removeEventListener("resize", handleResize);
 }, []);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    toast.success("Logged out successfully");
-    navigate("/");
-    setIsUserMenuOpen(false);
-  };
+const handleLogout = async () => {
+  // 🔥 clear Redux cart state
+  reduxDispatch(clearCart());
+
+  // 🔥 clear auth + storage
+  dispatch(logout());
+
+  toast.success("Logged out successfully");
+  navigate("/");
+  setIsUserMenuOpen(false);
+};
 
   return (
     <>
@@ -870,3 +881,4 @@ useEffect(() => {
   );
 };
 export default Navbar;
+

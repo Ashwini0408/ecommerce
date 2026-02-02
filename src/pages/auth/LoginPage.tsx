@@ -1208,6 +1208,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { login } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
 import logo from '../../assets/logo.png';
+import { mergeGuestCartAfterLogin } from "../../utils/cartMerge";
+import { useAppDispatch } from "../../hooks/useAuth";
 
 
 /* ================== ANIMATIONS (TS SAFE) ================== */
@@ -1306,6 +1308,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+const reduxDispatch = useAppDispatch();
 
   useEffect(() => {
   if (!loginSuccess || isLoading) return;
@@ -1384,9 +1387,14 @@ const LoginPage = () => {
     
     try {
       // Dispatch login action
-      await dispatch(login(formData)).unwrap();
+await dispatch(login(formData)).unwrap();
+
+// 🔥 MERGE GUEST CART → BACKEND CART
+await mergeGuestCartAfterLogin(reduxDispatch);
+
 toast.success('Login successful!');
-setLoginSuccess(true); // ✅ ADD THIS LINE
+setLoginSuccess(true);
+
       
       // Navigation will be handled by the useEffect above
       // Don't navigate here - let the useEffect handle it

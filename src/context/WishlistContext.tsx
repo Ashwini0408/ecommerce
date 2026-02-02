@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { wishlistApi } from "../api/wishlistApi";
+import useAuth from "../hooks/useAuth";
 
 interface WishlistContextType {
   wishlistIds: number[];
@@ -10,19 +11,33 @@ const WishlistContext = createContext<WishlistContextType | null>(null);
 
 export const WishlistProvider = ({ children }: { children: React.ReactNode }) => {
   const [wishlistIds, setWishlistIds] = useState<number[]>([]);
+  const { isAuthenticated } = useAuth(); // ✅ ADD THIS
 
-  // load wishlist once
   useEffect(() => {
+    // ⛔ IMPORTANT: Do NOTHING for guest users
+    if (!isAuthenticated) {
+      setWishlistIds([]); // clear wishlist for guests
+      return;
+    }
+
     const load = async () => {
       try {
         const data = await wishlistApi.getWishlist();
-        setWishlistIds(data.products.map(p => p.id));
-      } catch {}
+        setWishlistIds(data.products.map((p: any) => p.id));
+      } catch (error) {
+        console.error("Failed to load wishlist", error);
+      }
     };
+
     load();
-  }, []);
+  }, [isAuthenticated]); // ✅ depend on auth
 
   const toggleWishlist = async (productId: number) => {
+    if (!isAuthenticated) {
+      // ❌ do not call backend for guests
+      throw new Error("User not authenticated");
+    }
+
     // optimistic update
     setWishlistIds(prev =>
       prev.includes(productId)
@@ -32,8 +47,8 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
 
     try {
       await wishlistApi.toggleWishlist(productId);
-    } catch {
-      // rollback if needed (optional)
+    } catch (error) {
+      console.error("Wishlist toggle failed", error);
     }
   };
 

@@ -353,6 +353,484 @@
 // export default ProductDetailPage;
 
 
+// import { useState, useEffect } from 'react';
+// import { useParams, useNavigate } from 'react-router-dom';
+// import { motion } from 'framer-motion';
+// import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft, FiStar } from 'react-icons/fi';
+// import { FaFacebookF, FaTwitter, FaPinterestP } from 'react-icons/fa';
+// import Navbar from '../../components/layout/Navbar';
+// import { Footer } from '../../components/layout/Footer';
+// import { productApi } from '../../api/productApi';
+// import type { Product } from '../../types';
+// import { useAppDispatch } from '../../hooks/useAuth';
+// import { addToCart } from '../../store/slices/cartSlice';
+// import toast from 'react-hot-toast';
+// import { wishlistApi } from "../../api/wishlistApi";
+
+// // ----------------------------------------------------------------------
+// // 1. HELPER: Fix Image URLs
+// // ----------------------------------------------------------------------
+// const SERVER_URL = import.meta.env.VITE_API_IMG_URL;
+// const getImageUrl = (path?: string) => {
+//   if (!path) return '/placeholder.jpg';
+//   if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('https://')) return path;
+//   return `${SERVER_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+// };
+
+// const ProductDetailPage = () => {
+//   const { id } = useParams<{ id: string }>();
+//   const navigate = useNavigate();
+//   const dispatch = useAppDispatch();
+
+//   const [product, setProduct] = useState<Product | null>(null);
+//   const [loading, setLoading] = useState(true);
+//   const [selectedImage, setSelectedImage] = useState(0);
+//   const [quantity, setQuantity] = useState(1);
+//   const [selectedSize, setSelectedSize] = useState('');
+//   const [selectedColor, setSelectedColor] = useState('');
+//   const [isWishlisted, setIsWishlisted] = useState(false);
+
+//   useEffect(() => {
+//     if (id) {
+//       fetchProduct();
+//     }
+//   }, [id]);
+
+//   const fetchProduct = async () => {
+//     try {
+//       const data = await productApi.getProductById(Number(id));
+//       setProduct(data);
+
+//       // Auto-select first available options
+//       const sizes = data.attributes.filter((a) => a.type === 'Size');
+//       const colors = data.attributes.filter((a) => a.type === 'Color');
+//       if (sizes.length > 0) setSelectedSize(sizes[0].value);
+//       if (colors.length > 0) setSelectedColor(colors[0].value);
+//     } catch (error: any) {
+//       toast.error(error.message || 'Failed to fetch product');
+//       navigate('/products');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleAddToCart = () => {
+//     if (!product) return;
+
+//     if (product.stock === 0) {
+//       toast.error('Product is out of stock');
+//       return;
+//     }
+
+//     dispatch(
+//       addToCart({
+//         productId: product.id,
+//         name: product.name,
+//         price: product.price,
+//         salePrice: product.salePrice,
+//         quantity,
+//         selectedSize,
+//         selectedColor,
+//         image: product.images[0],
+//         stock: product.stock,
+//         itemId: 0
+//       })
+//     );
+//     toast.success('Added to cart!');
+//   };
+
+//   const handleBuyNow = () => {
+//     handleAddToCart();
+//     navigate('/cart');
+//   };
+
+//   // Clear selection function
+//   const handleClearSelection = () => {
+//     const sizes = product?.attributes.filter((a) => a.type === 'Size') || [];
+//     const colors = product?.attributes.filter((a) => a.type === 'Color') || [];
+//     if (sizes.length > 0) setSelectedSize(sizes[0].value);
+//     if (colors.length > 0) setSelectedColor(colors[0].value);
+//     setQuantity(1);
+//     toast.success('Selection cleared!');
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen bg-background text-foreground">
+//         <Navbar />
+//         <div className=" sm:px-6 lg:px-8 mx-auto">
+//           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+//             <div className="glass-card rounded-2xl h-96 shimmer" />
+//             <div className="space-y-4">
+//               <div className="glass-card rounded-2xl h-8 w-3/4 shimmer" />
+//               <div className="glass-card rounded-2xl h-6 w-1/2 shimmer" />
+//               <div className="glass-card rounded-2xl h-32 shimmer" />
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (!product) return null;
+
+//   const discount = product.salePrice
+//     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
+//     : 0;
+
+//   const sizes = product.attributes.filter((a) => a.type === 'Size');
+//   const colors = product.attributes.filter((a) => a.type === 'Color');
+
+//   // Mock review data from the image
+//   const reviewData = {
+//     rating: 4.8,
+//     reviewCount: 245,
+//     stars: 5
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-background text-foreground">
+//       <Navbar />
+
+//       <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 mx-auto max-w-6xl">
+//         {/* Back Button - Smaller */}
+//         <motion.button
+//           whileHover={{ scale: 1.02 }}
+//           whileTap={{ scale: 0.95 }}
+//           onClick={() => navigate(-1)}
+//           className="flex items-center space-x-1 text-sm text-muted-foreground hover:text-sage transition-colors mb-4"
+//         >
+//           <FiArrowLeft className="w-4 h-4" />
+//           <span>Back to Products</span>
+//         </motion.button>
+
+//         {/* Breadcrumb - Smaller */}
+//         <div className="mb-4 text-xs text-muted-foreground">
+//           <button 
+//             onClick={() => navigate('/')}
+//             className="hover:text-sage cursor-pointer"
+//           >
+//             Home
+//           </button>
+//           <span className="mx-1">/</span>
+//           <button 
+//             onClick={() => navigate('/products')}
+//             className="hover:text-sage cursor-pointer"
+//           >
+//             Products
+//           </button>
+//           <span className="mx-1">/</span>
+//           <span className="text-foreground font-medium">{product.name}</span>
+//         </div>
+
+//         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+//           {/* Left Column - Images - Smaller */}
+//           <div className="space-y-3">
+//             {/* Main Image - Reduced size */}
+//             <motion.div
+//               initial={{ opacity: 0 }}
+//               animate={{ opacity: 1 }}
+//               className="aspect-square rounded-xl overflow-hidden glass-card p-3"
+//             >
+//               <img
+//                 src={getImageUrl(product.images[selectedImage])}
+//                 alt={product.name}
+//                 className="w-full h-full object-contain"
+//               />
+//             </motion.div>
+
+//             {/* Thumbnails - Smaller */}
+//             {product.images.length > 1 && (
+//               <div className="grid grid-cols-5 gap-2">
+//                 {product.images.map((image, index) => (
+//                   <motion.button
+//                     key={index}
+//                     whileHover={{ scale: 1.05 }}
+//                     whileTap={{ scale: 0.95 }}
+//                     onClick={() => setSelectedImage(index)}
+//                     className={`aspect-square rounded-lg overflow-hidden border ${
+//                       selectedImage === index
+//                         ? 'border-sage ring-1 ring-sage'
+//                         : 'border-transparent'
+//                     }`}
+//                   >
+//                     <img
+//                       src={getImageUrl(image)}
+//                       alt={`${product.name} ${index + 1}`}
+//                       className="w-full h-full object-cover"
+//                     />
+//                   </motion.button>
+//                 ))}
+//               </div>
+//             )}
+//           </div>
+
+//           {/* Right Column - Product Info - Smaller */}
+//           <div className="space-y-4">
+//             {/* Category */}
+//             <div className="flex items-center justify-between">
+//               <span className="text-xs font-semibold text-sage uppercase tracking-wider">
+//                 {product.category}
+//               </span>
+//               <span
+//                 className={`px-2 py-1 rounded text-xs font-semibold ${
+//                   product.stock > 0
+//                     ? 'bg-green-500/20 text-green-400'
+//                     : 'bg-red-500/20 text-red-400'
+//                 }`}
+//               >
+//                 {product.stock > 0 ? `In Stock` : 'Out of stock'}
+//               </span>
+//             </div>
+
+//             {/* Title - Smaller */}
+//             <h1 className="text-2xl font-display font-bold text-foreground">
+//               {product.name}
+//             </h1>
+
+//             {/* Rating - Smaller */}
+//             <div className="flex items-center space-x-1">
+//               <div className="flex items-center">
+//                 {[...Array(reviewData.stars)].map((_, i) => (
+//                   <FiStar
+//                     key={i}
+//                     className={`w-3 h-3 ${
+//                       i < Math.floor(reviewData.rating)
+//                         ? 'text-yellow-500 fill-yellow-500'
+//                         : 'text-gray-300'
+//                     }`}
+//                   />
+//                 ))}
+//               </div>
+//               <span className="text-xs font-semibold text-foreground">
+//                 {reviewData.rating}
+//               </span>
+//               <span className="text-xs text-muted-foreground">
+//                 ({reviewData.reviewCount} Reviews)
+//               </span>
+//             </div>
+
+//             {/* Price - Smaller */}
+//             <div className="flex items-center space-x-3">
+//               {product.salePrice ? (
+//                 <>
+//                   <span className="text-2xl font-bold text-foreground">
+//                     ${product.salePrice.toFixed(2)}
+//                   </span>
+//                   <span className="text-lg text-muted-foreground line-through">
+//                     ${product.price.toFixed(2)}
+//                   </span>
+//                   <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs font-bold rounded">
+//                     -{discount}%
+//                   </span>
+//                 </>
+//               ) : (
+//                 <span className="text-2xl font-bold text-foreground">
+//                   ${product.price.toFixed(2)}
+//                 </span>
+//               )}
+//             </div>
+
+//             {/* Description - Smaller */}
+//             <p className="text-sm text-muted-foreground leading-relaxed border-b border-border pb-4">
+//               {product.description || "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}
+//             </p>
+
+//             {/* Color Selection - Smaller */}
+//             {colors.length > 0 && (
+//               <div>
+//                 <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+//                   Color: <span className="text-foreground font-bold">{selectedColor}</span>
+//                 </label>
+//                 <div className="flex flex-wrap gap-2">
+//                   {colors.map((color) => (
+//                     <motion.button
+//                       key={color.value}
+//                       whileHover={{ scale: 1.05 }}
+//                       whileTap={{ scale: 0.95 }}
+//                       onClick={() => setSelectedColor(color.value)}
+//                       className={`w-8 h-8 rounded-full border ${
+//                         selectedColor === color.value
+//                           ? 'border-sage ring-1 ring-sage/30 bg-sage/10'
+//                           : 'border-border'
+//                       }`}
+//                       style={{
+//                         backgroundColor: color.value.toLowerCase() === 'brown' ? '#8B4513' :
+//                                         color.value.toLowerCase() === 'black' ? '#000000' :
+//                                         color.value.toLowerCase() === 'blue' ? '#0000FF' :
+//                                         color.value.toLowerCase() === 'white' ? '#FFFFFF' : '#F3F4F6',
+//                       }}
+//                       title={color.value}
+//                     />
+//                   ))}
+//                 </div>
+//               </div>
+//             )}
+
+//             {/* Size Selection - Smaller */}
+//             {sizes.length > 0 && (
+//               <div>
+//                 <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+//                   Size: <span className="text-foreground font-bold">{selectedSize}</span>
+//                 </label>
+//                 <div className="flex flex-wrap items-center gap-2">
+//                   {sizes.map((size) => (
+//                     <motion.button
+//                       key={size.value}
+//                       whileHover={{ scale: 1.05 }}
+//                       whileTap={{ scale: 0.95 }}
+//                       onClick={() => setSelectedSize(size.value)}
+//                       className={`px-3 py-1.5 text-sm rounded font-medium transition-all ${
+//                         selectedSize === size.value
+//                           ? 'bg-sage text-white'
+//                           : 'glass-card hover:bg-accent/20 text-foreground'
+//                       }`}
+//                     >
+//                       {size.value}
+//                     </motion.button>
+//                   ))}
+//                   <button className="text-xs text-sage hover:underline font-medium">
+//                     View Size Guide
+//                   </button>
+//                 </div>
+//               </div>
+//             )}
+
+//             {/* SKU and Clear */}
+//             <div className="flex items-center justify-between text-xs text-muted-foreground">
+//               <span>SKU: <span className="font-semibold text-foreground">GHT95245AAA</span></span>
+//               <button 
+//                 onClick={handleClearSelection}
+//                 className="text-red-400 hover:text-red-500 font-medium"
+//               >
+//                 Clear
+//               </button>
+//             </div>
+
+//             {/* Quantity and Actions - Smaller */}
+//             <div className="space-y-3">
+//               <div>
+//                 <label className="text-xs font-semibold text-sage mb-1 block">
+//                   Quantity
+//                 </label>
+//                 <div className="flex items-center space-x-3">
+//                   <div className="flex items-center space-x-2">
+//                     <motion.button
+//                       whileTap={{ scale: 0.9 }}
+//                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
+//                       className="w-8 h-8 flex items-center justify-center glass-card rounded-lg font-bold text-base hover:bg-accent/20"
+//                     >
+//                       -
+//                     </motion.button>
+//                     <span className="w-10 text-center text-lg font-bold text-foreground">{quantity}</span>
+//                     <motion.button
+//                       whileTap={{ scale: 0.9 }}
+//                       onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+//                       className="w-8 h-8 flex items-center justify-center glass-card rounded-lg font-bold text-base hover:bg-accent/20"
+//                     >
+//                       +
+//                     </motion.button>
+//                   </div>
+//                 </div>
+//               </div>
+
+//               {/* Action Buttons - Smaller */}
+//               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+//                 <motion.button
+//                   whileHover={{ scale: 1.02 }}
+//                   whileTap={{ scale: 0.98 }}
+//                   onClick={handleAddToCart}
+//                   disabled={product.stock === 0}
+//                   className="col-span-2 btn-ghost flex items-center justify-center space-x-1 disabled:opacity-50 h-11 text-sm"
+//                 >
+//                   <FiShoppingCart className="w-4 h-4" />
+//                   <span>Add to Cart</span>
+//                 </motion.button>
+//                 <motion.button
+//                   whileHover={{ scale: 1.02 }}
+//                   whileTap={{ scale: 0.98 }}
+//                   onClick={handleBuyNow}
+//                   disabled={product.stock === 0}
+//                   className="btn-primary disabled:opacity-50 h-11 text-sm"
+//                 >
+//                   Buy Now
+//                 </motion.button>
+//               </div>
+
+//               {/* Wishlist Button - Smaller */}
+//               <motion.button
+//                 whileHover={{ scale: 1.05 }}
+//                 whileTap={{ scale: 0.95 }}
+//                 className="w-full flex items-center justify-center space-x-1 py-2 text-sm glass-card rounded-lg hover:bg-accent/10"
+//               >
+//                 <FiHeart className="w-4 h-4" />
+//                 <span className="font-medium">Add to Wishlist</span>
+//               </motion.button>
+//             </div>
+
+//             {/* Tags and Share - Smaller */}
+//             <div className="pt-4 border-t border-border space-y-3">
+//               {/* Tags */}
+//               <div>
+//                 <span className="text-xs font-semibold text-muted-foreground">Tags: </span>
+//                 <div className="flex flex-wrap gap-1.5 mt-1">
+//                   {['Women', 'Coat', 'Fashion', 'Jacket'].map((tag) => (
+//                     <span
+//                       key={tag}
+//                       className="px-2 py-0.5 text-xs glass-card rounded-full hover:bg-accent/20 cursor-pointer"
+//                     >
+//                       {tag}
+//                     </span>
+//                   ))}
+//                 </div>
+//               </div>
+
+//               {/* Share - Smaller */}
+//               <div className="flex items-center space-x-3">
+//                 <span className="text-xs font-semibold text-muted-foreground">Share:</span>
+//                 <div className="flex space-x-2">
+//                   <button className="w-7 h-7 rounded-full bg-[#3b5998] flex items-center justify-center text-white hover:opacity-90">
+//                     <FaFacebookF className="w-3 h-3" />
+//                   </button>
+//                   <button className="w-7 h-7 rounded-full bg-[#1da1f2] flex items-center justify-center text-white hover:opacity-90">
+//                     <FaTwitter className="w-3 h-3" />
+//                   </button>
+//                   <button className="w-7 h-7 rounded-full bg-[#e60023] flex items-center justify-center text-white hover:opacity-90">
+//                     <FaPinterestP className="w-3 h-3" />
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Features - Smaller */}
+//             <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
+//               <div className="flex items-center space-x-2">
+//                 <FiTruck className="text-sage w-5 h-5" />
+//                 <div>
+//                   <div className="text-sm font-semibold text-foreground">Free Shipping</div>
+//                   <div className="text-xs text-muted-foreground">On orders over $50</div>
+//                 </div>
+//               </div>
+//               <div className="flex items-center space-x-2">
+//                 <FiShield className="text-sage w-5 h-5" />
+//                 <div>
+//                   <div className="text-sm font-semibold text-foreground">Secure Payment</div>
+//                   <div className="text-xs text-muted-foreground">100% Protected</div>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//       <Footer />
+//     </div>
+//   );
+// };
+
+// export default ProductDetailPage;
+
+
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -361,14 +839,13 @@ import { FaFacebookF, FaTwitter, FaPinterestP } from 'react-icons/fa';
 import Navbar from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { productApi } from '../../api/productApi';
-import type { Product } from '../../types';
+import type { Product, ProductAttribute } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
-import { wishlistApi } from "../../api/wishlistApi";
 
 // ----------------------------------------------------------------------
-// 1. HELPER: Fix Image URLs
+// HELPER: Fix Image URLs
 // ----------------------------------------------------------------------
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL;
 const getImageUrl = (path?: string) => {
@@ -386,9 +863,13 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>('');
   const [isWishlisted, setIsWishlisted] = useState(false);
+  
+  // State for available options
+  const [availableSizes, setAvailableSizes] = useState<ProductAttribute[]>([]);
+  const [availableColors, setAvailableColors] = useState<ProductAttribute[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -401,11 +882,24 @@ const ProductDetailPage = () => {
       const data = await productApi.getProductById(Number(id));
       setProduct(data);
 
+      // Extract sizes and colors from product attributes
+      const sizes = data.attributes.filter((attr) => 
+        attr.type && attr.type.toUpperCase() === 'SIZE'
+      );
+      const colors = data.attributes.filter((attr) => 
+        attr.type && attr.type.toUpperCase() === 'COLOR'
+      );
+
+      setAvailableSizes(sizes);
+      setAvailableColors(colors);
+
       // Auto-select first available options
-      const sizes = data.attributes.filter((a) => a.type === 'Size');
-      const colors = data.attributes.filter((a) => a.type === 'Color');
-      if (sizes.length > 0) setSelectedSize(sizes[0].value);
-      if (colors.length > 0) setSelectedColor(colors[0].value);
+      if (sizes.length > 0) {
+        setSelectedSize(sizes[0].value);
+      }
+      if (colors.length > 0) {
+        setSelectedColor(colors[0].value);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to fetch product');
       navigate('/products');
@@ -422,6 +916,17 @@ const ProductDetailPage = () => {
       return;
     }
 
+    // Validate selections
+    if (availableSizes.length > 0 && !selectedSize) {
+      toast.error('Please select a size');
+      return;
+    }
+
+    if (availableColors.length > 0 && !selectedColor) {
+      toast.error('Please select a color');
+      return;
+    }
+
     dispatch(
       addToCart({
         productId: product.id,
@@ -433,6 +938,7 @@ const ProductDetailPage = () => {
         selectedColor,
         image: product.images[0],
         stock: product.stock,
+        itemId: 0
       })
     );
     toast.success('Added to cart!');
@@ -443,21 +949,50 @@ const ProductDetailPage = () => {
     navigate('/cart');
   };
 
-  // Clear selection function
   const handleClearSelection = () => {
-    const sizes = product?.attributes.filter((a) => a.type === 'Size') || [];
-    const colors = product?.attributes.filter((a) => a.type === 'Color') || [];
-    if (sizes.length > 0) setSelectedSize(sizes[0].value);
-    if (colors.length > 0) setSelectedColor(colors[0].value);
+    if (availableSizes.length > 0) {
+      setSelectedSize(availableSizes[0].value);
+    } else {
+      setSelectedSize('');
+    }
+    
+    if (availableColors.length > 0) {
+      setSelectedColor(availableColors[0].value);
+    } else {
+      setSelectedColor('');
+    }
+    
     setQuantity(1);
     toast.success('Selection cleared!');
+  };
+
+  // Helper function to get color name from value
+  const getColorName = (colorValue: string) => {
+    const colorMap: Record<string, string> = {
+      '#000000': 'Black',
+      '#FFFFFF': 'White',
+      '#FF0000': 'Red',
+      '#00FF00': 'Green',
+      '#0000FF': 'Blue',
+      '#FFFF00': 'Yellow',
+      '#800080': 'Purple',
+      '#FFA500': 'Orange',
+      '#808080': 'Gray',
+      '#A52A2A': 'Brown',
+      '#FFC0CB': 'Pink',
+      '#8B4513': 'Brown',
+      '#C0C0C0': 'Silver',
+      '#FFD700': 'Gold'
+    };
+    
+    return colorMap[colorValue.toUpperCase()] || colorValue;
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <Navbar />
-        <div className=" sm:px-6 lg:px-8 mx-auto">
+        <div className="pt-20 px-4 sm:px-6 lg:px-8 mx-auto max-w-6xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="glass-card rounded-2xl h-96 shimmer" />
             <div className="space-y-4">
@@ -471,16 +1006,28 @@ const ProductDetailPage = () => {
     );
   }
 
-  if (!product) return null;
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <Navbar />
+        <div className="pt-20 px-4 sm:px-6 lg:px-8 mx-auto max-w-6xl text-center">
+          <h1 className="text-2xl font-bold text-foreground">Product not found</h1>
+          <button 
+            onClick={() => navigate('/products')}
+            className="mt-4 px-6 py-2 bg-sage text-white rounded-lg hover:bg-sage/90 transition-colors"
+          >
+            Browse Products
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const discount = product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
-  const sizes = product.attributes.filter((a) => a.type === 'Size');
-  const colors = product.attributes.filter((a) => a.type === 'Color');
-
-  // Mock review data from the image
+  // Mock review data
   const reviewData = {
     rating: 4.8,
     reviewCount: 245,
@@ -492,7 +1039,7 @@ const ProductDetailPage = () => {
       <Navbar />
 
       <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 mx-auto max-w-6xl">
-        {/* Back Button - Smaller */}
+        {/* Back Button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.95 }}
@@ -503,8 +1050,8 @@ const ProductDetailPage = () => {
           <span>Back to Products</span>
         </motion.button>
 
-        {/* Breadcrumb - Smaller */}
-        <div className="mb-4 text-xs text-muted-foreground">
+        {/* Breadcrumb */}
+        <div className="mb-6 text-xs text-muted-foreground">
           <button 
             onClick={() => navigate('/')}
             className="hover:text-sage cursor-pointer"
@@ -523,49 +1070,22 @@ const ProductDetailPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         {/* Left Column - Images */}
-<div className="flex gap-12">
+          {/* Left Column - Images */}
+          <div className="space-y-3">
+            {/* Main Image */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="aspect-square rounded-xl overflow-hidden glass-card p-3"
+            >
+              <img
+                src={getImageUrl(product.images[selectedImage])}
+                alt={product.name}
+                className="w-full h-full object-contain"
+              />
+            </motion.div>
 
-  {/* THUMBNAILS (LEFT SIDE) */}
-  {product.images.length > 1 && (
-    <div className="flex flex-col gap-2">
-      {product.images.map((image, index) => (
-        <button
-          key={index}
-          onClick={() => setSelectedImage(index)}
-          className={`w-12 h-12  overflow-hidden border
-            ${
-              selectedImage === index
-                ? "border-sage ring-2 ring-sage/40"
-                : "border-gray-300"
-            }`}
-        >
-          <img
-            src={getImageUrl(image)}
-            alt={`Thumbnail ${index + 1}`}
-            className="w-full h-full object-cover"
-          />
-        </button>
-      ))}
-    </div>
-  )}
-
-  {/* MAIN IMAGE */}
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="flex-shrink-0"
-  >
-    <div className="w-[380px] aspect-[6/7] rounded-xl overflow-hidden border bg-white p-2">
-      <img
-        src={getImageUrl(product.images[selectedImage])}
-        alt={product.name}
-        className="w-full h-full object-contain"
-      />
-    </div>
-  </motion.div>
-
-            {/* Thumbnails - Smaller */}
+            {/* Thumbnails */}
             {product.images.length > 1 && (
               <div className="grid grid-cols-5 gap-2">
                 {product.images.map((image, index) => (
@@ -591,9 +1111,9 @@ const ProductDetailPage = () => {
             )}
           </div>
 
-          {/* Right Column - Product Info - Smaller */}
-          <div className="space-y-4">
-            {/* Category */}
+          {/* Right Column - Product Info */}
+          <div className="space-y-6">
+            {/* Category and Stock */}
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-sage uppercase tracking-wider">
                 {product.category}
@@ -605,16 +1125,16 @@ const ProductDetailPage = () => {
                     : 'bg-red-500/20 text-red-400'
                 }`}
               >
-                {product.stock > 0 ? `In Stock` : 'Out of stock'}
+                {product.stock > 0 ? `${product.stock} in Stock` : 'Out of stock'}
               </span>
             </div>
 
-            {/* Title - Smaller */}
+            {/* Title */}
             <h1 className="text-2xl font-display font-bold text-foreground">
               {product.name}
             </h1>
 
-            {/* Rating - Smaller */}
+            {/* Rating */}
             <div className="flex items-center space-x-1">
               <div className="flex items-center">
                 {[...Array(reviewData.stars)].map((_, i) => (
@@ -636,7 +1156,7 @@ const ProductDetailPage = () => {
               </span>
             </div>
 
-            {/* Price - Smaller */}
+            {/* Price */}
             <div className="flex items-center space-x-3">
               {product.salePrice ? (
                 <>
@@ -657,62 +1177,79 @@ const ProductDetailPage = () => {
               )}
             </div>
 
-            {/* Description - Smaller */}
+            {/* Description */}
             <p className="text-sm text-muted-foreground leading-relaxed border-b border-border pb-4">
               {product.description || "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."}
             </p>
 
-            {/* Color Selection - Smaller */}
-            {colors.length > 0 && (
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
-                  Color: <span className="text-foreground font-bold">{selectedColor}</span>
+            {/* Color Selection */}
+            {availableColors.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-muted-foreground flex justify-between">
+                  <span>Select Color:</span>
+                  {selectedColor && (
+                    <span className="text-foreground font-normal">
+                      Selected: {getColorName(selectedColor)}
+                    </span>
+                  )}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {colors.map((color) => (
-                    <motion.button
-                      key={color.value}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedColor(color.value)}
-                      className={`w-8 h-8 rounded-full border ${
-                        selectedColor === color.value
-                          ? 'border-sage ring-1 ring-sage/30 bg-sage/10'
-                          : 'border-border'
-                      }`}
-                      style={{
-                        backgroundColor: color.value.toLowerCase() === 'brown' ? '#8B4513' :
-                                        color.value.toLowerCase() === 'black' ? '#000000' :
-                                        color.value.toLowerCase() === 'blue' ? '#0000FF' :
-                                        color.value.toLowerCase() === 'white' ? '#FFFFFF' : '#F3F4F6',
-                      }}
-                      title={color.value}
-                    />
-                  ))}
+                  {availableColors.map((colorAttr) => {
+                    const colorValue = colorAttr.value;
+                    const colorName = getColorName(colorValue);
+                    
+                    return (
+                      <motion.button
+                        key={colorAttr.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedColor(colorValue)}
+                        className={`flex flex-col items-center space-y-1 p-2 rounded-lg border ${
+                          selectedColor === colorValue
+                            ? 'border-sage ring-1 ring-sage/30 bg-sage/10'
+                            : 'border-border hover:border-sage/50'
+                        }`}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-full border border-border"
+                          style={{ backgroundColor: colorValue }}
+                          title={colorName}
+                        />
+                        <span className="text-xs font-medium text-foreground">
+                          {colorName}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Size Selection - Smaller */}
-            {sizes.length > 0 && (
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
-                  Size: <span className="text-foreground font-bold">{selectedSize}</span>
+            {/* Size Selection */}
+            {availableSizes.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-muted-foreground flex justify-between">
+                  <span>Select Size:</span>
+                  {selectedSize && (
+                    <span className="text-foreground font-normal">
+                      Selected: {selectedSize}
+                    </span>
+                  )}
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
-                  {sizes.map((size) => (
+                  {availableSizes.map((sizeAttr) => (
                     <motion.button
-                      key={size.value}
+                      key={sizeAttr.id}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedSize(size.value)}
-                      className={`px-3 py-1.5 text-sm rounded font-medium transition-all ${
-                        selectedSize === size.value
+                      onClick={() => setSelectedSize(sizeAttr.value)}
+                      className={`px-4 py-2 text-sm rounded-lg font-medium transition-all ${
+                        selectedSize === sizeAttr.value
                           ? 'bg-sage text-white'
                           : 'glass-card hover:bg-accent/20 text-foreground'
                       }`}
                     >
-                      {size.value}
+                      {sizeAttr.value}
                     </motion.button>
                   ))}
                   <button className="text-xs text-sage hover:underline font-medium">
@@ -722,21 +1259,26 @@ const ProductDetailPage = () => {
               </div>
             )}
 
-            {/* SKU and Clear */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>SKU: <span className="font-semibold text-foreground">GHT95245AAA</span></span>
-              <button 
-                onClick={handleClearSelection}
-                className="text-red-400 hover:text-red-500 font-medium"
-              >
-                Clear
-              </button>
+            {/* SKU and Clear Selection */}
+            <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
+              <div>
+                <span className="font-medium">SKU: </span>
+                <span className="font-semibold text-foreground">GHT95245AAA</span>
+              </div>
+              {(selectedSize || selectedColor) && (
+                <button 
+                  onClick={handleClearSelection}
+                  className="text-red-400 hover:text-red-500 font-medium"
+                >
+                  Clear Selection
+                </button>
+              )}
             </div>
 
-            {/* Quantity and Actions - Smaller */}
-            <div className="space-y-3">
+            {/* Quantity and Actions */}
+            <div className="space-y-4 pt-4 border-t border-border">
               <div>
-                <label className="text-xs font-semibold text-sage mb-1 block">
+                <label className="text-sm font-semibold text-sage mb-2 block">
                   Quantity
                 </label>
                 <div className="flex items-center space-x-3">
@@ -744,32 +1286,39 @@ const ProductDetailPage = () => {
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-8 h-8 flex items-center justify-center glass-card rounded-lg font-bold text-base hover:bg-accent/20"
+                      className="w-10 h-10 flex items-center justify-center glass-card rounded-lg font-bold text-lg hover:bg-accent/20"
+                      disabled={quantity <= 1}
                     >
                       -
                     </motion.button>
-                    <span className="w-10 text-center text-lg font-bold text-foreground">{quantity}</span>
+                    <span className="w-12 text-center text-lg font-bold text-foreground">
+                      {quantity}
+                    </span>
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                      className="w-8 h-8 flex items-center justify-center glass-card rounded-lg font-bold text-base hover:bg-accent/20"
+                      className="w-10 h-10 flex items-center justify-center glass-card rounded-lg font-bold text-lg hover:bg-accent/20"
+                      disabled={quantity >= product.stock}
                     >
                       +
                     </motion.button>
                   </div>
+                  <span className="text-sm text-muted-foreground">
+                    {product.stock} available
+                  </span>
                 </div>
               </div>
 
-              {/* Action Buttons - Smaller */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
-                  className="col-span-2 btn-ghost flex items-center justify-center space-x-1 disabled:opacity-50 h-11 text-sm"
+                  className="btn-ghost flex items-center justify-center space-x-2 disabled:opacity-50 h-12 text-sm"
                 >
-                  <FiShoppingCart className="w-4 h-4" />
+                  <FiShoppingCart className="w-5 h-5" />
                   <span>Add to Cart</span>
                 </motion.button>
                 <motion.button
@@ -777,33 +1326,38 @@ const ProductDetailPage = () => {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleBuyNow}
                   disabled={product.stock === 0}
-                  className="btn-primary disabled:opacity-50 h-11 text-sm"
+                  className="btn-primary disabled:opacity-50 h-12 text-sm"
                 >
                   Buy Now
                 </motion.button>
               </div>
 
-              {/* Wishlist Button - Smaller */}
+              {/* Wishlist Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-full flex items-center justify-center space-x-1 py-2 text-sm glass-card rounded-lg hover:bg-accent/10"
+                onClick={() => setIsWishlisted(!isWishlisted)}
+                className="w-full flex items-center justify-center space-x-2 py-3 text-sm glass-card rounded-lg hover:bg-accent/10"
               >
-                <FiHeart className="w-4 h-4" />
-                <span className="font-medium">Add to Wishlist</span>
+                <FiHeart 
+                  className={`w-5 h-5 ${isWishlisted ? 'text-red-500 fill-red-500' : ''}`} 
+                />
+                <span className="font-medium">
+                  {isWishlisted ? 'Added to Wishlist' : 'Add to Wishlist'}
+                </span>
               </motion.button>
             </div>
 
-            {/* Tags and Share - Smaller */}
-            <div className="pt-4 border-t border-border space-y-3">
+            {/* Tags and Share */}
+            <div className="pt-4 border-t border-border space-y-4">
               {/* Tags */}
               <div>
-                <span className="text-xs font-semibold text-muted-foreground">Tags: </span>
-                <div className="flex flex-wrap gap-1.5 mt-1">
+                <span className="text-sm font-semibold text-muted-foreground">Tags: </span>
+                <div className="flex flex-wrap gap-2 mt-2">
                   {['Women', 'Coat', 'Fashion', 'Jacket'].map((tag) => (
                     <span
                       key={tag}
-                      className="px-2 py-0.5 text-xs glass-card rounded-full hover:bg-accent/20 cursor-pointer"
+                      className="px-3 py-1 text-xs glass-card rounded-full hover:bg-accent/20 cursor-pointer"
                     >
                       {tag}
                     </span>
@@ -811,34 +1365,38 @@ const ProductDetailPage = () => {
                 </div>
               </div>
 
-              {/* Share - Smaller */}
+              {/* Share */}
               <div className="flex items-center space-x-3">
-                <span className="text-xs font-semibold text-muted-foreground">Share:</span>
+                <span className="text-sm font-semibold text-muted-foreground">Share:</span>
                 <div className="flex space-x-2">
-                  <button className="w-7 h-7 rounded-full bg-[#3b5998] flex items-center justify-center text-white hover:opacity-90">
-                    <FaFacebookF className="w-3 h-3" />
+                  <button className="w-8 h-8 rounded-full bg-[#3b5998] flex items-center justify-center text-white hover:opacity-90">
+                    <FaFacebookF className="w-4 h-4" />
                   </button>
-                  <button className="w-7 h-7 rounded-full bg-[#1da1f2] flex items-center justify-center text-white hover:opacity-90">
-                    <FaTwitter className="w-3 h-3" />
+                  <button className="w-8 h-8 rounded-full bg-[#1da1f2] flex items-center justify-center text-white hover:opacity-90">
+                    <FaTwitter className="w-4 h-4" />
                   </button>
-                  <button className="w-7 h-7 rounded-full bg-[#e60023] flex items-center justify-center text-white hover:opacity-90">
-                    <FaPinterestP className="w-3 h-3" />
+                  <button className="w-8 h-8 rounded-full bg-[#e60023] flex items-center justify-center text-white hover:opacity-90">
+                    <FaPinterestP className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Features - Smaller */}
-            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
-              <div className="flex items-center space-x-2">
-                <FiTruck className="text-sage w-5 h-5" />
+            {/* Features */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center">
+                  <FiTruck className="text-sage w-5 h-5" />
+                </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">Free Shipping</div>
                   <div className="text-xs text-muted-foreground">On orders over $50</div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <FiShield className="text-sage w-5 h-5" />
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center">
+                  <FiShield className="text-sage w-5 h-5" />
+                </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">Secure Payment</div>
                   <div className="text-xs text-muted-foreground">100% Protected</div>

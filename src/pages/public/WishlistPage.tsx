@@ -259,6 +259,7 @@ import { cartApi } from "../../api/cartApi";
 import { productApi } from "../../api/productApi";
 import { useAppDispatch } from "../../hooks/useAuth";
 import { addToCart as addToCartRedux } from "../../store/slices/cartSlice";
+import useAuth from "../../hooks/useAuth";
 // Mock wishlist data - replace with actual API data
 const IMAGE_BASE_URL =
   import.meta.env.VITE_API_IMG_URL || "http://localhost:8090";
@@ -276,6 +277,8 @@ const [colors, setColors] = useState<string[]>([]);
 const [selectedSize, setSelectedSize] = useState("");
 const [selectedColor, setSelectedColor] = useState("");
 const dispatch = useAppDispatch();
+const { isAuthenticated } = useAuth();
+
 
   // Remove item from wishlist
 const handleRemoveItem = async (id: number) => {
@@ -368,32 +371,36 @@ const confirmAddToCart = async () => {
     return sum + (item.originalPrice - item.discountedPrice);
   }, 0);
 useEffect(() => {
+  // ⛔ STOP for guests — DO NOT call wishlist API
+  if (!isAuthenticated) {
+    setWishlistItems([]);
+    setLoading(false);
+    return;
+  }
+
   const fetchWishlist = async () => {
     try {
       setLoading(true);
 
-const data = await wishlistApi.getWishlist();
+      const data = await wishlistApi.getWishlist();
 
-// ✅ data.products (NOT data.items)
-const formattedItems = data.products.map((product: any) => ({
-  id: product.id,
-  name: product.name,
-  category: product.category ?? "Uncategorized",
-  originalPrice: product.price,
-  discountedPrice: product.salePrice ?? product.price,
-  discount: product.salePrice
-    ? Math.round(
-        ((product.price - product.salePrice) / product.price) * 100
-      )
-    : 0,
-  image: product.images?.[0]
-    ? `${IMAGE_BASE_URL}${product.images[0]}`
-    : "/placeholder.jpg",
-}));
+      const formattedItems = data.products.map((product: any) => ({
+        id: product.id,
+        name: product.name,
+        category: product.category ?? "Uncategorized",
+        originalPrice: product.price,
+        discountedPrice: product.salePrice ?? product.price,
+        discount: product.salePrice
+          ? Math.round(
+              ((product.price - product.salePrice) / product.price) * 100
+            )
+          : 0,
+        image: product.images?.[0]
+          ? `${IMAGE_BASE_URL}${product.images[0]}`
+          : "/placeholder.jpg",
+      }));
 
-
-setWishlistItems(formattedItems);
-
+      setWishlistItems(formattedItems);
     } catch (error) {
       console.error("Failed to fetch wishlist", error);
     } finally {
@@ -402,7 +409,7 @@ setWishlistItems(formattedItems);
   };
 
   fetchWishlist();
-}, []);
+}, [isAuthenticated]);
 
   return (
     <div className="min-h-screen flex flex-col">

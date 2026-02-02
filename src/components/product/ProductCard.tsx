@@ -352,7 +352,8 @@ import { formatINR } from "../../utils/currency";
 import { useNavigate } from "react-router-dom";
 // import { wishlistApi } from "../../api/wishlistApi";
 import { useWishlist } from "../../context/WishlistContext";
-
+import useAuth from "../../hooks/useAuth";
+import { toast } from 'sonner';
 
 // --- CONFIGURATION ---
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
@@ -375,7 +376,7 @@ const { wishlistIds, toggleWishlist } = useWishlist();
 const isWishlisted = wishlistIds.includes(product.id);
 
 // example: token-based auth
-const isLoggedIn = Boolean(localStorage.getItem("authToken"));
+const { isAuthenticated } = useAuth();
 
   // --- HELPER: Resolve Image URL ---
   const getImageUrl = (path?: string) => {
@@ -396,7 +397,8 @@ const handleWishlistClick = async (
   e.preventDefault();
   e.stopPropagation();
 
-  if (!isLoggedIn) {
+  if (!isAuthenticated) {
+    toast.error("Please login to use wishlist");
     navigate("/login");
     return;
   }
@@ -451,7 +453,11 @@ const handleWishlistClick = async (
     .slice(0, 4) || []; // Take only first 4 sizes
 
   return (
-    <Link to={`/products/${product.id}`}>
+    // <Link to={`/products/${product.id}`}>
+    <div
+  onClick={() => navigate(`/products/${product.id}`)}
+  className="relative bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 cursor-pointer"
+>
       <div 
         className="relative bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}
@@ -602,7 +608,8 @@ const handleWishlistClick = async (
           
         </div>
       </div>
-    </Link>
+    {/* </Link> */}
+    </div>
   );
 };
 

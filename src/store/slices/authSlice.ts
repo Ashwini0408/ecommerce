@@ -260,10 +260,16 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   } catch (error) {
     console.error('Logout API call failed', error);
   } finally {
+    // 🔥 Clear auth storage
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+
+    // 🔥 Clear cart storage
+    localStorage.removeItem('cart');
+    localStorage.removeItem('styliste_cart');
   }
 });
+
 
 const authSlice = createSlice({
   name: 'auth',
