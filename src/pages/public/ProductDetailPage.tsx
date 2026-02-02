@@ -418,29 +418,45 @@ const ProductDetailPage = () => {
     }
   };
 
-  const handleAddToCart = () => {
-    if (!product) return;
+const handleAddToCart = async () => {
+  if (!product) return;
 
-    if (product.stock === 0) {
-      toast.error('Product is out of stock');
-      return;
-    }
+  if (product.stock === 0) {
+    toast.error("Product is out of stock");
+    return;
+  }
 
+  try {
+    // 1️⃣ ADD TO BACKEND CART
+    const response = await cartApi.addToCart({
+      productId: product.id,
+      quantity,
+      selectedSize,
+      selectedColor,
+    });
+
+    // 2️⃣ UPDATE REDUX USING BACKEND RESPONSE
     dispatch(
       addToCart({
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        salePrice: product.salePrice,
-        quantity,
-        selectedSize,
-        selectedColor,
-        image: product.images[0],
-        stock: product.stock,
+        itemId: response.itemId,           // ✅ REQUIRED
+        productId: response.productId,
+        name: response.name,
+        price: response.price,
+        salePrice: response.salePrice,
+        quantity: response.quantity,
+        selectedSize: response.selectedSize,
+        selectedColor: response.selectedColor,
+        image: response.image,
+        stock: response.stock,
       })
     );
-    toast.success('Added to cart!');
-  };
+
+    toast.success("Added to cart!");
+  } catch (error) {
+    toast.error("Failed to add to cart");
+  }
+};
+
 const handleWishlistToggle = async () => {
   if (!localStorage.getItem("authToken")) {
     navigate("/login");
@@ -584,8 +600,6 @@ const isWishlisted = wishlistIds.includes(product.id);
   </motion.div>
 
 </div>
-
-
           {/* Right Column - Product Info - Smaller */}
           <div className="space-y-4">
             {/* Category */}

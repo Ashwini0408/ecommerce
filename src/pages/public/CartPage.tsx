@@ -129,6 +129,9 @@ const handleDecrement = async (
             {items.map((item) => {
               const effectivePrice = item.salePrice || item.price;
               const itemTotal = effectivePrice * item.quantity;
+console.log("itemId:", item.itemId);
+console.log("price:", item.price);
+console.log("quantity:", item.quantity);
 
               return (
                 <motion.div
