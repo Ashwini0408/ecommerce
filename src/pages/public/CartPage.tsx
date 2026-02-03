@@ -429,35 +429,41 @@ const findBackendItemId = (productId: number, selectedSize?: string, selectedCol
   return reduxItem?.itemId || 0;
 };
 
-  const handleRemoveItem = async (
-    itemId: number,
-    productId: number,
-    selectedSize?: string,
-    selectedColor?: string
-  ) => {
-    try {
-      // Get the actual backend itemId
-      const backendItemId = findBackendItemId(productId, selectedSize, selectedColor);
-      
-      if (!backendItemId || backendItemId === 0) {
-        toast.error('Cannot find item in server cart');
-        return;
-      }
-      
-      console.log('Removing item with backend ID:', backendItemId);
-      await cartApi.removeItem(backendItemId);
+const handleRemoveItem = async (
+  itemId: number,
+  productId: number,
+  selectedSize?: string,
+  selectedColor?: string
+) => {
+  // ✅ GUEST USER → LOCAL REMOVE ONLY
+  if (!isAuthenticated) {
+    dispatch(removeFromCart({ productId, selectedSize, selectedColor }));
+    toast.success('Item removed from cart');
+    return;
+  }
 
-      dispatch(removeFromCart({ productId, selectedSize, selectedColor }));
-      toast.success('Item removed from cart');
-      
-      // Refresh backend items
-      const updatedCart = await cartApi.getCart();
-setBackendItems(updatedCart.items || []);
-    } catch (error) {
-      console.error('Remove error:', error);
-      toast.error('Failed to remove item');
+  // ✅ LOGGED-IN USER → BACKEND + REDUX
+  try {
+    const backendItemId = findBackendItemId(productId, selectedSize, selectedColor);
+
+    if (!backendItemId) {
+      toast.error('Item not found in server cart');
+      return;
     }
-  };
+
+    await cartApi.removeItem(backendItemId);
+
+    dispatch(removeFromCart({ productId, selectedSize, selectedColor }));
+    toast.success('Item removed from cart');
+
+    const updatedCart = await cartApi.getCart();
+    setBackendItems(updatedCart.items || []);
+  } catch (error) {
+    console.error('Remove error:', error);
+    toast.error('Failed to remove item');
+  }
+};
+
 
   const handleIncrement = async (
     itemId: number,
