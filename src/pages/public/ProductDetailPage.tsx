@@ -1426,6 +1426,11 @@ import type { Product, ProductAttribute } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
+import useAuth from "../../hooks/useAuth";
+import { cartApi } from "../../api/cartApi";
+import { useAppSelector } from "../../hooks/useAuth";
+
+
 
 // ----------------------------------------------------------------------
 // HELPER: Fix Image URLs
@@ -1471,6 +1476,7 @@ const ProductDetailPage = () => {
   // State for available options
   const [availableSizes, setAvailableSizes] = useState<ProductAttribute[]>([]);
   const [availableColors, setAvailableColors] = useState<ProductAttribute[]>([]);
+const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (id) {
@@ -1509,41 +1515,73 @@ const ProductDetailPage = () => {
     }
   };
 
-  const handleAddToCart = () => {
-    if (!product) return;
+const handleAddToCart = async () => {
+  if (!product) return;
 
-    if (product.stock === 0) {
-      toast.error('Product is out of stock');
-      return;
-    }
+  if (product.stock === 0) {
+    toast.error("Product is out of stock");
+    return;
+  }
 
-    // Validate selections
-    if (availableSizes.length > 0 && !selectedSize) {
-      toast.error('Please select a size');
-      return;
-    }
+  if (availableSizes.length > 0 && !selectedSize) {
+    toast.error("Please select a size");
+    return;
+  }
 
-    if (availableColors.length > 0 && !selectedColor) {
-      toast.error('Please select a color');
-      return;
-    }
+  if (availableColors.length > 0 && !selectedColor) {
+    toast.error("Please select a color");
+    return;
+  }
 
-    dispatch(
-      addToCart({
+  try {
+    if (isAuthenticated) {
+      // ✅ BACKEND CART
+      const backendItem = await cartApi.addToCart({
         productId: product.id,
-        name: product.name,
-        price: product.price,
-        salePrice: product.salePrice,
         quantity,
         selectedSize,
         selectedColor,
-        image: product.images[0],
-        stock: product.stock,
-        itemId: 0
-      })
-    );
-    toast.success('Added to cart!');
-  };
+      });
+
+      dispatch(
+        addToCart({
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          salePrice: product.salePrice,
+          quantity: backendItem.quantity,
+          selectedSize,
+          selectedColor,
+          image: product.images[0],
+          stock: product.stock,
+          itemId: backendItem.id, // ✅ REAL ID
+        })
+      );
+    } else {
+      // ✅ GUEST CART
+      dispatch(
+        addToCart({
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          salePrice: product.salePrice,
+          quantity,
+          selectedSize,
+          selectedColor,
+          image: product.images[0],
+          stock: product.stock,
+          itemId: 0,
+        })
+      );
+    }
+
+    toast.success("Added to cart!");
+  } catch (err: any) {
+    console.error("Add to cart failed:", err);
+    toast.error("Failed to add to cart");
+  }
+};
+
 
   const handleBuyNow = () => {
     handleAddToCart();
