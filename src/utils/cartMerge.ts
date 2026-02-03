@@ -3,14 +3,14 @@ import { clearCart, addToCart } from "../store/slices/cartSlice";
 import type { AppDispatch } from "../store/store";
 
 export const mergeGuestCartAfterLogin = async (dispatch: AppDispatch) => {
-  const guestCartRaw = localStorage.getItem("styliste_cart");
+  const guestCartRaw = localStorage.getItem("styliste_guest_cart");
 
   if (!guestCartRaw) return;
 
   const guestItems = JSON.parse(guestCartRaw);
 
   if (!Array.isArray(guestItems) || guestItems.length === 0) {
-    localStorage.removeItem("styliste_cart");
+    localStorage.removeItem("styliste_guest_cart");
     return;
   }
 

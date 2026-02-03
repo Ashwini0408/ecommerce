@@ -328,6 +328,7 @@ import { useAppSelector, useAppDispatch } from '../../hooks/useAuth';
 import cartApi from '../../api/cartApi';
 import { formatINR } from "../../utils/currency";
 
+
 import {
   addToCart,
   removeFromCart,
@@ -357,50 +358,52 @@ const CartPage = () => {
   const { items, totalPrice, totalItems } = useAppSelector((state) => state.cart);
   const [isLoading, setIsLoading] = useState(false);
   const [backendItems, setBackendItems] = useState<BackendCartItem[]>([]);
+const { isAuthenticated, token } = useAppSelector((state) => state.auth);
 
 // CartPage.tsx - Update the fetchCartFromBackend function
 useEffect(() => {
+  if (!isAuthenticated) {
+    console.log('User not logged in, skipping cart API call');
+    return;
+  }
+
   const fetchCartFromBackend = async () => {
     try {
       setIsLoading(true);
+
       const response = await cartApi.getCart();
       console.log('Fetched cart from backend:', response);
-      
-      // The backend returns an object with items array inside
-      // response has {id: 1, userId: 2, items: Array(7), totalAmount: 52800}
+
       const cartData = response.items || [];
-      // Store backend items
       setBackendItems(cartData);
-      
-      // Clear and reload Redux store with backend data
+
       dispatch(clearCart());
-      
-      // Add each item from backend to Redux
+
       cartData.forEach((item: any) => {
-        // Map backend response to your CartItem type
         dispatch(addToCart({
-          itemId: item.id, // Backend cart item ID
+          itemId: item.id,
           productId: item.productId,
           name: item.productName,
-           price: item.unitPrice,        // ✅ FIX
-  salePrice: undefined,  
+          price: item.unitPrice,
+          salePrice: undefined,
           quantity: item.quantity,
           selectedSize: item.selectedSize,
           selectedColor: item.selectedColor,
           image: item.productImage,
-          stock: item.stock || 999, // Backend might not send stock
+          stock: item.stock || 999,
         }));
       });
+
     } catch (error) {
       console.error('Failed to fetch cart from backend:', error);
-      toast.error('Failed to load cart from server');
     } finally {
       setIsLoading(false);
     }
   };
 
   fetchCartFromBackend();
-}, [dispatch]);
+}, [dispatch, isAuthenticated]);
+
 
 const findBackendItemId = (productId: number, selectedSize?: string, selectedColor?: string): number => {
  const backendItem = Array.isArray(backendItems)

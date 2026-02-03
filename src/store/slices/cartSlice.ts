@@ -179,39 +179,44 @@
 
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { CartItem } from '../../types';
+const GUEST_CART_KEY = 'styliste_guest_cart';
+const USER_CART_KEY = 'styliste_user_cart';
 
 interface CartState {
   items: CartItem[];
   totalItems: number;
   totalPrice: number;
 }
+const isBrowser = typeof window !== 'undefined';
 
 const saveGuestCart = (items: CartItem[]) => {
-  localStorage.setItem("styliste_cart", JSON.stringify(items));
+  if (!isBrowser) return;
+  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
 };
 
-// Helper function to load and validate cart from localStorage
+
 const loadAndValidateCartFromStorage = (): CartItem[] => {
+  if (!isBrowser) return [];
+
   try {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      const parsed = JSON.parse(savedCart);
-      
-      // Validate and ensure numeric values
-      return parsed.map((item: any) => ({
-        ...item,
-        price: Number(item.price) || 0,
-        salePrice: item.salePrice ? Number(item.salePrice) : undefined,
-        quantity: Number(item.quantity) || 1,
-        stock: Number(item.stock) || 0,
-        productId: Number(item.productId) || 0,
-        itemId: Number(item.itemId) || 0, // This should be the backend ID
-      }));
-    }
-  } catch (error) {
-    console.error('Error loading cart from localStorage:', error);
+    const savedCart =
+      localStorage.getItem(USER_CART_KEY);
+
+    if (!savedCart) return [];
+
+    const parsed = JSON.parse(savedCart);
+    return parsed.map((item: any) => ({
+      ...item,
+      price: Number(item.price) || 0,
+      salePrice: item.salePrice ? Number(item.salePrice) : undefined,
+      quantity: Math.max(Number(item.quantity) || 1, 1),
+      stock: Number(item.stock) || 0,
+      productId: Number(item.productId) || 0,
+      itemId: Number(item.itemId) || 0,
+    }));
+  } catch {
+    return [];
   }
-  return [];
 };
 
 // Calculate totals helper with validation
@@ -259,11 +264,10 @@ const cartSlice = createSlice({
         } else {
           existingItem.quantity = action.payload.stock;
         }
-        
-        // IMPORTANT: Update the itemId if provided (from backend)
-        if (action.payload.itemId && action.payload.itemId > 0) {
-          existingItem.itemId = action.payload.itemId;
-        }
+       if (typeof action.payload.itemId === 'number') {
+  existingItem.itemId = action.payload.itemId;
+}
+
       } else {
         // Add new item with the backend itemId
         state.items.push({
@@ -277,12 +281,7 @@ const cartSlice = createSlice({
       state.totalItems = totals.totalItems;
       state.totalPrice = totals.totalPrice;
 
-      // Save guest cart ONLY if not logged in
-      if (!localStorage.getItem("authToken")) {
-        saveGuestCart(state.items);
-      } else {
-        localStorage.setItem("cart", JSON.stringify(state.items));
-      }
+     saveGuestCart(state.items);
 
     },
 
@@ -301,12 +300,7 @@ const cartSlice = createSlice({
       state.totalItems = totals.totalItems;
       state.totalPrice = totals.totalPrice;
 
-      // Save to localStorage
-      if (!localStorage.getItem("authToken")) {
-      saveGuestCart(state.items);
-    } else {
-      localStorage.setItem("cart", JSON.stringify(state.items));
-    }
+   saveGuestCart(state.items);
 
     },
 
@@ -331,28 +325,25 @@ const cartSlice = createSlice({
       state.totalItems = totals.totalItems;
       state.totalPrice = totals.totalPrice;
 
-      // Save to localStorage
-      if (!localStorage.getItem("authToken")) {
-      saveGuestCart(state.items);
-    } else {
-      localStorage.setItem("cart", JSON.stringify(state.items));
-    }
+    saveGuestCart(state.items);
 
     },
 
-    clearCart: (state) => {
-      state.items = [];
-      state.totalItems = 0;
-      state.totalPrice = 0;
+   clearCart: (state) => {
+  state.items = [];
+  state.totalItems = 0;
+  state.totalPrice = 0;
 
-      localStorage.removeItem("cart");
-      localStorage.removeItem("styliste_cart");
-    },
+  localStorage.removeItem(GUEST_CART_KEY);
+  localStorage.removeItem(USER_CART_KEY);
+},
 
 
     // Load cart from localStorage
     loadCartFromStorage: (state) => {
-      const savedCart = localStorage.getItem('cart');
+      const savedCart =
+  localStorage.getItem(GUEST_CART_KEY) ||
+  localStorage.getItem(USER_CART_KEY);
       if (savedCart) {
         try {
           const parsed = JSON.parse(savedCart);
@@ -362,7 +353,8 @@ const cartSlice = createSlice({
             ...item,
             price: Number(item.price) || 0,
             salePrice: item.salePrice ? Number(item.salePrice) : undefined,
-            quantity: Number(item.quantity) || 1,
+            quantity: Math.max(Number(item.quantity) || 1, 1),
+
             stock: Number(item.stock) || 0,
             productId: Number(item.productId) || 0,
             itemId: Number(item.itemId) || 0,
@@ -387,7 +379,8 @@ const cartSlice = createSlice({
         ...item,
         price: Number(item.price) || 0,
         salePrice: item.salePrice ? Number(item.salePrice) : undefined,
-        quantity: Number(item.quantity) || 1,
+        quantity: Math.max(Number(item.quantity) || 1, 1),
+
         stock: Number(item.stock) || 0,
         productId: Number(item.productId) || 0,
         itemId: Number(item.itemId) || 0, // This should be the backend ID
@@ -398,12 +391,7 @@ const cartSlice = createSlice({
       state.totalItems = totals.totalItems;
       state.totalPrice = totals.totalPrice;
 
-      // Save to localStorage
-      if (!localStorage.getItem("authToken")) {
-      saveGuestCart(state.items);
-    } else {
-      localStorage.setItem("cart", JSON.stringify(state.items));
-    }
+   saveGuestCart(state.items);
 
     },
 
@@ -428,12 +416,7 @@ const cartSlice = createSlice({
         item.itemId = action.payload.itemId;
       }
 
-      // Save to localStorage
-      if (!localStorage.getItem("authToken")) {
       saveGuestCart(state.items);
-    } else {
-      localStorage.setItem("cart", JSON.stringify(state.items));
-    }
 
     },
 
@@ -454,12 +437,8 @@ const cartSlice = createSlice({
       state.totalItems = totals.totalItems;
       state.totalPrice = totals.totalPrice;
 
-      // Save to localStorage
-      if (!localStorage.getItem("authToken")) {
-      saveGuestCart(state.items);
-    } else {
-      localStorage.setItem("cart", JSON.stringify(state.items));
-    }
+ saveGuestCart(state.items);
+
 
     },
 
@@ -480,12 +459,8 @@ const cartSlice = createSlice({
       state.totalItems = totals.totalItems;
       state.totalPrice = totals.totalPrice;
 
-      // Save to localStorage
-      if (!localStorage.getItem("authToken")) {
-        saveGuestCart(state.items);
-      } else {
-        localStorage.setItem("cart", JSON.stringify(state.items));
-      }
+ saveGuestCart(state.items);
+
 
     },
   },
