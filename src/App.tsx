@@ -240,6 +240,9 @@ import PrivacyPolicy from './pages/public/PrivacyPolicy';
 import TermsOfService from './pages/public/TermsAndConditions';
 import RefundPolicy from './pages/public/RefundPolicy';
 import Testimonial from './pages/public/Testimonial';
+import Wishlist from './pages/public/WishlistPage';
+import { WishlistProvider } from "./context/WishlistContext";
+
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
@@ -287,6 +290,7 @@ function App() {
   }, [dispatch]);
 
   return (
+    <WishlistProvider>
     <div className="min-h-screen bg-dark-950 text-dark-50">
       <ScrollToTop />
       <Routes>
@@ -311,6 +315,7 @@ function App() {
         <Route path="/sustainability" element={<SustainabilityComingSoon />} />
         <Route path="/shipping" element={<ShippingCommingSoon />} />
         <Route path="/returns" element={<ReturnCommingSoon />} />
+        <Route path="/wishlist" element={<Wishlist />} />
 
         {/* Protected User Routes */}
         <Route
@@ -355,6 +360,7 @@ function App() {
         </>
       )}
     </div>
+    </WishlistProvider>
   );
 }
 

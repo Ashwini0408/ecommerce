@@ -60,24 +60,13 @@ axiosInstance.interceptors.response.use(
       
       // Handle 401 Unauthorized - Token expired or invalid
     if (status === 401) {
-  const url = error.config?.url || "";
+  console.warn("[API] 401 Unauthorized");
 
-  const isPublicApi =
-    url.includes("/appointments") ||
-    url.includes("/products") ||
-    url.includes("/cart");
-    url.includes("/contact");
-
-  // 🚫 DO NOT clear auth for public APIs
-  if (!isPublicApi) {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
-
-    if (window.location.pathname !== "/login") {
-      window.location.href = "/login";
-    }
-  }
+  // ❌ DO NOT redirect from axios
+  // ❌ DO NOT clear auth automatically
+  // Let the UI / ProtectedRoute decide what to do
 }
+
       // Handle 403 Forbidden
       if (status === 403) {
         console.warn('Forbidden - Insufficient permissions');

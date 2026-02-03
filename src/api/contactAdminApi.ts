@@ -3,6 +3,7 @@ import axiosInstance from "./axios";
 /* ================= TYPES ================= */
 
 export interface ContactMessage {
+  status: string;
   id: number;
   name: string;
   email: string;
@@ -12,7 +13,7 @@ export interface ContactMessage {
 }
 
 /* ================= API ================= */
-
+export type ContactStatus = "PENDING" | "READ" | "RESOLVED";
 export const ContactAdminApi = {
   // ✅ Get all contact messages (ADMIN)
   getAllContacts: async (): Promise<ContactMessage[]> => {
@@ -29,6 +30,20 @@ export const ContactAdminApi = {
   // ✅ Delete contact message (optional)
   deleteContact: async (id: number) => {
     const response = await axiosInstance.delete(`/contact/${id}`);
+    return response.data;
+  },
+
+    updateContactStatus: async (
+    id: number,
+    status: ContactStatus,
+  ): Promise<ContactMessage> => {
+    const response = await axiosInstance.patch(
+      `/contact/admin/${id}/status`,
+      null, // no body
+      {
+        params: { status }, // ?status=RESOLVED
+      },
+    );
     return response.data;
   },
 };

@@ -34,6 +34,7 @@ export interface SignUpRequest {
 
 // ==================== PRODUCT ====================
 export interface ProductAttribute {
+  id: Key | null | undefined;
   key: string;
   type: string;
   value: string;
@@ -52,6 +53,7 @@ export interface Product {
   videos?: string[];
   attributes: ProductAttribute[];
   isActive: boolean;
+  isWishlisted?: boolean;
 }
 
 export interface CreateProductRequest {
@@ -98,6 +100,7 @@ export interface PaginatedResponse<T> {
 
 // ==================== CART ====================
 export interface CartItem {
+  itemId: number; 
   productId: number;
   name: string;
   price: number;

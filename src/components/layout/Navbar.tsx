@@ -573,20 +573,28 @@ import {
   FiMenu,
   FiX,
   FiLogOut,
-  FiSearch,
+  FiHeart,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
 import { useAppSelector } from "../../hooks/useAuth";
 import { logout } from "../../store/slices/authSlice";
 import toast from "react-hot-toast";
 import logo from "../../assets/logo.png";
+import { useWishlist } from "../../context/WishlistContext";
+// import { logout } from "../../store/slices/authSlice";
+import { clearCart } from "../../store/slices/cartSlice";
+import type { AsyncThunkAction, AsyncThunkConfig } from "@reduxjs/toolkit";
+import { useAppDispatch } from "../../hooks/useAuth";
+
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, isAdmin, dispatch } = useAuth();
   const { totalItems } = useAppSelector((state) => state.cart);
+  const { wishlistIds } = useWishlist();
 const location = useLocation();
 const isActive = (path: string) => location.pathname === path;
+const reduxDispatch = useAppDispatch(); // ✅ for cart actions
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -612,12 +620,17 @@ useEffect(() => {
   return () => window.removeEventListener("resize", handleResize);
 }, []);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    toast.success("Logged out successfully");
-    navigate("/");
-    setIsUserMenuOpen(false);
-  };
+const handleLogout = async () => {
+  // 🔥 clear Redux cart state
+  reduxDispatch(clearCart());
+
+  // 🔥 clear auth + storage
+  dispatch(logout());
+
+  toast.success("Logged out successfully");
+  navigate("/");
+  setIsUserMenuOpen(false);
+};
 
   return (
     <>
@@ -694,14 +707,24 @@ useEffect(() => {
 </div>
             {/* ---------------- RIGHT ACTIONS ---------------- */}
             <div className="hidden md:flex items-center space-x-4">
-              {!isAdmin && (
+{!isAdmin && (
   <motion.button
     whileHover={{ scale: 1.1 }}
     whileTap={{ scale: 0.9 }}
-    onClick={() => navigate("/products")}
-    className="p-2 text-white/80 hover:text-white"
+    onClick={() => navigate("/wishlist")}
+    className="relative p-2 text-white/80 hover:text-white"
   >
-    <FiSearch size={22} />
+    <FiHeart size={22} />
+
+    {wishlistIds.length > 0 && (
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="absolute -top-1 -right-1 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
+      >
+        {wishlistIds.length}
+      </motion.span>
+    )}
   </motion.button>
 )}
              {!isAdmin && (
@@ -858,3 +881,4 @@ useEffect(() => {
   );
 };
 export default Navbar;
+

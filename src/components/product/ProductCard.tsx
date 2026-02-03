@@ -349,6 +349,11 @@ import { Link } from 'react-router-dom';
 import { FiHeart } from 'react-icons/fi';
 import type { Product } from '../../types';
 import { formatINR } from "../../utils/currency";
+import { useNavigate } from "react-router-dom";
+// import { wishlistApi } from "../../api/wishlistApi";
+import { useWishlist } from "../../context/WishlistContext";
+import useAuth from "../../hooks/useAuth";
+import { toast } from 'sonner';
 
 // --- CONFIGURATION ---
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
@@ -357,12 +362,21 @@ interface ProductCardProps {
   product: Product;
   compact?: boolean;   // 👈 ADD THIS LINE
   className?: string;
+  //  isWishlisted: boolean;
+  // onWishlistToggle: (productId: number, added: boolean) => void;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+
   const [isHovered, setIsHovered] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const slideshowIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+const navigate = useNavigate();
+const { wishlistIds, toggleWishlist } = useWishlist();
+const isWishlisted = wishlistIds.includes(product.id);
+
+// example: token-based auth
+const { isAuthenticated } = useAuth();
 
   // --- HELPER: Resolve Image URL ---
   const getImageUrl = (path?: string) => {
@@ -377,6 +391,25 @@ const ProductCard = ({ product }: ProductCardProps) => {
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return `${SERVER_URL}${cleanPath}`;
   };
+const handleWishlistClick = async (
+  e: React.MouseEvent<HTMLButtonElement>
+) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!isAuthenticated) {
+    toast.error("Please login to use wishlist");
+    navigate("/login");
+    return;
+  }
+
+  try {
+    await toggleWishlist(product.id);
+  } catch (error) {
+    console.error("Wishlist toggle failed", error);
+  }
+};
+
 
   const images = product.images?.map(getImageUrl) || [getImageUrl()];
   const displayImage = images[currentImageIndex];
@@ -420,7 +453,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
     .slice(0, 4) || []; // Take only first 4 sizes
 
   return (
-    <Link to={`/products/${product.id}`}>
+    // <Link to={`/products/${product.id}`}>
+    <div
+  onClick={() => navigate(`/products/${product.id}`)}
+  className="relative bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 cursor-pointer"
+>
       <div 
         className="relative bg-white rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-300 cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}
@@ -451,9 +488,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
           )}
           
           {/* Wishlist Button - Top Right */}
-          <button className="absolute top-3 right-3 p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm">
-            <FiHeart size={18} className="text-gray-600" />
-          </button>
+          <button
+  onClick={handleWishlistClick}
+  className="absolute top-3 right-3 p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm z-10"
+>
+  <FiHeart size={18} className={isWishlisted ? "text-red-500 fill-red-500" : "text-gray-600"} />
+</button>
+
 
           {/* Out of Stock Badge */}
           {product.stock === 0 && (
@@ -567,7 +608,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
           
         </div>
       </div>
-    </Link>
+    {/* </Link> */}
+    </div>
   );
 };
 
