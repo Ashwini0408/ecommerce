@@ -1429,7 +1429,7 @@ import toast from 'react-hot-toast';
 import useAuth from "../../hooks/useAuth";
 import { cartApi } from "../../api/cartApi";
 import { useAppSelector } from "../../hooks/useAuth";
-
+import reviewApi, { type Review } from "../../api/reviewApi";
 
 
 // ----------------------------------------------------------------------
@@ -1477,6 +1477,36 @@ const ProductDetailPage = () => {
   const [availableSizes, setAvailableSizes] = useState<ProductAttribute[]>([]);
   const [availableColors, setAvailableColors] = useState<ProductAttribute[]>([]);
 const { isAuthenticated } = useAuth();
+
+const [reviews, setReviews] = useState<Review[]>([]);
+const [reviewCount, setReviewCount] = useState(0);
+const [averageRating, setAverageRating] = useState(0);
+
+
+useEffect(() => {
+  const fetchReviews = async () => {
+    try {
+      const { data } = await reviewApi.getProductReviews(Number(product), 0, 5);
+
+      setReviews(data.content);
+      setReviewCount(data.totalElements);
+
+      if (data.content.length > 0) {
+        const avg =
+          data.content.reduce((sum, r) => sum + r.rating, 0) /
+          data.content.length;
+
+        setAverageRating(Number(avg.toFixed(1)));
+      } else {
+        setAverageRating(0);
+      }
+    } catch (err) {
+      console.error("Failed to load reviews", err);
+    }
+  };
+
+  fetchReviews();
+}, [product]);
 
   useEffect(() => {
     if (id) {
@@ -1667,11 +1697,7 @@ const handleAddToCart = async () => {
     : 0;
 
   // Mock review data
-  const reviewData = {
-    rating: 4.8,
-    reviewCount: 245,
-    stars: 5
-  };
+  
 
   // Default description with HTML formatting
   const defaultDescription = `<b>sdivbsdfvb</b><div><br></div><div><ul><li><b>sdfgh</b></li><li><b>sdfgh</b></li><li><b><u>sdfgh</u></b></li></ul></div>`;
@@ -1780,26 +1806,30 @@ const handleAddToCart = async () => {
             </h1>
 
             {/* Rating */}
-            <div className="flex items-center space-x-1">
-              <div className="flex items-center">
-                {[...Array(reviewData.stars)].map((_, i) => (
-                  <FiStar
-                    key={i}
-                    className={`w-3 h-3 ${
-                      i < Math.floor(reviewData.rating)
-                        ? 'text-yellow-500 fill-yellow-500'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs font-semibold text-foreground">
-                {reviewData.rating}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                ({reviewData.reviewCount} Reviews)
-              </span>
-            </div>
+         {/* Rating */}
+<div className="flex items-center space-x-1">
+  <div className="flex items-center">
+    {[...Array(5)].map((_, i) => (
+      <FiStar
+        key={i}
+        className={`w-3 h-3 ${
+          i < Math.round(averageRating)
+            ? "text-yellow-500 fill-yellow-500"
+            : "text-gray-300"
+        }`}
+      />
+    ))}
+  </div>
+
+  <span className="text-xs font-semibold text-foreground">
+    {averageRating}
+  </span>
+
+  <span className="text-xs text-muted-foreground">
+    ({reviewCount} Reviews)
+  </span>
+</div>
+
 
             {/* Price in INR */}
             <div className="flex items-center space-x-3">
@@ -1913,21 +1943,7 @@ const handleAddToCart = async () => {
               </div>
             )}
 
-            {/* SKU and Clear Selection */}
-            <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
-              <div>
-                <span className="font-medium">SKU: </span>
-                <span className="font-semibold text-foreground">GHT95245AAA</span>
-              </div>
-              {(selectedSize || selectedColor) && (
-                <button 
-                  onClick={handleClearSelection}
-                  className="text-red-400 hover:text-red-500 font-medium"
-                >
-                  Clear Selection
-                </button>
-              )}
-            </div>
+           
 
             {/* Quantity and Actions */}
             <div className="space-y-4 pt-4 border-t border-border">
@@ -2004,36 +2020,8 @@ const handleAddToCart = async () => {
 
             {/* Tags and Share */}
             <div className="pt-4 border-t border-border space-y-4">
-              {/* Tags */}
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground">Tags: </span>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {['Women', 'Coat', 'Fashion', 'Jacket'].map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 text-xs glass-card rounded-full hover:bg-accent/20 cursor-pointer"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Share */}
-              <div className="flex items-center space-x-3">
-                <span className="text-sm font-semibold text-muted-foreground">Share:</span>
-                <div className="flex space-x-2">
-                  <button className="w-8 h-8 rounded-full bg-[#3b5998] flex items-center justify-center text-white hover:opacity-90">
-                    <FaFacebookF className="w-4 h-4" />
-                  </button>
-                  <button className="w-8 h-8 rounded-full bg-[#1da1f2] flex items-center justify-center text-white hover:opacity-90">
-                    <FaTwitter className="w-4 h-4" />
-                  </button>
-                  <button className="w-8 h-8 rounded-full bg-[#e60023] flex items-center justify-center text-white hover:opacity-90">
-                    <FaPinterestP className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              
+             
             </div>
 
             {/* Features */}
