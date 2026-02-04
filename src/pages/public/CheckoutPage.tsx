@@ -75,7 +75,15 @@ const CheckoutPage = () => {
   //
   //   try {
   //     // Create order in backend
-  //     const shippingAddress = `${formData.addressLine1}, ${formData.addressLine2 ? formData.addressLine2 + ', ' : ''}${formData.city}, ${formData.state} ${formData.postalCode}, ${formData.country}`;
+  //     const shippingAddress = {
+  //       addressLine1: formData.addressLine1,
+  //       addressLine2: formData.addressLine2 || undefined,
+  //       city: formData.city,
+  //       state: formData.state,
+  //       postalCode: formData.postalCode,
+  //       country: formData.country,
+  //       contactPhone: formData.phone,
+  //     };
   //
   //     const orderData = {
   //       items: items.map((item) => ({
@@ -147,7 +155,15 @@ const CheckoutPage = () => {
     setLoading(true);
 
     try {
-      const shippingAddress = `${formData.addressLine1}, ${formData.addressLine2 ? formData.addressLine2 + ', ' : ''}${formData.city}, ${formData.state} ${formData.postalCode}, ${formData.country}`;
+      const shippingAddress = {
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2 || undefined,
+        city: formData.city,
+        state: formData.state,
+        postalCode: formData.postalCode,
+        country: formData.country,
+        contactPhone: formData.phone,
+      };
 
       const orderData = {
         items: items.map((item) => ({
