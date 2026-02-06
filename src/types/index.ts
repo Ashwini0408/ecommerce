@@ -123,6 +123,7 @@ export interface OrderItem {
   totalPrice: number;
   selectedSize?: string;
   selectedColor?: string;
+  reviewId?: number;
 }
 
 export interface Order {

@@ -1,10 +1,12 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiPackage, FiUser, FiCalendar, FiMapPin, FiEdit2, FiPlus, FiEye, FiEyeOff, FiCheck, FiX, FiSearch, FiSliders } from 'react-icons/fi';
+import { FiPackage, FiUser, FiCalendar, FiMapPin, FiEdit2, FiPlus, FiEye, FiEyeOff, FiCheck, FiX, FiSearch, FiSliders, FiChevronRight, FiStar, FiImage } from 'react-icons/fi';
 import Navbar from '../../components/layout/Navbar';
 import { orderApi } from '../../api/orderApi';
 import { appointmentApi } from '../../api/appointmentApi';
 import { userProfileApi, type UserProfile, type UserAddress, type AddressPayload } from '../../api/userProfileApi';
+import reviewApi from '../../api/reviewApi';
 import type { Order, Appointment } from '../../types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -22,6 +24,8 @@ const UserDashboard = () => {
     const { user, isAuthenticated, isHydrated } = useSelector(
       (state: RootState) => state.auth
     );
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [activeTab, setActiveTab] = useState<AccountTab>('overview');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -65,6 +69,18 @@ const UserDashboard = () => {
   const [orderTimeFilter, setOrderTimeFilter] = useState<OrderTimeFilter>('ANYTIME');
   const [orderStatusDraft, setOrderStatusDraft] = useState<OrderStatusFilter>('ALL');
   const [orderTimeDraft, setOrderTimeDraft] = useState<OrderTimeFilter>('ANYTIME');
+  const [reviewDrafts, setReviewDrafts] = useState<
+    Record<string, { rating: number; title: string; body: string }>
+  >({});
+  const [reviewSubmitting, setReviewSubmitting] = useState<Record<string, boolean>>({});
+  const [reviewModal, setReviewModal] = useState<{
+    orderId: number;
+    item: Order['items'][number];
+  } | null>(null);
+  const [reviewAttachments, setReviewAttachments] = useState<
+    Record<string, { images: File[]; videos: File[] }>
+  >({});
+  const [reviewIds, setReviewIds] = useState<Record<string, number>>({});
   const IMAGE_BASE_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
 
   const getOrderImageUrl = (path?: string) => {
@@ -74,12 +90,198 @@ const UserDashboard = () => {
     return `${IMAGE_BASE_URL}${cleanPath}`;
   };
 
-    useEffect(() => {
-      if (!isHydrated) return;        // ⛔ wait until localStorage is loaded
-      if (!isAuthenticated) return;  // ⛔ user not logged in
-      if (!user) return;             // ⛔ safety guard
+  const getReviewKey = (orderId: number, productId: number) => `${orderId}-${productId}`;
 
-      fetchUserData();               // ✅ API CALLS FIRE HERE
+  const getReviewDraft = (key: string) =>
+    reviewDrafts[key] || { rating: 0, title: '', body: '' };
+
+  const getReviewAttachments = (key: string) =>
+    reviewAttachments[key] || { images: [], videos: [] };
+  const getReviewId = (key: string) => reviewIds[key];
+
+  const updateReviewDraft = (
+    key: string,
+    patch: Partial<{ rating: number; title: string; body: string }>
+  ) => {
+    setReviewDrafts((prev) => {
+      const current = prev[key] || { rating: 0, title: '', body: '' };
+      return {
+        ...prev,
+        [key]: { ...current, ...patch },
+      };
+    });
+  };
+
+  const updateReviewAttachments = (
+    key: string,
+    type: 'images' | 'videos',
+    files: FileList | File[]
+  ) => {
+    const list = Array.isArray(files) ? files : Array.from(files);
+    setReviewAttachments((prev) => ({
+      ...prev,
+      [key]: {
+        ...getReviewAttachments(key),
+        [type]: [...getReviewAttachments(key)[type], ...list],
+      },
+    }));
+  };
+
+  const removeReviewAttachment = (
+    key: string,
+    type: 'images' | 'videos',
+    index: number
+  ) => {
+    setReviewAttachments((prev) => {
+      const current = getReviewAttachments(key);
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          [type]: current[type].filter((_, idx) => idx !== index),
+        },
+      };
+    });
+  };
+
+  const fetchExistingReview = async (orderId: number, productId: number) => {
+    if (!user?.id) return null;
+    try {
+      const data = await reviewApi.getProductReviews(productId, 0, 50);
+      return (
+        data.content.find(
+          (review) =>
+            review.userId === user.id &&
+            (!review.orderId || review.orderId === orderId)
+        ) || null
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  const openReviewModal = async (orderId: number, item: Order['items'][number]) => {
+    const key = getReviewKey(orderId, item.productId);
+    if (!reviewDrafts[key]) {
+      setReviewDrafts((prev) => ({
+        ...prev,
+        [key]: { rating: 0, title: '', body: '' },
+      }));
+    }
+    if (!reviewAttachments[key]) {
+      setReviewAttachments((prev) => ({
+        ...prev,
+        [key]: { images: [], videos: [] },
+      }));
+    }
+    if (item.reviewId && !reviewIds[key]) {
+      setReviewIds((prev) => ({ ...prev, [key]: item.reviewId! }));
+    }
+    setReviewModal({ orderId, item });
+
+    const existing = await fetchExistingReview(orderId, item.productId);
+    if (existing) {
+      setReviewIds((prev) => ({ ...prev, [key]: existing.id }));
+      setReviewDrafts((prev) => {
+        const current = prev[key];
+        if (current && (current.rating || current.title || current.body)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [key]: {
+            rating: existing.rating,
+            title: existing.title || '',
+            body: existing.body || '',
+          },
+        };
+      });
+    }
+  };
+
+  const closeReviewModal = () => {
+    setReviewModal(null);
+  };
+
+  const handleSubmitReview = async (orderId: number, item: Order['items'][number]) => {
+    if (!user?.id) {
+      toast.error('Please log in to submit a review');
+      return;
+    }
+    const reviewKey = getReviewKey(orderId, item.productId);
+    const draft = getReviewDraft(reviewKey);
+    if (!draft.rating || draft.rating < 1) {
+      toast.error('Please select a star rating');
+      return;
+    }
+    if (!draft.body.trim()) {
+      toast.error('Please write your review');
+      return;
+    }
+
+    setReviewSubmitting((prev) => ({ ...prev, [reviewKey]: true }));
+    try {
+      const attachments = getReviewAttachments(reviewKey);
+      let reviewId = getReviewId(reviewKey);
+      if (!reviewId) {
+        const existing = await fetchExistingReview(orderId, item.productId);
+        if (existing) {
+          reviewId = existing.id;
+          setReviewIds((prev) => ({ ...prev, [reviewKey]: existing.id }));
+        }
+      }
+
+      if (reviewId) {
+        await reviewApi.updateReview(
+          reviewId,
+          {
+            userId: user.id,
+            rating: draft.rating,
+            title: draft.title.trim() || item.productName || 'Review',
+            body: draft.body.trim(),
+          },
+          attachments.images,
+          attachments.videos
+        );
+        toast.success('Review updated');
+      } else {
+        const created = await reviewApi.createReview(
+          {
+            userId: user.id,
+            productId: item.productId,
+            orderId,
+            rating: draft.rating,
+            title: draft.title.trim() || item.productName || 'Review',
+            body: draft.body.trim(),
+          },
+          attachments.images,
+          attachments.videos
+        );
+        setReviewIds((prev) => ({ ...prev, [reviewKey]: created.id }));
+        toast.success('Review submitted');
+      }
+      setReviewDrafts((prev) => ({
+        ...prev,
+        [reviewKey]: { rating: 0, title: '', body: '' },
+      }));
+      setReviewAttachments((prev) => ({
+        ...prev,
+        [reviewKey]: { images: [], videos: [] },
+      }));
+      setReviewModal(null);
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to submit review');
+    } finally {
+      setReviewSubmitting((prev) => ({ ...prev, [reviewKey]: false }));
+    }
+  };
+
+    useEffect(() => {
+      if (!isHydrated) return;        // ? wait until localStorage is loaded
+      if (!isAuthenticated) return;  // ? user not logged in
+      if (!user) return;             // ? safety guard
+
+      fetchUserData();               // ? API CALLS FIRE HERE
     }, [isHydrated, isAuthenticated, user]);
 
     useEffect(() => {
@@ -88,6 +290,21 @@ const UserDashboard = () => {
         phone: profile?.phone || user?.phone || '',
       });
     }, [profile, user]);
+
+    useEffect(() => {
+      const nextTab = (location.state as { tab?: AccountTab } | null)?.tab;
+      if (nextTab && nextTab !== activeTab) {
+        setActiveTab(nextTab);
+      }
+    }, [location.state, activeTab]);
+
+    useEffect(() => {
+      const isModalOpen = isOrderFilterOpen || reviewModal !== null;
+      document.body.style.overflow = isModalOpen ? 'hidden' : '';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }, [isOrderFilterOpen, reviewModal]);
 
 
     const resetAddressForm = (overrides: Partial<AddressPayload> = {}) => {
@@ -606,68 +823,134 @@ const UserDashboard = () => {
                       {filteredOrders.map((order) => {
                         const firstItem = order.items[0];
                         const previewImage = getOrderImageUrl(firstItem?.productImage);
+                        const orderDate = new Date(order.createdAt);
+                        const isValidDate = !Number.isNaN(orderDate.getTime());
+                        const dateText = isValidDate ? format(orderDate, 'MMMM dd, yyyy') : '—';
+                        const displayOrderId = order.orderNumber
+                          ? String(order.orderNumber)
+                          : String(order.id);
+                        const orderLabel = displayOrderId.startsWith('ORD-')
+                          ? displayOrderId
+                          : `ORD-${displayOrderId}`;
                         return (
                           <motion.div
                             key={order.id}
                             whileHover={{ y: -2 }}
                             className="rounded-2xl border border-[#E6E2D6] bg-white p-5 shadow-sm"
                           >
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                                    order.status
-                                  )}`}
-                                >
-                                  {order.status.replace(/_/g, ' ')}
-                                </span>
-                                <span className="text-xs text-dark-500">
-                                  On {format(new Date(order.createdAt), 'MMM dd, yyyy')}
-                                </span>
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-4">
+                                <div className="h-16 w-16 rounded-xl bg-[#F2F0E8] overflow-hidden flex items-center justify-center">
+                                  <img
+                                    src={previewImage}
+                                    alt={firstItem?.productName || 'Order item'}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs font-semibold text-dark-700">
+                                      {orderLabel}
+                                    </span>
+                                    <span
+                                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${getStatusColor(
+                                        order.status
+                                      )}`}
+                                    >
+                                      {order.status.replace(/_/g, ' ')}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm font-semibold text-dark-900">
+                                    {firstItem?.productName || 'Order items'}
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-3 text-xs text-dark-500">
+                                    <span>{dateText}</span>
+                                    <span className="font-semibold text-dark-700">
+                                      {formatINR(order.totalAmount)}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-lg font-semibold text-dark-900">
-                                  {formatINR(order.totalAmount)}
-                                </p>
-                                <p className="text-xs text-dark-500">Order #{order.id}</p>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/orders/${order.id}`)}
+                                className="h-9 w-9 rounded-full border border-[#E6E2D6] text-dark-500 hover:text-[#6B7D60] hover:border-[#6B7D60] flex items-center justify-center"
+                                aria-label="View order details"
+                              >
+                                <FiChevronRight size={18} />
+                              </button>
                             </div>
 
-                            <div className="mt-4 flex flex-col sm:flex-row gap-4">
-                              <div className="h-20 w-20 rounded-xl bg-[#F2F0E8] overflow-hidden flex items-center justify-center">
-                                <img
-                                  src={previewImage}
-                                  alt={firstItem?.productName || 'Order item'}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-semibold text-dark-900">
-                                  {firstItem?.productName || 'Order items'}
-                                </p>
-                                <div className="mt-1 space-y-1 text-xs text-dark-500">
-                                  {firstItem?.quantity != null && (
-                                    <p>Qty: {firstItem.quantity}</p>
-                                  )}
-                                  {firstItem?.selectedSize && <p>Size: {firstItem.selectedSize}</p>}
-                                  {firstItem?.selectedColor && (
-                                    <p>Color: {firstItem.selectedColor}</p>
-                                  )}
-                                </div>
-                                {order.items.length > 1 && (
-                                  <p className="text-xs text-dark-500 mt-2">
-                                    +{order.items.length - 1} more items
-                                  </p>
-                                )}
-                              </div>
-                              <div className="sm:max-w-[200px] flex items-start gap-2 text-xs text-dark-500">
-                                <FiMapPin size={14} className="mt-0.5" />
-                                <span className="line-clamp-3">{order.shippingAddress}</span>
-                              </div>
-                            </div>
-                            {order.trackingNumber && (
-                              <div className="mt-3 text-xs text-dark-500">
-                                Tracking: {order.trackingNumber}
+                            {order.status === 'DELIVERED' && order.items.length > 0 && (
+                              <div className="mt-4 border-t border-[#E6E2D6] pt-4 space-y-3">
+                                {order.items.map((item) => {
+                                  const reviewKey = getReviewKey(order.id, item.productId);
+                                  const reviewDraft = getReviewDraft(reviewKey);
+                                  const existingReviewId = getReviewId(reviewKey);
+                                  const itemImage = getOrderImageUrl(item.productImage);
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E6E2D6] bg-white p-3"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="h-12 w-12 rounded-xl bg-[#F2F0E8] overflow-hidden flex items-center justify-center">
+                                          <img
+                                            src={itemImage}
+                                            alt={item.productName}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-semibold text-dark-900">
+                                            {item.productName}
+                                          </p>
+                                          <p className="text-xs text-dark-500 mt-1">
+                                            Qty: {item.quantity}
+                                            {item.selectedSize
+                                              ? ` · Size: ${item.selectedSize}`
+                                              : ''}
+                                            {item.selectedColor
+                                              ? ` · Color: ${item.selectedColor}`
+                                              : ''}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-3">
+                                        <div className="flex items-center gap-1">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                              key={star}
+                                              type="button"
+                                              onClick={() => {
+                                                updateReviewDraft(reviewKey, { rating: star });
+                                                openReviewModal(order.id, item);
+                                              }}
+                                              className="p-1"
+                                              aria-label={`Rate ${star} stars`}
+                                            >
+                                              <FiStar
+                                                size={16}
+                                                className={
+                                                  reviewDraft.rating >= star
+                                                    ? 'text-[#6B7D60] fill-[#6B7D60]'
+                                                    : 'text-dark-300'
+                                                }
+                                              />
+                                            </button>
+                                          ))}
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => openReviewModal(order.id, item)}
+                                          className="text-xs font-semibold text-[#6B7D60] hover:underline"
+                                        >
+                                          {existingReviewId ? 'Edit Review' : 'Write Review'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             )}
                           </motion.div>
@@ -764,6 +1047,155 @@ const UserDashboard = () => {
                   </div>
                 </div>
               )}
+
+              {reviewModal &&
+                (() => {
+                  const reviewKey = getReviewKey(
+                    reviewModal.orderId,
+                    reviewModal.item.productId
+                  );
+                  const draft = getReviewDraft(reviewKey);
+                  const attachments = getReviewAttachments(reviewKey);
+                  const isSubmitting = !!reviewSubmitting[reviewKey];
+                  const existingReviewId = getReviewId(reviewKey);
+                  const previewImage = getOrderImageUrl(reviewModal.item.productImage);
+                  return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                      <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-xl border border-[#E6E2D6] flex flex-col">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E6E2D6]">
+                          <h3 className="text-sm font-semibold tracking-widest text-dark-700">
+                            WRITE REVIEW
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={closeReviewModal}
+                            className="text-dark-500 hover:text-dark-700"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
+                          <div className="rounded-xl border border-[#E6E2D6] bg-white p-4 flex flex-wrap gap-4">
+                            <div className="h-20 w-20 rounded-xl bg-[#F2F0E8] overflow-hidden flex items-center justify-center">
+                              <img
+                                src={previewImage}
+                                alt={reviewModal.item.productName}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-dark-900">
+                                {reviewModal.item.productName}
+                              </p>
+                              <div className="mt-2 flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => updateReviewDraft(reviewKey, { rating: star })}
+                                    className="p-1"
+                                    aria-label={`Rate ${star} stars`}
+                                  >
+                                    <FiStar
+                                      size={18}
+                                      className={
+                                        draft.rating >= star
+                                          ? 'text-[#6B7D60] fill-[#6B7D60]'
+                                          : 'text-dark-300'
+                                      }
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <textarea
+                              placeholder="Please write product review here."
+                              value={draft.body}
+                              onChange={(e) =>
+                                updateReviewDraft(reviewKey, { body: e.target.value })
+                              }
+                              className="input-field h-40 resize-none"
+                            />
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3">
+                            <label className="relative h-14 w-14 rounded-lg border border-dashed border-[#CFC8B4] bg-[#F9F8F4] flex items-center justify-center cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) =>
+                                  updateReviewAttachments(
+                                    reviewKey,
+                                    'images',
+                                    e.target.files || []
+                                  )
+                                }
+                              />
+                              <FiImage size={18} className="text-dark-400" />
+                            </label>
+                            {attachments.images.map((file, index) => (
+                              <div
+                                key={`${file.name}-${index}`}
+                                className="relative h-14 w-14 overflow-visible"
+                              >
+                                <div className="h-full w-full rounded-lg overflow-hidden border border-[#E6E2D6] bg-white">
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt="Review upload"
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeReviewAttachment(reviewKey, 'images', index)
+                                  }
+                                  className="absolute -top-2 -right-2 z-20 h-5 w-5 rounded-full bg-[#6B7D60] text-white flex items-center justify-center shadow ring-2 ring-white"
+                                  aria-label="Remove photo"
+                                >
+                                  <FiX size={12} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+
+                          <p className="text-[11px] text-dark-500">
+                            By submitting review you give us consent to publish and process
+                            personal information in accordance with our policies.
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-3 px-6 py-4 border-t border-[#E6E2D6] bg-white">
+                          <button
+                            type="button"
+                            onClick={closeReviewModal}
+                            className="btn-ghost border border-[#E6E2D6]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSubmitReview(reviewModal.orderId, reviewModal.item)
+                            }
+                            disabled={isSubmitting}
+                            className="btn-primary disabled:opacity-50"
+                          >
+                            {isSubmitting
+                              ? 'Submitting...'
+                              : existingReviewId
+                              ? 'Update Review'
+                              : 'Submit Review'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
               {/* Appointments Tab */}
               {activeTab === 'appointments' && (

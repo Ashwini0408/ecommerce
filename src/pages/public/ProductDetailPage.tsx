@@ -1414,7 +1414,7 @@
 // export default ProductDetailPage;
 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft, FiStar } from 'react-icons/fi';
@@ -1482,11 +1482,40 @@ const [reviews, setReviews] = useState<Review[]>([]);
 const [reviewCount, setReviewCount] = useState(0);
 const [averageRating, setAverageRating] = useState(0);
 
+  const ratingScale = [5, 4, 3, 2, 1];
+  const ratingDistribution = useMemo(
+    () =>
+      ratingScale.map(
+        (rating) =>
+          reviews.filter((review) => Math.round(review.rating) === rating).length
+      ),
+    [reviews]
+  );
+  const totalRecentRatings = ratingDistribution.reduce((sum, count) => sum + count, 0);
+  const customerPhotos = useMemo(
+    () =>
+      reviews
+        .flatMap((review) => review.imageUrls ?? [])
+        .filter((url): url is string => Boolean(url)),
+    [reviews]
+  );
+  const previewPhotos = customerPhotos.slice(0, 4);
+  const extraPhotoCount = Math.max(customerPhotos.length - previewPhotos.length, 0);
+  const formatReviewDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+
 
 useEffect(() => {
+  const productId = product?.id ?? (id ? Number(id) : NaN);
+  if (!Number.isFinite(productId)) return;
+
   const fetchReviews = async () => {
     try {
-      const { data } = await reviewApi.getProductReviews(Number(product), 0, 5);
+      const data = await reviewApi.getProductReviews(productId, 0, 5);
 
       setReviews(data.content);
       setReviewCount(data.totalElements);
@@ -1506,7 +1535,7 @@ useEffect(() => {
   };
 
   fetchReviews();
-}, [product]);
+}, [product?.id, id]);
 
   useEffect(() => {
     if (id) {
@@ -1695,9 +1724,6 @@ const handleAddToCart = async () => {
   const discount = product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
-
-  // Mock review data
-  
 
   // Default description with HTML formatting
   const defaultDescription = `<b>sdivbsdfvb</b><div><br></div><div><ul><li><b>sdfgh</b></li><li><b>sdfgh</b></li><li><b><u>sdfgh</u></b></li></ul></div>`;
@@ -2047,6 +2073,177 @@ const handleAddToCart = async () => {
             </div>
           </div>
         </div>
+
+        {/* Ratings & Reviews */}
+        <section className="mt-12 border-t border-border pt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-foreground">Ratings & Reviews</h2>
+            <span className="text-xs text-muted-foreground">
+              {reviewCount} Verified Buyers
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-4xl font-bold text-foreground">
+                  {averageRating.toFixed(1)}
+                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <FiStar
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.round(averageRating)
+                            ? 'text-yellow-500 fill-yellow-500'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {reviewCount} ratings
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 rounded-2xl border border-border bg-white p-5 shadow-sm space-y-2">
+              {ratingScale.map((rating, index) => {
+                const count = ratingDistribution[index] ?? 0;
+                const percent = totalRecentRatings
+                  ? Math.round((count / totalRecentRatings) * 100)
+                  : 0;
+
+                return (
+                  <div key={rating} className="flex items-center gap-3">
+                    <span className="w-6 text-xs font-semibold text-foreground">
+                      {rating}
+                    </span>
+                    <div className="flex-1 h-2 rounded-full bg-sage/10 overflow-hidden">
+                      <div className="h-full bg-sage" style={{ width: `${percent}%` }} />
+                    </div>
+                    <span className="w-8 text-xs text-muted-foreground text-right">
+                      {count}
+                    </span>
+                  </div>
+                );
+              })}
+              <p className="text-[11px] text-muted-foreground">
+                Based on {totalRecentRatings} recent ratings
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-foreground">Customer Photos</h3>
+                <span className="text-xs text-muted-foreground">
+                  ({customerPhotos.length})
+                </span>
+              </div>
+              {previewPhotos.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No photos yet. Be the first to share!
+                </p>
+              ) : (
+                <div className="grid grid-cols-4 gap-2">
+                  {previewPhotos.map((photo, index) => (
+                    <div
+                      key={`${photo}-${index}`}
+                      className="relative aspect-square rounded-lg overflow-hidden border border-border"
+                    >
+                      <img
+                        src={getImageUrl(photo)}
+                        alt={`Customer ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      {index === previewPhotos.length - 1 && extraPhotoCount > 0 && (
+                        <div className="absolute inset-0 bg-black/60 text-white text-xs font-semibold flex items-center justify-center">
+                          +{extraPhotoCount}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Customer Reviews</h3>
+                <span className="text-xs text-muted-foreground">
+                  {reviewCount} total · {reviews.length} recent
+                </span>
+              </div>
+
+              {reviews.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border bg-white p-6 text-sm text-muted-foreground">
+                  No reviews yet. Be the first to review this product.
+                </div>
+              ) : (
+                reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-sage/10 text-sage flex items-center justify-center text-sm font-semibold">
+                          {(review.username || 'V').slice(0, 1).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {review.username || 'Verified Buyer'}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <FiStar
+                                key={i}
+                                className={`h-3.5 w-3.5 ${
+                                  i < Math.round(review.rating)
+                                    ? 'text-yellow-500 fill-yellow-500'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatReviewDate(review.createdAt)}
+                      </span>
+                    </div>
+
+                    {review.title && (
+                      <p className="text-sm font-semibold text-foreground">{review.title}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">{review.body}</p>
+
+                    {review.imageUrls?.length > 0 && (
+                      <div className="grid grid-cols-4 gap-2">
+                        {review.imageUrls.slice(0, 4).map((imageUrl, index) => (
+                          <div
+                            key={`${review.id}-${index}`}
+                            className="aspect-square rounded-lg overflow-hidden border border-border"
+                          >
+                            <img
+                              src={getImageUrl(imageUrl)}
+                              alt={`Review ${review.id}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
       </div>
       <Footer />
     </div>

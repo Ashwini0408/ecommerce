@@ -246,6 +246,7 @@ import { WishlistProvider } from "./context/WishlistContext";
 
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
+import OrderDetailsPage from './pages/user/OrderDetailsPage';
 
 // Admin Components
 import AdminLayout from './components/layout/AdminLayout';
@@ -323,6 +324,14 @@ function App() {
           element={
             <ProtectedRoute>
               <UserDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetailsPage />
             </ProtectedRoute>
           }
         />
