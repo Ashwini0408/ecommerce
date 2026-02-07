@@ -5,6 +5,7 @@ export interface Review {
   productId?: number;
   userId?: number;
   orderId?: number;
+  media?: ReviewMedia[];
   title: string;
   body: string;
   rating: number;

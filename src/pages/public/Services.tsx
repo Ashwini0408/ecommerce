@@ -438,7 +438,7 @@ const services = [
     icon: Palette,
     title: "Theme-Based Outfits",
     description:
-      "Perfectly coordinated outfits for families, events, and themed celebrations.",
+      "Perfectly coordinated outfits for families' events, and themed celebrations.",
     bgImage: themeOutfitsImg,
   },
   {

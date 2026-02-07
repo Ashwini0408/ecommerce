@@ -81,7 +81,17 @@ const UserDashboard = () => {
     Record<string, { images: File[]; videos: File[] }>
   >({});
   const [reviewIds, setReviewIds] = useState<Record<string, number>>({});
-  const IMAGE_BASE_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
+  const [reviewExistingImages, setReviewExistingImages] = useState<
+    Record<string, { url: string; mediaId?: number }[]>
+  >({});
+  const [reviewMediaIdsToDelete, setReviewMediaIdsToDelete] = useState<Record<string, number[]>>(
+    {}
+  );
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+  const fallbackImageBaseUrl = apiBaseUrl
+    ? apiBaseUrl.replace(/\/api\/?$/i, '')
+    : 'http://localhost:8090';
+  const IMAGE_BASE_URL = import.meta.env.VITE_API_IMG_URL || fallbackImageBaseUrl;
 
   const getOrderImageUrl = (path?: string) => {
     if (!path) return '/placeholder.jpg';
@@ -98,6 +108,35 @@ const UserDashboard = () => {
   const getReviewAttachments = (key: string) =>
     reviewAttachments[key] || { images: [], videos: [] };
   const getReviewId = (key: string) => reviewIds[key];
+  const getReviewExistingImages = (key: string) => reviewExistingImages[key] || [];
+  const getReviewMediaIdsToDelete = (key: string) => reviewMediaIdsToDelete[key] || [];
+
+  const normalizeMediaPath = (value: string) =>
+    value.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
+
+  const mapExistingReviewImages = (review: {
+    imageUrls?: string[];
+    media?: { id: number; url: string; mediaType: 'IMAGE' | 'VIDEO' }[];
+  }) => {
+    const mediaByPath = new Map<string, number>();
+    (review.media || [])
+      .filter((m) => m.mediaType === 'IMAGE')
+      .forEach((m) => {
+        mediaByPath.set(normalizeMediaPath(m.url), m.id);
+      });
+
+    const imageUrls =
+      review.imageUrls && review.imageUrls.length > 0
+        ? review.imageUrls
+        : (review.media || [])
+            .filter((m) => m.mediaType === 'IMAGE')
+            .map((m) => m.url);
+
+    return imageUrls.map((url) => ({
+      url,
+      mediaId: mediaByPath.get(normalizeMediaPath(url)),
+    }));
+  };
 
   const updateReviewDraft = (
     key: string,
@@ -118,13 +157,16 @@ const UserDashboard = () => {
     files: FileList | File[]
   ) => {
     const list = Array.isArray(files) ? files : Array.from(files);
-    setReviewAttachments((prev) => ({
-      ...prev,
-      [key]: {
-        ...getReviewAttachments(key),
-        [type]: [...getReviewAttachments(key)[type], ...list],
-      },
-    }));
+    setReviewAttachments((prev) => {
+      const current = prev[key] || { images: [], videos: [] };
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          [type]: [...current[type], ...list],
+        },
+      };
+    });
   };
 
   const removeReviewAttachment = (
@@ -133,7 +175,7 @@ const UserDashboard = () => {
     index: number
   ) => {
     setReviewAttachments((prev) => {
-      const current = getReviewAttachments(key);
+      const current = prev[key] || { images: [], videos: [] };
       return {
         ...prev,
         [key]: {
@@ -144,14 +186,46 @@ const UserDashboard = () => {
     });
   };
 
-  const fetchExistingReview = async (orderId: number, productId: number) => {
-    if (!user?.id) return null;
+  const removeExistingReviewImage = (key: string, index: number) => {
+    const current = getReviewExistingImages(key);
+    const target = current[index];
+
+    setReviewExistingImages((prev) => ({
+      ...prev,
+      [key]: (prev[key] || []).filter((_, idx) => idx !== index),
+    }));
+
+    if (target?.mediaId) {
+      setReviewMediaIdsToDelete((prev) => ({
+        ...prev,
+        [key]: Array.from(new Set([...(prev[key] || []), target.mediaId as number])),
+      }));
+    }
+  };
+
+  const fetchExistingReview = async (
+    orderId: number,
+    productId: number,
+    knownReviewId?: number
+  ) => {
     try {
-      const data = await reviewApi.getProductReviews(productId, 0, 50);
+      const data = await reviewApi.getProductReviews(productId, 0, 200);
+      const reviews = data.content || [];
+      if (knownReviewId) {
+        const byId = reviews.find((review) => review.id === knownReviewId);
+        if (byId) return byId;
+      }
+      const byOrder = reviews.find((review) => review.orderId === orderId);
+      if (byOrder) return byOrder;
+
+      if (!user?.id) return null;
+      const normalizedUserName = (user.name || '').trim().toLowerCase();
       return (
-        data.content.find(
+        reviews.find(
           (review) =>
-            review.userId === user.id &&
+            (review.userId === user.id ||
+              (normalizedUserName.length > 0 &&
+                (review.username || '').trim().toLowerCase() === normalizedUserName)) &&
             (!review.orderId || review.orderId === orderId)
         ) || null
       );
@@ -168,34 +242,34 @@ const UserDashboard = () => {
         [key]: { rating: 0, title: '', body: '' },
       }));
     }
-    if (!reviewAttachments[key]) {
-      setReviewAttachments((prev) => ({
-        ...prev,
-        [key]: { images: [], videos: [] },
-      }));
-    }
+    setReviewAttachments((prev) => ({
+      ...prev,
+      [key]: { images: [], videos: [] },
+    }));
     if (item.reviewId && !reviewIds[key]) {
       setReviewIds((prev) => ({ ...prev, [key]: item.reviewId! }));
     }
     setReviewModal({ orderId, item });
 
-    const existing = await fetchExistingReview(orderId, item.productId);
+    const existing = await fetchExistingReview(orderId, item.productId, item.reviewId);
     if (existing) {
       setReviewIds((prev) => ({ ...prev, [key]: existing.id }));
-      setReviewDrafts((prev) => {
-        const current = prev[key];
-        if (current && (current.rating || current.title || current.body)) {
-          return prev;
-        }
-        return {
-          ...prev,
-          [key]: {
-            rating: existing.rating,
-            title: existing.title || '',
-            body: existing.body || '',
-          },
-        };
-      });
+      setReviewExistingImages((prev) => ({
+        ...prev,
+        [key]: mapExistingReviewImages(existing),
+      }));
+      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewDrafts((prev) => ({
+        ...prev,
+        [key]: {
+          rating: existing.rating || 0,
+          title: existing.title || '',
+          body: existing.body || '',
+        },
+      }));
+    } else {
+      setReviewExistingImages((prev) => ({ ...prev, [key]: [] }));
+      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
     }
   };
 
@@ -222,27 +296,31 @@ const UserDashboard = () => {
     setReviewSubmitting((prev) => ({ ...prev, [reviewKey]: true }));
     try {
       const attachments = getReviewAttachments(reviewKey);
-      let reviewId = getReviewId(reviewKey);
-      if (!reviewId) {
-        const existing = await fetchExistingReview(orderId, item.productId);
-        if (existing) {
-          reviewId = existing.id;
-          setReviewIds((prev) => ({ ...prev, [reviewKey]: existing.id }));
-        }
+      const mediaIdsToDelete = getReviewMediaIdsToDelete(reviewKey);
+      const knownReviewId = item.reviewId || getReviewId(reviewKey);
+      const existing = await fetchExistingReview(orderId, item.productId, knownReviewId);
+      const reviewId = existing?.id || getReviewId(reviewKey);
+      if (existing?.id) {
+        setReviewIds((prev) => ({ ...prev, [reviewKey]: existing.id }));
       }
 
+      let persistedReviewId: number | null = null;
+      let persistedImages: { url: string; mediaId?: number }[] = [];
       if (reviewId) {
-        await reviewApi.updateReview(
+        const updated = await reviewApi.updateReview(
           reviewId,
           {
             userId: user.id,
             rating: draft.rating,
             title: draft.title.trim() || item.productName || 'Review',
             body: draft.body.trim(),
+            ...(mediaIdsToDelete.length > 0 ? { mediaIdsToDelete } : {}),
           },
           attachments.images,
           attachments.videos
         );
+        persistedReviewId = updated.id;
+        persistedImages = mapExistingReviewImages(updated);
         toast.success('Review updated');
       } else {
         const created = await reviewApi.createReview(
@@ -257,12 +335,36 @@ const UserDashboard = () => {
           attachments.images,
           attachments.videos
         );
-        setReviewIds((prev) => ({ ...prev, [reviewKey]: created.id }));
+        persistedReviewId = created.id;
+        persistedImages = mapExistingReviewImages(created);
         toast.success('Review submitted');
       }
+
+      if (persistedReviewId) {
+        setReviewIds((prev) => ({ ...prev, [reviewKey]: persistedReviewId as number }));
+      }
+
+      if (persistedImages.length === 0) {
+        const refreshed = await fetchExistingReview(
+          orderId,
+          item.productId,
+          persistedReviewId || reviewId || item.reviewId
+        );
+        persistedImages = refreshed ? mapExistingReviewImages(refreshed) : [];
+      }
+
+      setReviewExistingImages((prev) => ({
+        ...prev,
+        [reviewKey]: persistedImages,
+      }));
+      setReviewMediaIdsToDelete((prev) => ({ ...prev, [reviewKey]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
-        [reviewKey]: { rating: 0, title: '', body: '' },
+        [reviewKey]: {
+          rating: draft.rating,
+          title: draft.title,
+          body: draft.body,
+        },
       }));
       setReviewAttachments((prev) => ({
         ...prev,
@@ -305,6 +407,70 @@ const UserDashboard = () => {
         document.body.style.overflow = '';
       };
     }, [isOrderFilterOpen, reviewModal]);
+
+    useEffect(() => {
+      if (!user?.id || orders.length === 0) return;
+      const deliveredItems = orders
+        .filter((order) => order.status === 'DELIVERED')
+        .flatMap((order) =>
+          order.items.map((item) => ({
+            orderId: order.id,
+            item,
+            key: getReviewKey(order.id, item.productId),
+          }))
+        );
+      if (deliveredItems.length === 0) return;
+
+      let active = true;
+      const preloadReviews = async () => {
+        const nextReviewIds: Record<string, number> = {};
+        const nextDrafts: Record<string, { rating: number; title: string; body: string }> = {};
+        const nextExistingImages: Record<string, { url: string; mediaId?: number }[]> = {};
+
+      await Promise.all(
+        deliveredItems.map(async ({ orderId, item, key }) => {
+            const existing = await fetchExistingReview(
+              orderId,
+              item.productId,
+              item.reviewId
+            );
+            if (!existing) return;
+            nextReviewIds[key] = existing.id;
+            nextExistingImages[key] = mapExistingReviewImages(existing);
+            nextDrafts[key] = {
+              rating: existing.rating || 0,
+              title: existing.title || '',
+              body: existing.body || '',
+            };
+          })
+        );
+
+        if (!active) return;
+        if (Object.keys(nextReviewIds).length > 0) {
+          setReviewIds((prev) => ({ ...prev, ...nextReviewIds }));
+        }
+        if (Object.keys(nextExistingImages).length > 0) {
+          setReviewExistingImages((prev) => ({ ...prev, ...nextExistingImages }));
+        }
+        if (Object.keys(nextDrafts).length > 0) {
+          setReviewDrafts((prev) => {
+            const merged = { ...prev };
+            Object.entries(nextDrafts).forEach(([key, value]) => {
+              const current = prev[key];
+              if (!current || (!current.rating && !current.title && !current.body)) {
+                merged[key] = value;
+              }
+            });
+            return merged;
+          });
+        }
+      };
+
+      preloadReviews();
+      return () => {
+        active = false;
+      };
+    }, [orders, user?.id, user?.name]);
 
 
     const resetAddressForm = (overrides: Partial<AddressPayload> = {}) => {
@@ -1056,6 +1222,7 @@ const UserDashboard = () => {
                   );
                   const draft = getReviewDraft(reviewKey);
                   const attachments = getReviewAttachments(reviewKey);
+                  const existingImages = getReviewExistingImages(reviewKey);
                   const isSubmitting = !!reviewSubmitting[reviewKey];
                   const existingReviewId = getReviewId(reviewKey);
                   const previewImage = getOrderImageUrl(reviewModal.item.productImage);
@@ -1138,6 +1305,29 @@ const UserDashboard = () => {
                               />
                               <FiImage size={18} className="text-dark-400" />
                             </label>
+                            {existingImages.map((image, index) => (
+                              <div
+                                key={`existing-${image.url}-${index}`}
+                                className="relative h-14 w-14 overflow-visible"
+                                title="Already uploaded"
+                              >
+                                <div className="h-full w-full rounded-lg overflow-hidden border border-[#E6E2D6] bg-white">
+                                  <img
+                                    src={getOrderImageUrl(image.url)}
+                                    alt="Existing review"
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeExistingReviewImage(reviewKey, index)}
+                                  className="absolute -top-2 -right-2 z-20 h-5 w-5 rounded-full bg-[#6B7D60] text-white flex items-center justify-center shadow ring-2 ring-white"
+                                  aria-label="Remove existing photo"
+                                >
+                                  <FiX size={12} />
+                                </button>
+                              </div>
+                            ))}
                             {attachments.images.map((file, index) => (
                               <div
                                 key={`${file.name}-${index}`}

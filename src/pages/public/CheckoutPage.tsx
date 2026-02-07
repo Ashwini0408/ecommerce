@@ -18,6 +18,7 @@ import { useAppSelector, useAppDispatch } from '../../hooks/useAuth';
 import { useAuth } from '../../hooks/useAuth';
 import { clearCart } from '../../store/slices/cartSlice';
 import { orderApi } from '../../api/orderApi';
+import cartApi from '../../api/cartApi';
 import {
   userProfileApi,
   type AddressPayload,
@@ -378,6 +379,28 @@ const CheckoutPage = () => {
       };
 
       const order = await orderApi.createOrder(orderData);
+
+      // Clear backend cart for authenticated users so cart does not repopulate.
+      try {
+        const localBackendItemIds = Array.from(
+          new Set(items.map((item) => Number(item.itemId)).filter((id) => Number.isFinite(id) && id > 0))
+        );
+
+        let backendItemIds = localBackendItemIds;
+        if (backendItemIds.length === 0) {
+          const cartResponse = await cartApi.getCart();
+          backendItemIds = (cartResponse?.items || [])
+            .map((item: { id: number }) => Number(item.id))
+            .filter((id: number) => Number.isFinite(id) && id > 0);
+        }
+
+        if (backendItemIds.length > 0) {
+          await Promise.allSettled(backendItemIds.map((itemId) => cartApi.removeItem(itemId)));
+        }
+      } catch (cartClearError) {
+        console.warn('Order placed, but failed to fully clear server cart.', cartClearError);
+      }
+
       toast.success('Order placed successfully!');
       dispatch(clearCart());
       navigate(`/dashboard?orderSuccess=${order.id}`);
@@ -770,7 +793,6 @@ const CheckoutPage = () => {
                     className="h-8"
                   />
                 </label>
-
                 <label
                   htmlFor="cod"
                   className={`flex items-center space-x-3 rounded-xl border p-4 transition ${
