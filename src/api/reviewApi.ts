@@ -26,6 +26,8 @@ export interface ReviewCreatePayload {
 }
 
 export interface ReviewUpdatePayload {
+  videosToDelete: string[];
+  imagesToDelete: string[];
   userId: number;
   rating: number;
   title: string;

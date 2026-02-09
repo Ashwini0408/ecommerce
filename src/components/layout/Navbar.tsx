@@ -699,6 +699,7 @@ const handleLogout = async () => {
     { name: "Products", path: "/products" },
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
+    { name: "Blog", path: "/blog" },
     { name: "Contact us", path: "/contact" },
     { name: "Testimonials", path: "/testimonials" },
   ].map((item) => (
