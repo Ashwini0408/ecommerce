@@ -1,10 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, User, Clock } from "lucide-react";
-import Navbar from "../../components/layout/Navbar";
-import { Footer } from "../../components/layout/Footer";
-
-import sareeUpcycleHero from "@/assets/blog/saree-upcycle-hero.jpg";
+import Navbar from "../../../src/components/layout/Navbar";
+import { Footer } from "../../../src/components/layout/Footer";      
+import sareeUpcycleHero from "../../assets/saree-upcycle-hero.jpg";
 
 const blogPosts = [
   {

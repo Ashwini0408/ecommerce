@@ -19,14 +19,13 @@ import {
 } from "lucide-react";
 
 // Import images
-import heroImage from "@/assets/blog/saree-upcycle-hero.jpg";
-import sareeWaste from "@/assets/blog/saree-waste.jpg";
-import climateAction from "@/assets/blog/climate-action.jpg";
-import sareeSalwar from "@/assets/blog/saree-salwar.jpg";
-import sareeCroptop from "@/assets/blog/saree-croptop.jpg";
-import sareeHomedecor from "@/assets/blog/saree-homedecor.jpg";
-import authorImage from "@/assets/blog/author-babita.jpg";
-
+import heroImage from "../../assets/saree-upcycle-hero.jpg";
+import sareeWaste from "../../assets/saree-waste.jpg";
+import climateAction from "../../assets/climate-action.jpg";
+import sareeSalwar from "../../assets/saree-salwar.jpg";
+import sareeCroptop from "../../assets/saree-croptop.jpg";
+import sareeHomedecor from "../../assets/saree-homedecor.jpg";
+import authorImage from "../../assets/author-babita.jpg";
 // Simple Layout Component
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
