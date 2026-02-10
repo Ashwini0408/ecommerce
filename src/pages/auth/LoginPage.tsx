@@ -1210,7 +1210,7 @@ import toast from 'react-hot-toast';
 import logo from '../../assets/logo.png';
 import { mergeGuestCartAfterLogin } from "../../utils/cartMerge";
 import { useAppDispatch } from "../../hooks/useAuth";
-
+import { useLocation } from 'react-router-dom';
 
 /* ================== ANIMATIONS (TS SAFE) ================== */
 const cardVariants: Variants = {
@@ -1320,7 +1320,11 @@ const reduxDispatch = useAppDispatch();
   }
 }, [loginSuccess, isAdmin, isLoading, navigate]);
 
-
+ useEffect(() => {
+    if (location.state?.prefillEmail) {
+      setFormData(prev => ({ ...prev, email: location.state.prefillEmail }));
+    }
+  }, [location.state]);
   /* ================== VALIDATION RULES ================== */
  const validationRules = {
   email: (value: string) => {

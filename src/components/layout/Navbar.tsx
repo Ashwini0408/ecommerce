@@ -585,6 +585,7 @@ import { useWishlist } from "../../context/WishlistContext";
 import { clearCart } from "../../store/slices/cartSlice";
 import type { AsyncThunkAction, AsyncThunkConfig } from "@reduxjs/toolkit";
 import { useAppDispatch } from "../../hooks/useAuth";
+import { userProfileApi } from "../../api/userProfileApi";
 
 
 const Navbar = () => {
@@ -599,6 +600,7 @@ const reduxDispatch = useAppDispatch(); // ✅ for cart actions
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [profileName, setProfileName] = useState<string | null>(null);
 const isAdminRoute = location.pathname.startsWith("/admin");
 
   useEffect(() => {
@@ -619,6 +621,37 @@ useEffect(() => {
   window.addEventListener("resize", handleResize);
   return () => window.removeEventListener("resize", handleResize);
 }, []);
+
+useEffect(() => {
+  let isMounted = true;
+
+  const fetchProfileName = async () => {
+    if (!isAuthenticated || !user?.id) {
+      if (isMounted) setProfileName(null);
+      return;
+    }
+
+    try {
+      const profile = await userProfileApi.getUserProfile(user.id);
+      if (isMounted) setProfileName(profile.name);
+    } catch (error) {
+      console.warn("Failed to fetch profile for navbar", error);
+    }
+  };
+
+  fetchProfileName();
+
+  const handleProfileUpdated = () => {
+    fetchProfileName();
+  };
+
+  window.addEventListener("profile:updated", handleProfileUpdated);
+
+  return () => {
+    isMounted = false;
+    window.removeEventListener("profile:updated", handleProfileUpdated);
+  };
+}, [isAuthenticated, user?.id]);
 
 const handleLogout = async () => {
   // 🔥 clear Redux cart state
@@ -666,6 +699,7 @@ const handleLogout = async () => {
     { name: "Products", path: "/products" },
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
+    { name: "Blog", path: "/blog" },
     { name: "Contact us", path: "/contact" },
     { name: "Testimonials", path: "/testimonials" },
   ].map((item) => (
@@ -757,7 +791,9 @@ const handleLogout = async () => {
                     className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/10 text-white"
                   >
                     <FiUser size={18} />
-                    <span className="text-sm font-medium">{user?.name}</span>
+                    <span className="text-sm font-medium">
+                      {profileName || user?.name}
+                    </span>
                   </motion.button>
 
                   <AnimatePresence initial={false}>

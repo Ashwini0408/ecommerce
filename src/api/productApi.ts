@@ -108,6 +108,7 @@ export interface SubCategoryRequest {
   description: string;
 }
 
+
 /* =======================
    PRODUCT + CATEGORY API
 ======================= */
@@ -257,6 +258,12 @@ export const productApi = {
       throw error.response?.data || error;
     }
   },
+
+
+
+
 };
+
+
 
 export default productApi;

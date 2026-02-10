@@ -117,11 +117,13 @@ export interface OrderItem {
   id: number;
   productId: number;
   productName: string;
+  productImage?: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
   selectedSize?: string;
   selectedColor?: string;
+  reviewId?: number;
 }
 
 export interface Order {
@@ -143,6 +145,16 @@ export interface Order {
   items: OrderItem[];
 }
 
+export interface ShippingAddress {
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  contactPhone: string;
+}
+
 export interface CreateOrderRequest {
   items: {
     productId: number;
@@ -150,7 +162,7 @@ export interface CreateOrderRequest {
     selectedSize?: string;
     selectedColor?: string;
   }[];
-  shippingAddress: string;
+  shippingAddress: ShippingAddress;
 }
 
 export interface UpdateOrderStatusRequest {
@@ -208,6 +220,7 @@ export interface Address {
   state: string;
   postalCode: string;
   country: string;
+  contactPhone?: string;
   isDefault: boolean;
 }
 

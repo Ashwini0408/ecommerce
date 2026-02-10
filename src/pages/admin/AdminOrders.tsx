@@ -3309,7 +3309,7 @@ const STATUS_CONFIG: Record<
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [_modalLoading, setModalLoading] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderTimeline, setOrderTimeline] = useState<TimelineEvent[]>([]);
@@ -4163,7 +4163,157 @@ const AdminOrders = () => {
       </div>
 
       {/* --- ORDER DETAILS MODAL --- */}
-      {/* ... (Order details modal remains exactly the same) ... */}
+      <AnimatePresence>
+        {showDetailsModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDetailsModal(false)}
+              className="backdrop-overlay"
+            />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-dark-900">
+                      Order #{selectedOrder?.id || "..."}
+                    </h2>
+                    {selectedOrder && (
+                      <p className="text-dark-600 mt-1">
+                        {selectedOrder.items?.length || 0} item(s) ·{" "}
+                        {selectedOrder.createdAt
+                          ? format(
+                              new Date(selectedOrder.createdAt),
+                              "MMM dd, yyyy HH:mm",
+                            )
+                          : "Date N/A"}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {selectedOrder && (
+                      <button
+                        onClick={() => {
+                          setShowDetailsModal(false);
+                          handleViewTimeline(selectedOrder.id);
+                        }}
+                        className="p-2 text-purple-600 hover:text-purple-900 hover:bg-purple-50 rounded-lg transition-colors"
+                        title="View Timeline"
+                      >
+                        <FiList size={18} />
+                      </button>
+                    )}
+                    <button onClick={() => setShowDetailsModal(false)}>
+                      <FiX size={24} className="text-dark-400 hover:text-dark-900" />
+                    </button>
+                  </div>
+                </div>
+
+                {modalLoading || !selectedOrder ? (
+                  <div className="flex justify-center items-center py-12">
+                    <FiLoader className="animate-spin text-sage" size={40} />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs text-dark-500 mb-1">Status</p>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                            selectedOrder.status || "UNKNOWN",
+                          )}`}
+                        >
+                          {selectedOrder.status || "UNKNOWN"}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-dark-500 mb-1">Payment</p>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getPaymentColor(
+                            selectedOrder.paymentStatus || "PENDING",
+                          )}`}
+                        >
+                          {selectedOrder.paymentStatus || "PENDING"}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-dark-500 mb-1">Total</p>
+                        <p className="text-sm font-semibold text-dark-900">
+                          {formatINR(selectedOrder.totalAmount || 0)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-dark-500 mb-2">Shipping Address</p>
+                      <div className="rounded-xl border border-dark-200 bg-white p-4 text-sm text-dark-700">
+                        {selectedOrder.shippingAddress || "Not available"}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-xs text-dark-500">Order Items</p>
+                      {selectedOrder.items?.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex flex-wrap md:flex-nowrap items-center gap-4 rounded-xl border border-dark-200 bg-white p-4"
+                        >
+                          {renderProductImage(
+                            (item as any)?.productImage || null,
+                            item.productName,
+                            "h-16 w-16 rounded-lg overflow-hidden",
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-dark-900">
+                              {item.productName}
+                            </p>
+                            <p className="text-xs text-dark-500 mt-1">
+                              Qty: {item.quantity} · {formatINR(item.unitPrice)}
+                            </p>
+                            {(item.selectedSize || item.selectedColor) && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {item.selectedSize && (
+                                  <span className="text-[11px] px-2 py-1 bg-gray-100 rounded">
+                                    Size: {item.selectedSize}
+                                  </span>
+                                )}
+                                {item.selectedColor && (
+                                  <span className="text-[11px] px-2 py-1 bg-gray-100 rounded">
+                                    Color: {item.selectedColor}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm font-semibold text-dark-900">
+                            {formatINR(item.totalPrice)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {selectedOrder.trackingNumber && (
+                      <div>
+                        <p className="text-xs text-dark-500 mb-2">Tracking Number</p>
+                        <div className="rounded-xl border border-dark-200 bg-white p-4 text-sm text-dark-700 font-mono">
+                          {selectedOrder.trackingNumber}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* --- TIMELINE MODAL (Showing all statuses from update modal) --- */}
       <AnimatePresence>

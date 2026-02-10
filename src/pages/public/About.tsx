@@ -669,7 +669,7 @@ const teamMembers = [
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
   },
   {
-    name: "Pooja Gupta",
+    name: "Pooja Kumari",
     role: "Helping Hand of Babita Ma'am",
     description:
       "She is a great help in completing small tasks like hand stitching, fall piko, thread work, hand embroidery, and helping Babita ma'am in her work.",

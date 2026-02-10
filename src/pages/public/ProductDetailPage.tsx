@@ -1414,7 +1414,7 @@
 // export default ProductDetailPage;
 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft, FiStar } from 'react-icons/fi';
@@ -1426,6 +1426,11 @@ import type { Product, ProductAttribute } from '../../types';
 import { useAppDispatch } from '../../hooks/useAuth';
 import { addToCart } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
+import useAuth from "../../hooks/useAuth";
+import { cartApi } from "../../api/cartApi";
+import { useAppSelector } from "../../hooks/useAuth";
+import reviewApi, { type Review } from "../../api/reviewApi";
+
 
 // ----------------------------------------------------------------------
 // HELPER: Fix Image URLs
@@ -1471,6 +1476,66 @@ const ProductDetailPage = () => {
   // State for available options
   const [availableSizes, setAvailableSizes] = useState<ProductAttribute[]>([]);
   const [availableColors, setAvailableColors] = useState<ProductAttribute[]>([]);
+const { isAuthenticated } = useAuth();
+
+const [reviews, setReviews] = useState<Review[]>([]);
+const [reviewCount, setReviewCount] = useState(0);
+const [averageRating, setAverageRating] = useState(0);
+
+  const ratingScale = [5, 4, 3, 2, 1];
+  const ratingDistribution = useMemo(
+    () =>
+      ratingScale.map(
+        (rating) =>
+          reviews.filter((review) => Math.round(review.rating) === rating).length
+      ),
+    [reviews]
+  );
+  const totalRecentRatings = ratingDistribution.reduce((sum, count) => sum + count, 0);
+  const customerPhotos = useMemo(
+    () =>
+      reviews
+        .flatMap((review) => review.imageUrls ?? [])
+        .filter((url): url is string => Boolean(url)),
+    [reviews]
+  );
+  const previewPhotos = customerPhotos.slice(0, 4);
+  const extraPhotoCount = Math.max(customerPhotos.length - previewPhotos.length, 0);
+  const formatReviewDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+
+
+useEffect(() => {
+  const productId = product?.id ?? (id ? Number(id) : NaN);
+  if (!Number.isFinite(productId)) return;
+
+  const fetchReviews = async () => {
+    try {
+      const data = await reviewApi.getProductReviews(productId, 0, 5);
+
+      setReviews(data.content);
+      setReviewCount(data.totalElements);
+
+      if (data.content.length > 0) {
+        const avg =
+          data.content.reduce((sum, r) => sum + r.rating, 0) /
+          data.content.length;
+
+        setAverageRating(Number(avg.toFixed(1)));
+      } else {
+        setAverageRating(0);
+      }
+    } catch (err) {
+      console.error("Failed to load reviews", err);
+    }
+  };
+
+  fetchReviews();
+}, [product?.id, id]);
 
   useEffect(() => {
     if (id) {
@@ -1509,41 +1574,73 @@ const ProductDetailPage = () => {
     }
   };
 
-  const handleAddToCart = () => {
-    if (!product) return;
+const handleAddToCart = async () => {
+  if (!product) return;
 
-    if (product.stock === 0) {
-      toast.error('Product is out of stock');
-      return;
-    }
+  if (product.stock === 0) {
+    toast.error("Product is out of stock");
+    return;
+  }
 
-    // Validate selections
-    if (availableSizes.length > 0 && !selectedSize) {
-      toast.error('Please select a size');
-      return;
-    }
+  if (availableSizes.length > 0 && !selectedSize) {
+    toast.error("Please select a size");
+    return;
+  }
 
-    if (availableColors.length > 0 && !selectedColor) {
-      toast.error('Please select a color');
-      return;
-    }
+  if (availableColors.length > 0 && !selectedColor) {
+    toast.error("Please select a color");
+    return;
+  }
 
-    dispatch(
-      addToCart({
+  try {
+    if (isAuthenticated) {
+      // ✅ BACKEND CART
+      const backendItem = await cartApi.addToCart({
         productId: product.id,
-        name: product.name,
-        price: product.price,
-        salePrice: product.salePrice,
         quantity,
         selectedSize,
         selectedColor,
-        image: product.images[0],
-        stock: product.stock,
-        itemId: 0
-      })
-    );
-    toast.success('Added to cart!');
-  };
+      });
+
+      dispatch(
+        addToCart({
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          salePrice: product.salePrice,
+          quantity: backendItem.quantity,
+          selectedSize,
+          selectedColor,
+          image: product.images[0],
+          stock: product.stock,
+          itemId: backendItem.id, // ✅ REAL ID
+        })
+      );
+    } else {
+      // ✅ GUEST CART
+      dispatch(
+        addToCart({
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          salePrice: product.salePrice,
+          quantity,
+          selectedSize,
+          selectedColor,
+          image: product.images[0],
+          stock: product.stock,
+          itemId: 0,
+        })
+      );
+    }
+
+    toast.success("Added to cart!");
+  } catch (err: any) {
+    console.error("Add to cart failed:", err);
+    toast.error("Failed to add to cart");
+  }
+};
+
 
   const handleBuyNow = () => {
     handleAddToCart();
@@ -1627,13 +1724,6 @@ const ProductDetailPage = () => {
   const discount = product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
-
-  // Mock review data
-  const reviewData = {
-    rating: 4.8,
-    reviewCount: 245,
-    stars: 5
-  };
 
   // Default description with HTML formatting
   const defaultDescription = `<b>sdivbsdfvb</b><div><br></div><div><ul><li><b>sdfgh</b></li><li><b>sdfgh</b></li><li><b><u>sdfgh</u></b></li></ul></div>`;
@@ -1742,26 +1832,30 @@ const ProductDetailPage = () => {
             </h1>
 
             {/* Rating */}
-            <div className="flex items-center space-x-1">
-              <div className="flex items-center">
-                {[...Array(reviewData.stars)].map((_, i) => (
-                  <FiStar
-                    key={i}
-                    className={`w-3 h-3 ${
-                      i < Math.floor(reviewData.rating)
-                        ? 'text-yellow-500 fill-yellow-500'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs font-semibold text-foreground">
-                {reviewData.rating}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                ({reviewData.reviewCount} Reviews)
-              </span>
-            </div>
+         {/* Rating */}
+<div className="flex items-center space-x-1">
+  <div className="flex items-center">
+    {[...Array(5)].map((_, i) => (
+      <FiStar
+        key={i}
+        className={`w-3 h-3 ${
+          i < Math.round(averageRating)
+            ? "text-yellow-500 fill-yellow-500"
+            : "text-gray-300"
+        }`}
+      />
+    ))}
+  </div>
+
+  <span className="text-xs font-semibold text-foreground">
+    {averageRating}
+  </span>
+
+  <span className="text-xs text-muted-foreground">
+    ({reviewCount} Reviews)
+  </span>
+</div>
+
 
             {/* Price in INR */}
             <div className="flex items-center space-x-3">
@@ -1875,21 +1969,7 @@ const ProductDetailPage = () => {
               </div>
             )}
 
-            {/* SKU and Clear Selection */}
-            <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
-              <div>
-                <span className="font-medium">SKU: </span>
-                <span className="font-semibold text-foreground">GHT95245AAA</span>
-              </div>
-              {(selectedSize || selectedColor) && (
-                <button 
-                  onClick={handleClearSelection}
-                  className="text-red-400 hover:text-red-500 font-medium"
-                >
-                  Clear Selection
-                </button>
-              )}
-            </div>
+           
 
             {/* Quantity and Actions */}
             <div className="space-y-4 pt-4 border-t border-border">
@@ -1966,36 +2046,8 @@ const ProductDetailPage = () => {
 
             {/* Tags and Share */}
             <div className="pt-4 border-t border-border space-y-4">
-              {/* Tags */}
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground">Tags: </span>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {['Women', 'Coat', 'Fashion', 'Jacket'].map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 text-xs glass-card rounded-full hover:bg-accent/20 cursor-pointer"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Share */}
-              <div className="flex items-center space-x-3">
-                <span className="text-sm font-semibold text-muted-foreground">Share:</span>
-                <div className="flex space-x-2">
-                  <button className="w-8 h-8 rounded-full bg-[#3b5998] flex items-center justify-center text-white hover:opacity-90">
-                    <FaFacebookF className="w-4 h-4" />
-                  </button>
-                  <button className="w-8 h-8 rounded-full bg-[#1da1f2] flex items-center justify-center text-white hover:opacity-90">
-                    <FaTwitter className="w-4 h-4" />
-                  </button>
-                  <button className="w-8 h-8 rounded-full bg-[#e60023] flex items-center justify-center text-white hover:opacity-90">
-                    <FaPinterestP className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              
+             
             </div>
 
             {/* Features */}
@@ -2021,6 +2073,177 @@ const ProductDetailPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Ratings & Reviews */}
+        <section className="mt-12 border-t border-border pt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-foreground">Ratings & Reviews</h2>
+            <span className="text-xs text-muted-foreground">
+              {reviewCount} Verified Buyers
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-4xl font-bold text-foreground">
+                  {averageRating.toFixed(1)}
+                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <FiStar
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.round(averageRating)
+                            ? 'text-yellow-500 fill-yellow-500'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {reviewCount} ratings
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 rounded-2xl border border-border bg-white p-5 shadow-sm space-y-2">
+              {ratingScale.map((rating, index) => {
+                const count = ratingDistribution[index] ?? 0;
+                const percent = totalRecentRatings
+                  ? Math.round((count / totalRecentRatings) * 100)
+                  : 0;
+
+                return (
+                  <div key={rating} className="flex items-center gap-3">
+                    <span className="w-6 text-xs font-semibold text-foreground">
+                      {rating}
+                    </span>
+                    <div className="flex-1 h-2 rounded-full bg-sage/10 overflow-hidden">
+                      <div className="h-full bg-sage" style={{ width: `${percent}%` }} />
+                    </div>
+                    <span className="w-8 text-xs text-muted-foreground text-right">
+                      {count}
+                    </span>
+                  </div>
+                );
+              })}
+              <p className="text-[11px] text-muted-foreground">
+                Based on {totalRecentRatings} recent ratings
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-foreground">Customer Photos</h3>
+                <span className="text-xs text-muted-foreground">
+                  ({customerPhotos.length})
+                </span>
+              </div>
+              {previewPhotos.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No photos yet. Be the first to share!
+                </p>
+              ) : (
+                <div className="grid grid-cols-4 gap-2">
+                  {previewPhotos.map((photo, index) => (
+                    <div
+                      key={`${photo}-${index}`}
+                      className="relative aspect-square rounded-lg overflow-hidden border border-border"
+                    >
+                      <img
+                        src={getImageUrl(photo)}
+                        alt={`Customer ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      {index === previewPhotos.length - 1 && extraPhotoCount > 0 && (
+                        <div className="absolute inset-0 bg-black/60 text-white text-xs font-semibold flex items-center justify-center">
+                          +{extraPhotoCount}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Customer Reviews</h3>
+                <span className="text-xs text-muted-foreground">
+                  {reviewCount} total · {reviews.length} recent
+                </span>
+              </div>
+
+              {reviews.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border bg-white p-6 text-sm text-muted-foreground">
+                  No reviews yet. Be the first to review this product.
+                </div>
+              ) : (
+                reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-full bg-sage/10 text-sage flex items-center justify-center text-sm font-semibold">
+                          {(review.username || 'V').slice(0, 1).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {review.username || 'Verified Buyer'}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <FiStar
+                                key={i}
+                                className={`h-3.5 w-3.5 ${
+                                  i < Math.round(review.rating)
+                                    ? 'text-yellow-500 fill-yellow-500'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {formatReviewDate(review.createdAt)}
+                      </span>
+                    </div>
+
+                    {review.title && (
+                      <p className="text-sm font-semibold text-foreground">{review.title}</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">{review.body}</p>
+
+                    {review.imageUrls?.length > 0 && (
+                      <div className="grid grid-cols-4 gap-2">
+                        {review.imageUrls.slice(0, 4).map((imageUrl, index) => (
+                          <div
+                            key={`${review.id}-${index}`}
+                            className="aspect-square rounded-lg overflow-hidden border border-border"
+                          >
+                            <img
+                              src={getImageUrl(imageUrl)}
+                              alt={`Review ${review.id}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
       </div>
       <Footer />
     </div>

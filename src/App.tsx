@@ -242,10 +242,12 @@ import RefundPolicy from './pages/public/RefundPolicy';
 import Testimonial from './pages/public/Testimonial';
 import Wishlist from './pages/public/WishlistPage';
 import { WishlistProvider } from "./context/WishlistContext";
-
-
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import Blog from './pages/public/Blog';
+import BlogPost from './pages/public/BlogPost';
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
+import OrderDetailsPage from './pages/user/OrderDetailsPage';
 
 // Admin Components
 import AdminLayout from './components/layout/AdminLayout';
@@ -316,6 +318,9 @@ function App() {
         <Route path="/shipping" element={<ShippingCommingSoon />} />
         <Route path="/returns" element={<ReturnCommingSoon />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:id" element={<BlogPost />} />
 
         {/* Protected User Routes */}
         <Route
@@ -323,6 +328,14 @@ function App() {
           element={
             <ProtectedRoute>
               <UserDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetailsPage />
             </ProtectedRoute>
           }
         />

@@ -352,6 +352,7 @@ interface BackendCartItem {
   stock?: number;
 }
 
+
 const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -465,67 +466,73 @@ const handleRemoveItem = async (
 };
 
 
-  const handleIncrement = async (
-    itemId: number,
-    productId: number,
-    quantity: number,
-    selectedSize?: string,
-    selectedColor?: string
-  ) => {
-    try {
-      // Get the actual backend itemId
-      const backendItemId = findBackendItemId(productId, selectedSize, selectedColor);
-      
-      if (!backendItemId || backendItemId === 0) {
-        toast.error('Cannot find item in server cart');
-        return;
-      }
-      
-      console.log('Updating quantity with backend ID:', backendItemId);
-      await cartApi.updateQuantity(backendItemId, quantity + 1);
+const handleIncrement = async (
+  itemId: number,
+  productId: number,
+  quantity: number,
+  selectedSize?: string,
+  selectedColor?: string
+) => {
+  // 👤 GUEST USER → LOCAL ONLY
+  if (!isAuthenticated) {
+    dispatch(incrementQuantity({ productId, selectedSize, selectedColor }));
+    return;
+  }
 
-      dispatch(incrementQuantity({ productId, selectedSize, selectedColor }));
-      
-      // Refresh backend items
-      const updatedCart = await cartApi.getCart();
-      setBackendItems(updatedCart.items || []);
-    } catch (error) {
-      console.error('Increment error:', error);
-      toast.error('Failed to update quantity');
+  try {
+    const backendItemId = findBackendItemId(productId, selectedSize, selectedColor);
+
+    if (!backendItemId || backendItemId === 0) {
+      toast.error('Cannot find item in server cart');
+      return;
     }
-  };
 
-  const handleDecrement = async (
-    itemId: number,
-    productId: number,
-    quantity: number,
-    selectedSize?: string,
-    selectedColor?: string
-  ) => {
+    await cartApi.updateQuantity(backendItemId, quantity + 1);
+    dispatch(incrementQuantity({ productId, selectedSize, selectedColor }));
+
+    const updatedCart = await cartApi.getCart();
+    setBackendItems(updatedCart.items || []);
+  } catch (error) {
+    console.error('Increment error:', error);
+    toast.error('Failed to update quantity');
+  }
+};
+
+ const handleDecrement = async (
+  itemId: number,
+  productId: number,
+  quantity: number,
+  selectedSize?: string,
+  selectedColor?: string
+) => {
+  // 👤 GUEST USER → LOCAL ONLY
+  if (!isAuthenticated) {
     if (quantity === 1) return;
+    dispatch(decrementQuantity({ productId, selectedSize, selectedColor }));
+    return;
+  }
 
-    try {
-      // Get the actual backend itemId
-      const backendItemId = findBackendItemId(productId, selectedSize, selectedColor);
-      
-      if (!backendItemId || backendItemId === 0) {
-        toast.error('Cannot find item in server cart');
-        return;
-      }
-      
-      console.log('Decrementing with backend ID:', backendItemId);
-      await cartApi.updateQuantity(backendItemId, quantity - 1);
+  if (quantity === 1) return;
 
-      dispatch(decrementQuantity({ productId, selectedSize, selectedColor }));
-      
-      // Refresh backend items
-      const updatedCart = await cartApi.getCart();
-      setBackendItems(updatedCart.items || []);
-    } catch (error) {
-      console.error('Decrement error:', error);
-      toast.error('Failed to update quantity');
+  try {
+    const backendItemId = findBackendItemId(productId, selectedSize, selectedColor);
+
+    if (!backendItemId || backendItemId === 0) {
+      toast.error('Cannot find item in server cart');
+      return;
     }
-  };
+
+    await cartApi.updateQuantity(backendItemId, quantity - 1);
+    dispatch(decrementQuantity({ productId, selectedSize, selectedColor }));
+
+    const updatedCart = await cartApi.getCart();
+    setBackendItems(updatedCart.items || []);
+  } catch (error) {
+    console.error('Decrement error:', error);
+    toast.error('Failed to update quantity');
+  }
+};
+
 
   const handleClearCart = () => {
     dispatch(clearCart());

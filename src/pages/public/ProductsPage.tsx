@@ -319,7 +319,8 @@ import toast from 'react-hot-toast';
 import { Footer } from '../../components/layout/Footer';
 import { formatINR } from '../../utils/currency';
 import { wishlistApi } from "../../api/wishlistApi";
-
+import productFilterApi from '../../api/productFilterApi';
+import { resolveColor } from "../../utils/colorResolver";
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -351,20 +352,51 @@ const ProductsPage = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   // Sample data for sizes and colors (replace with your actual data)
-  const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-  const availableColors = [
-    { name: 'Black', value: '#000000' },
-    { name: 'White', value: '#FFFFFF' },
-    { name: 'Red', value: '#EF4444' },
-    { name: 'Blue', value: '#3B82F6' },
-    { name: 'Green', value: '#10B981' },
-    { name: 'Yellow', value: '#FBBF24' },
-    { name: 'Purple', value: '#8B5CF6' },
-    { name: 'Pink', value: '#EC4899' },
-    { name: 'Gray', value: '#6B7280' },
-    { name: 'Brown', value: '#92400E' },
-  ];
+const [availableSizes, setAvailableSizes] = useState<string[]>([]);
+const [availableColors, setAvailableColors] = useState<
+  { name: string; value: string }[]
+>([]);
 
+const COLOR_MAP: Record<string, string> = {
+  Red: '#ef4444',
+  'Navy Blue': '#1e3a8a',
+  'Charcoal Grey': '#374151',
+  White: '#ffffff',
+  Black: '#000000',
+  Blue: '#3b82f6',
+  Green: '#22c55e',
+  Yellow: '#facc15',
+  Purple: '#a855f7',
+  Pink: '#ec4899',
+  Brown: '#92400e',
+};
+
+
+
+useEffect(() => {
+  const fetchFilters = async () => {
+    try {
+      const { data } = await productFilterApi.getFilters();
+
+      // Sizes
+      setAvailableSizes(data.SIZE);
+
+      // Colors (convert string → UI object)
+     setAvailableColors(
+  data.COLOR.map((colorName) => ({
+    name: colorName,
+    value: resolveColor(colorName),
+  }))
+);
+
+    } catch (error) {
+      console.error('Failed to load filters', error);
+    }
+  };
+
+  fetchFilters();
+}, []);
+  
   // --- 1. FETCH CATEGORIES ON MOUNT ---
   useEffect(() => {
     const loadCategories = async () => {
@@ -656,85 +688,107 @@ useEffect(() => {
                     </div>
 
                     {/* Size Section */}
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => toggleSection('size')}
-                        className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 dark:text-gray-200 py-2 hover:text-sage transition-colors"
-                      >
-                        <span>Size</span>
-                        {expandedSections.size ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-                      </button>
-                      <AnimatePresence>
-                        {expandedSections.size && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="flex flex-wrap gap-2 pt-1">
-                              {availableSizes.map((size) => (
-                                <button
-                                  key={size}
-                                  onClick={() => toggleSize(size)}
-                                  className={`px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 ${
-                                    selectedSizes.includes(size)
-                                      ? 'bg-sage text-white border-sage shadow-sm'
-                                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:border-sage hover:text-sage'
-                                  }`}
-                                >
-                                  {size}
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                   {/* Size Section */}
+<div className="space-y-2">
+  <button
+    onClick={() => toggleSection('size')}
+    className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 dark:text-gray-200 py-2 hover:text-sage transition-colors"
+  >
+    <span>Size</span>
+    {expandedSections.size ? (
+      <FiChevronUp size={18} />
+    ) : (
+      <FiChevronDown size={18} />
+    )}
+  </button>
+
+  <AnimatePresence>
+    {expandedSections.size && (
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        className="overflow-hidden"
+      >
+        <div className="flex flex-wrap gap-2 pt-1">
+          {availableSizes.map((size) => (
+            <button
+              key={size}
+              onClick={() => toggleSize(size)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-all duration-200 ${
+                selectedSizes.includes(size)
+                  ? 'bg-sage text-white border-sage shadow-sm'
+                  : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:border-sage hover:text-sage'
+              }`}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
+
 
                     {/* Color Section */}
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => toggleSection('color')}
-                        className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 dark:text-gray-200 py-2 hover:text-sage transition-colors"
-                      >
-                        <span>Color</span>
-                        {expandedSections.color ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-                      </button>
-                      <AnimatePresence>
-                        {expandedSections.color && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="grid grid-cols-5 gap-2 pt-1">
-                              {availableColors.map((color) => (
-                                <button
-                                  key={color.name}
-                                  onClick={() => toggleColor(color.name)}
-                                  className={`relative w-9 h-9 rounded-full border-2 flex items-center justify-center transition-transform hover:scale-110 ${
-                                    selectedColors.includes(color.name)
-                                      ? 'border-sage ring-2 ring-sage/30'
-                                      : 'border-white dark:border-gray-800'
-                                  }`}
-                                  title={color.name}
-                                  style={{ backgroundColor: color.value }}
-                                >
-                                  {selectedColors.includes(color.name) && (
-                                    <div className="w-5 h-5 rounded-full bg-white/90 dark:bg-gray-900/90 flex items-center justify-center">
-                                      <div className="w-2 h-2 rounded-full bg-sage"></div>
-                                    </div>
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                    {/* Color Section */}
+<div className="space-y-2">
+  <button
+    onClick={() => toggleSection('color')}
+    className="w-full flex items-center justify-between text-sm font-semibold text-gray-800 dark:text-gray-200 py-2 hover:text-sage transition-colors"
+  >
+    <span>Color</span>
+    {expandedSections.color ? (
+      <FiChevronUp size={18} />
+    ) : (
+      <FiChevronDown size={18} />
+    )}
+  </button>
 
+  <AnimatePresence>
+    {expandedSections.color && (
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ height: 'auto', opacity: 1 }}
+        exit={{ height: 0, opacity: 0 }}
+        className="overflow-hidden"
+      >
+        <div className="grid grid-cols-5 gap-2 pt-1">
+          {availableColors.map((color) => {
+            const isSelected = selectedColors.includes(color.name);
+
+            return (
+              <button
+                key={color.name}
+                type="button"
+                onClick={() => toggleColor(color.name)}
+                title={color.name}
+                style={{ backgroundColor: color.value }}
+                className={`relative w-9 h-9 rounded-full border-2 flex items-center justify-center transition-transform hover:scale-110 ${
+                  isSelected
+                    ? 'border-sage ring-2 ring-sage/30'
+                    : 'border-white dark:border-gray-800'
+                }`}
+              >
+                {isSelected && (
+                  <div className="w-5 h-5 rounded-full bg-white/90 dark:bg-gray-900/90 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-sage" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
+
+
+
+
+               
                     {/* Sort Section */}
                     <div className="space-y-2">
                       <button
