@@ -76,6 +76,8 @@ export interface UpdateProductRequest extends Partial<CreateProductRequest> {
 export interface ProductFilterRequest {
   category?: string;
   subcategory?: string;
+  sizes?: string[];
+  colors?: string[];
   minPrice?: number;
   maxPrice?: number;
   searchQuery?: string;

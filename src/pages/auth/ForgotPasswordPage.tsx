@@ -104,6 +104,23 @@ const ForgotPasswordPage = () => {
   
   // Timer for OTP resend
   const [otpTimer, setOtpTimer] = useState(0);
+
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (typeof error === 'string' && error.trim()) {
+      return error;
+    }
+    if (error && typeof error === 'object' && 'message' in error) {
+      const directMessage = (error as { message?: unknown }).message;
+      if (typeof directMessage === 'string' && directMessage.trim()) {
+        return directMessage;
+      }
+    }
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    return fallback;
+  };
   
   // Email validation
   const validateEmail = (email: string) => {
@@ -157,8 +174,10 @@ const ForgotPasswordPage = () => {
       toast.success('OTP sent to your email');
       setStage('otp');
       setOtpTimer(300); // 5 minutes timer
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to send OTP');
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'Failed to send OTP');
+      setErrors((prev) => ({ ...prev, email: message }));
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -181,8 +200,8 @@ const ForgotPasswordPage = () => {
       await authApi.verifyOtp(email, otpString);
       toast.success('OTP verified successfully');
       setStage('reset');
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'OTP verification failed';
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'OTP verification failed');
       setErrors({ ...errors, otp: message });
       toast.error(message);
     } finally {
@@ -217,8 +236,8 @@ const ForgotPasswordPage = () => {
       navigate('/login', { 
         state: { prefillEmail: email } 
       });
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Password reset failed');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Password reset failed'));
     } finally {
       setIsLoading(false);
     }
@@ -237,8 +256,8 @@ const ForgotPasswordPage = () => {
       await authApi.forgotPassword(email);
       toast.success('OTP resent to your email');
       setOtpTimer(300); // Reset to 5 minutes
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to resend OTP');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Failed to resend OTP'));
     } finally {
       setIsLoading(false);
     }

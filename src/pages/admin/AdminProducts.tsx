@@ -17537,10 +17537,12 @@ const AdminProducts = () => {
 
     try {
       const updatePayload: ReviewUpdatePayload = {
-        userId: editForm.userId,
-        rating: editForm.rating,
-        title: editForm.title,
-        body: editForm.body,
+          userId: editForm.userId,
+          rating: editForm.rating,
+          title: editForm.title,
+          body: editForm.body,
+          videosToDelete: [],
+          imagesToDelete: []
       };
 
       // Add URLs to delete if any

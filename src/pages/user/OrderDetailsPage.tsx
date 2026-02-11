@@ -88,10 +88,8 @@ const OrderDetailsPage = () => {
     Record<string, { images: File[]; videos: File[] }>
   >({});
   const [reviewIds, setReviewIds] = useState<Record<string, number>>({});
-  const [reviewExistingImages, setReviewExistingImages] = useState<
-    Record<string, { url: string; mediaId?: number }[]>
-  >({});
-  const [reviewMediaIdsToDelete, setReviewMediaIdsToDelete] = useState<Record<string, number[]>>(
+  const [reviewExistingImages, setReviewExistingImages] = useState<Record<string, string[]>>({});
+  const [reviewImagesToDelete, setReviewImagesToDelete] = useState<Record<string, string[]>>(
     {}
   );
   const [reviewModal, setReviewModal] = useState<{
@@ -191,22 +189,12 @@ const OrderDetailsPage = () => {
     reviewAttachments[key] || { images: [], videos: [] };
   const getReviewId = (key: string) => reviewIds[key];
   const getReviewExistingImages = (key: string) => reviewExistingImages[key] || [];
-  const getReviewMediaIdsToDelete = (key: string) => reviewMediaIdsToDelete[key] || [];
-
-  const normalizeMediaPath = (value: string) =>
-    value.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
+  const getReviewImagesToDelete = (key: string) => reviewImagesToDelete[key] || [];
 
   const mapExistingReviewImages = (review: {
     imageUrls?: string[];
     media?: { id: number; url: string; mediaType: 'IMAGE' | 'VIDEO' }[];
   }) => {
-    const mediaByPath = new Map<string, number>();
-    (review.media || [])
-      .filter((m) => m.mediaType === 'IMAGE')
-      .forEach((m) => {
-        mediaByPath.set(normalizeMediaPath(m.url), m.id);
-      });
-
     const imageUrls =
       review.imageUrls && review.imageUrls.length > 0
         ? review.imageUrls
@@ -214,10 +202,7 @@ const OrderDetailsPage = () => {
             .filter((m) => m.mediaType === 'IMAGE')
             .map((m) => m.url);
 
-    return imageUrls.map((url) => ({
-      url,
-      mediaId: mediaByPath.get(normalizeMediaPath(url)),
-    }));
+    return imageUrls;
   };
 
   const updateReviewDraft = (
@@ -264,17 +249,17 @@ const OrderDetailsPage = () => {
 
   const removeExistingReviewImage = (key: string, index: number) => {
     const current = getReviewExistingImages(key);
-    const target = current[index];
+    const targetUrl = current[index];
 
     setReviewExistingImages((prev) => ({
       ...prev,
       [key]: (prev[key] || []).filter((_, idx) => idx !== index),
     }));
 
-    if (target?.mediaId) {
-      setReviewMediaIdsToDelete((prev) => ({
+    if (targetUrl) {
+      setReviewImagesToDelete((prev) => ({
         ...prev,
-        [key]: Array.from(new Set([...(prev[key] || []), target.mediaId as number])),
+        [key]: Array.from(new Set([...(prev[key] || []), targetUrl])),
       }));
     }
   };
@@ -334,7 +319,7 @@ const OrderDetailsPage = () => {
         ...prev,
         [key]: mapExistingReviewImages(existing),
       }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
         [key]: {
@@ -345,7 +330,7 @@ const OrderDetailsPage = () => {
       }));
     } else {
       setReviewExistingImages((prev) => ({ ...prev, [key]: [] }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
     }
   };
 
@@ -367,7 +352,7 @@ const OrderDetailsPage = () => {
     setReviewSubmitting((prev) => ({ ...prev, [key]: true }));
     try {
       const attachments = getReviewAttachments(key);
-      const mediaIdsToDelete = getReviewMediaIdsToDelete(key);
+      const imagesToDelete = getReviewImagesToDelete(key);
       let existingId = getReviewId(key);
       if (!existingId) {
         const existing = await fetchExistingReview(
@@ -383,7 +368,7 @@ const OrderDetailsPage = () => {
       }
 
       let persistedReviewId: number | null = null;
-      let persistedImages: { url: string; mediaId?: number }[] = [];
+      let persistedImages: string[] = [];
       if (existingId) {
         const updated = await reviewApi.updateReview(
           existingId,
@@ -392,7 +377,8 @@ const OrderDetailsPage = () => {
             rating: draft.rating,
             title: draft.title.trim() || item.productName || 'Review',
             body: draft.body.trim(),
-            ...(mediaIdsToDelete.length > 0 ? { mediaIdsToDelete } : {}),
+            imagesToDelete,
+            videosToDelete: [],
           },
           attachments.images,
           attachments.videos
@@ -432,7 +418,7 @@ const OrderDetailsPage = () => {
         ...prev,
         [key]: persistedImages,
       }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
         [key]: {
@@ -465,7 +451,7 @@ const OrderDetailsPage = () => {
     const loadExistingReviews = async () => {
       const updates: Record<string, number> = {};
       const drafts: Record<string, { rating: number; title: string; body: string }> = {};
-      const existingImages: Record<string, { url: string; mediaId?: number }[]> = {};
+      const existingImages: Record<string, string[]> = {};
 
       await Promise.all(
         order.items.map(async (item) => {
@@ -861,15 +847,15 @@ const OrderDetailsPage = () => {
                       />
                       <FiImage size={18} className="text-dark-400" />
                     </label>
-                    {existingImages.map((image, index) => (
+                    {existingImages.map((imageUrl, index) => (
                       <div
-                        key={`existing-${image.url}-${index}`}
+                        key={`existing-${imageUrl}-${index}`}
                         className="relative h-14 w-14 overflow-visible"
                         title="Already uploaded"
                       >
                         <div className="h-full w-full rounded-lg overflow-hidden border border-[#E6E2D6] bg-white">
                           <img
-                            src={getOrderImageUrl(image.url)}
+                            src={getOrderImageUrl(imageUrl)}
                             alt="Existing review"
                             className="h-full w-full object-cover"
                           />

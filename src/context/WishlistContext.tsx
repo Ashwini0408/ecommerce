@@ -5,6 +5,7 @@ import useAuth from "../hooks/useAuth";
 interface WishlistContextType {
   wishlistIds: number[];
   toggleWishlist: (productId: number) => Promise<void>;
+  removeWishlistId: (productId: number) => void;
 }
 
 const WishlistContext = createContext<WishlistContextType | null>(null);
@@ -52,8 +53,12 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  const removeWishlistId = (productId: number) => {
+    setWishlistIds((prev) => prev.filter((id) => id !== productId));
+  };
+
   return (
-    <WishlistContext.Provider value={{ wishlistIds, toggleWishlist }}>
+    <WishlistContext.Provider value={{ wishlistIds, toggleWishlist, removeWishlistId }}>
       {children}
     </WishlistContext.Provider>
   );
