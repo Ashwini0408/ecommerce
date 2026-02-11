@@ -4482,9 +4482,12 @@ const getCurrentMediaUrl = () => {
                       {sizeAttr.value}
                     </motion.button>
                   ))}
-                  <button className="text-xs text-sage hover:underline font-medium">
-                    View Size Guide
-                  </button>
+                  <button
+  onClick={() => navigate("/sizeGuide")}
+  className="text-xs text-sage hover:underline font-medium"
+>
+  View Size Guide
+</button>
                 </div>
               </div>
             )}

@@ -174,7 +174,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50">
       {/* Static Sidebar */}
       <div className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-white to-gray-50 text-gray-800 shadow-lg z-40 border-r border-gray-200">
         {/* Logo/Header */}
@@ -269,8 +269,8 @@ const AdminLayout = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="ml-64 flex-1 p-6">
-        <div className="max-w-7xl mx-auto">
+      <main className="ml-64 w-[calc(100%-16rem)] min-h-screen p-6 bg-gray-50">
+        <div className="w-full min-h-full">
           {/* Header Bar - You can remove this if you want just the sidebar navigation */}
           <Outlet />
         </div>

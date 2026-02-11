@@ -88,6 +88,12 @@ const OrderDetailsPage = () => {
     Record<string, { images: File[]; videos: File[] }>
   >({});
   const [reviewIds, setReviewIds] = useState<Record<string, number>>({});
+  const [reviewExistingImages, setReviewExistingImages] = useState<
+    Record<string, { url: string; mediaId?: number }[]>
+  >({});
+  const [reviewMediaIdsToDelete, setReviewMediaIdsToDelete] = useState<Record<string, number[]>>(
+    {}
+  );
   const [reviewModal, setReviewModal] = useState<{
     item: Order['items'][number];
   } | null>(null);
@@ -184,6 +190,35 @@ const OrderDetailsPage = () => {
   const getReviewAttachments = (key: string) =>
     reviewAttachments[key] || { images: [], videos: [] };
   const getReviewId = (key: string) => reviewIds[key];
+  const getReviewExistingImages = (key: string) => reviewExistingImages[key] || [];
+  const getReviewMediaIdsToDelete = (key: string) => reviewMediaIdsToDelete[key] || [];
+
+  const normalizeMediaPath = (value: string) =>
+    value.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
+
+  const mapExistingReviewImages = (review: {
+    imageUrls?: string[];
+    media?: { id: number; url: string; mediaType: 'IMAGE' | 'VIDEO' }[];
+  }) => {
+    const mediaByPath = new Map<string, number>();
+    (review.media || [])
+      .filter((m) => m.mediaType === 'IMAGE')
+      .forEach((m) => {
+        mediaByPath.set(normalizeMediaPath(m.url), m.id);
+      });
+
+    const imageUrls =
+      review.imageUrls && review.imageUrls.length > 0
+        ? review.imageUrls
+        : (review.media || [])
+            .filter((m) => m.mediaType === 'IMAGE')
+            .map((m) => m.url);
+
+    return imageUrls.map((url) => ({
+      url,
+      mediaId: mediaByPath.get(normalizeMediaPath(url)),
+    }));
+  };
 
   const updateReviewDraft = (
     key: string,
@@ -227,15 +262,38 @@ const OrderDetailsPage = () => {
     });
   };
 
+  const removeExistingReviewImage = (key: string, index: number) => {
+    const current = getReviewExistingImages(key);
+    const target = current[index];
+
+    setReviewExistingImages((prev) => ({
+      ...prev,
+      [key]: (prev[key] || []).filter((_, idx) => idx !== index),
+    }));
+
+    if (target?.mediaId) {
+      setReviewMediaIdsToDelete((prev) => ({
+        ...prev,
+        [key]: Array.from(new Set([...(prev[key] || []), target.mediaId as number])),
+      }));
+    }
+  };
+
   const fetchExistingReview = async (
     productId: number,
     userId: number,
-    orderIdValue: number
+    orderIdValue: number,
+    knownReviewId?: number
   ) => {
     try {
-      const data = await reviewApi.getProductReviews(productId, 0, 50);
+      const data = await reviewApi.getProductReviews(productId, 0, 200);
+      const reviews = data.content || [];
+      if (knownReviewId) {
+        const byId = reviews.find((review) => review.id === knownReviewId);
+        if (byId) return byId;
+      }
       return (
-        data.content.find(
+        reviews.find(
           (review) =>
             review.userId === userId &&
             (!review.orderId || review.orderId === orderIdValue)
@@ -255,28 +313,39 @@ const OrderDetailsPage = () => {
         [key]: { rating: 0, title: '', body: '' },
       }));
     }
-    if (!reviewAttachments[key]) {
-      setReviewAttachments((prev) => ({
-        ...prev,
-        [key]: { images: [], videos: [] },
-      }));
+    setReviewAttachments((prev) => ({
+      ...prev,
+      [key]: { images: [], videos: [] },
+    }));
+    if (item.reviewId && !reviewIds[key]) {
+      setReviewIds((prev) => ({ ...prev, [key]: item.reviewId! }));
     }
     setReviewModal({ item });
 
-    const existing = await fetchExistingReview(item.productId, order.userId, order.id);
+    const existing = await fetchExistingReview(
+      item.productId,
+      order.userId,
+      order.id,
+      item.reviewId || getReviewId(key)
+    );
     if (existing) {
       setReviewIds((prev) => ({ ...prev, [key]: existing.id }));
-      setReviewDrafts((prev) => {
-        if (prev[key]) return prev;
-        return {
-          ...prev,
-          [key]: {
-            rating: existing.rating,
-            title: existing.title || '',
-            body: existing.body || '',
-          },
-        };
-      });
+      setReviewExistingImages((prev) => ({
+        ...prev,
+        [key]: mapExistingReviewImages(existing),
+      }));
+      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewDrafts((prev) => ({
+        ...prev,
+        [key]: {
+          rating: existing.rating || 0,
+          title: existing.title || '',
+          body: existing.body || '',
+        },
+      }));
+    } else {
+      setReviewExistingImages((prev) => ({ ...prev, [key]: [] }));
+      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
     }
   };
 
@@ -298,27 +367,38 @@ const OrderDetailsPage = () => {
     setReviewSubmitting((prev) => ({ ...prev, [key]: true }));
     try {
       const attachments = getReviewAttachments(key);
+      const mediaIdsToDelete = getReviewMediaIdsToDelete(key);
       let existingId = getReviewId(key);
       if (!existingId) {
-        const existing = await fetchExistingReview(item.productId, order.userId, order.id);
+        const existing = await fetchExistingReview(
+          item.productId,
+          order.userId,
+          order.id,
+          item.reviewId
+        );
         if (existing) {
           existingId = existing.id;
           setReviewIds((prev) => ({ ...prev, [key]: existing.id }));
         }
       }
 
+      let persistedReviewId: number | null = null;
+      let persistedImages: { url: string; mediaId?: number }[] = [];
       if (existingId) {
-        await reviewApi.updateReview(
+        const updated = await reviewApi.updateReview(
           existingId,
           {
             userId: order.userId,
             rating: draft.rating,
             title: draft.title.trim() || item.productName || 'Review',
             body: draft.body.trim(),
+            ...(mediaIdsToDelete.length > 0 ? { mediaIdsToDelete } : {}),
           },
           attachments.images,
           attachments.videos
         );
+        persistedReviewId = updated.id;
+        persistedImages = mapExistingReviewImages(updated);
       } else {
         const created = await reviewApi.createReview(
           {
@@ -332,12 +412,34 @@ const OrderDetailsPage = () => {
           attachments.images,
           attachments.videos
         );
-        setReviewIds((prev) => ({ ...prev, [key]: created.id }));
+        persistedReviewId = created.id;
+        persistedImages = mapExistingReviewImages(created);
       }
 
+      if (persistedReviewId) {
+        setReviewIds((prev) => ({ ...prev, [key]: persistedReviewId as number }));
+      }
+      if (persistedImages.length === 0) {
+        const refreshed = await fetchExistingReview(
+          item.productId,
+          order.userId,
+          order.id,
+          persistedReviewId || existingId || item.reviewId
+        );
+        persistedImages = refreshed ? mapExistingReviewImages(refreshed) : [];
+      }
+      setReviewExistingImages((prev) => ({
+        ...prev,
+        [key]: persistedImages,
+      }));
+      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
-        [key]: { rating: 0, title: '', body: '' },
+        [key]: {
+          rating: draft.rating,
+          title: draft.title,
+          body: draft.body,
+        },
       }));
       setReviewAttachments((prev) => ({
         ...prev,
@@ -363,14 +465,21 @@ const OrderDetailsPage = () => {
     const loadExistingReviews = async () => {
       const updates: Record<string, number> = {};
       const drafts: Record<string, { rating: number; title: string; body: string }> = {};
+      const existingImages: Record<string, { url: string; mediaId?: number }[]> = {};
 
       await Promise.all(
         order.items.map(async (item) => {
           const key = getReviewKey(order.id, item.productId);
           if (reviewIds[key]) return;
-          const existing = await fetchExistingReview(item.productId, order.userId, order.id);
+          const existing = await fetchExistingReview(
+            item.productId,
+            order.userId,
+            order.id,
+            item.reviewId
+          );
           if (existing) {
             updates[key] = existing.id;
+            existingImages[key] = mapExistingReviewImages(existing);
             if (!reviewDrafts[key]) {
               drafts[key] = {
                 rating: existing.rating,
@@ -385,6 +494,9 @@ const OrderDetailsPage = () => {
       if (!active) return;
       if (Object.keys(updates).length) {
         setReviewIds((prev) => ({ ...prev, ...updates }));
+      }
+      if (Object.keys(existingImages).length) {
+        setReviewExistingImages((prev) => ({ ...prev, ...existingImages }));
       }
       if (Object.keys(drafts).length) {
         setReviewDrafts((prev) => ({ ...prev, ...drafts }));
@@ -673,6 +785,7 @@ const OrderDetailsPage = () => {
           const key = getReviewKey(order.id, reviewModal.item.productId);
           const draft = getReviewDraft(key);
           const attachments = getReviewAttachments(key);
+          const existingImages = getReviewExistingImages(key);
           const isSubmitting = !!reviewSubmitting[key];
           const existingReviewId = getReviewId(key);
           const previewImage = getOrderImageUrl(reviewModal.item.productImage);
@@ -748,8 +861,31 @@ const OrderDetailsPage = () => {
                       />
                       <FiImage size={18} className="text-dark-400" />
                     </label>
+                    {existingImages.map((image, index) => (
+                      <div
+                        key={`existing-${image.url}-${index}`}
+                        className="relative h-14 w-14 overflow-visible"
+                        title="Already uploaded"
+                      >
+                        <div className="h-full w-full rounded-lg overflow-hidden border border-[#E6E2D6] bg-white">
+                          <img
+                            src={getOrderImageUrl(image.url)}
+                            alt="Existing review"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeExistingReviewImage(key, index)}
+                          className="absolute -top-2 -right-2 z-20 h-5 w-5 rounded-full bg-[#6B7D60] text-white flex items-center justify-center shadow ring-2 ring-white"
+                          aria-label="Remove existing photo"
+                        >
+                          <FiX size={12} />
+                        </button>
+                      </div>
+                    ))}
                     {attachments.images.map((file, index) => (
-                      <div key={`${file.name}-${index}`} className="relative h-14 w-14">
+                      <div key={`${file.name}-${index}`} className="relative h-14 w-14 overflow-visible">
                         <div className="h-full w-full rounded-lg overflow-hidden border border-[#E6E2D6] bg-white">
                           <img
                             src={URL.createObjectURL(file)}

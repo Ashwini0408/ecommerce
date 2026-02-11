@@ -7103,6 +7103,7 @@
 
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiEye,
@@ -7201,6 +7202,23 @@ const AdminUsers = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const rowsPerPageOptions = [5, 10, 20, 50, 100];
+
+  useEffect(() => {
+    const isModalOpen =
+      showViewModal ||
+      showOrdersModal ||
+      showOrderDetailModal ||
+      showAppointmentsModal;
+    document.body.style.overflow = isModalOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [
+    showViewModal,
+    showOrdersModal,
+    showOrderDetailModal,
+    showAppointmentsModal,
+  ]);
 
   const SERVER_URL = import.meta.env.VITE_API_IMG_URL || 'http://192.168.1.111:8090';
 
@@ -7826,15 +7844,16 @@ const AdminUsers = () => {
       </div>
 
       {/* ================= VIEW USER MODAL ================= */}
-      <AnimatePresence>
-        {showViewModal && selectedUser && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-              onClick={() => setShowViewModal(false)}
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div className="glass-card rounded-3xl p-8 max-w-xl w-full">
+      {createPortal(
+        <AnimatePresence>
+          {showViewModal && selectedUser && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9990]"
+                onClick={() => setShowViewModal(false)}
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div className="glass-card rounded-3xl p-8 max-w-xl w-full">
                 <div className="flex justify-between mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-foreground">
@@ -7920,30 +7939,33 @@ const AdminUsers = () => {
                     Close
                   </button>
                 </div>
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       {/* ================= ENHANCED ORDERS MODAL ================= */}
-      <AnimatePresence>
-        {showOrdersModal && selectedUser && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-              onClick={() => setShowOrdersModal(false)}
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {showOrdersModal && selectedUser && (
+            <>
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-card border border-border rounded-3xl shadow-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-              >
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9990]"
+                onClick={() => setShowOrdersModal(false)}
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-card border border-border rounded-3xl shadow-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+                >
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-sage flex items-center justify-center">
@@ -8173,30 +8195,33 @@ const AdminUsers = () => {
                     })}
                   </div>
                 )}
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       {/* ================= ORDER DETAIL MODAL ================= */}
-      <AnimatePresence>
-        {showOrderDetailModal && selectedOrder && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-              onClick={() => setShowOrderDetailModal(false)}
-            />
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {showOrderDetailModal && selectedOrder && (
+            <>
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-card border border-border rounded-3xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
-              >
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9990]"
+                onClick={() => setShowOrderDetailModal(false)}
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-card border border-border rounded-3xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+                >
                 <div className="bg-gradient-sage px-6 py-5 flex justify-between items-center">
                   <div>
                     <h2 className="text-xl font-bold text-white">Order Details</h2>
@@ -8396,22 +8421,25 @@ const AdminUsers = () => {
                     Close
                   </button>
                 </div>
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       {/* ================= APPOINTMENTS MODAL ================= */}
-      <AnimatePresence>
-        {showAppointmentsModal && selectedUser && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-              onClick={() => setShowAppointmentsModal(false)}
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
+      {createPortal(
+        <AnimatePresence>
+          {showAppointmentsModal && selectedUser && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9990]"
+                onClick={() => setShowAppointmentsModal(false)}
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div className="glass-card rounded-2xl p-6 max-w-3xl w-full">
                 <div className="flex justify-between mb-4">
                   <h2 className="text-xl font-bold text-foreground">
                     Appointments – {selectedUser.name}
@@ -8439,11 +8467,13 @@ const AdminUsers = () => {
                     ))}
                   </div>
                 )}
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
     </div>
   );
 };

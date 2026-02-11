@@ -282,35 +282,501 @@
 
 
 
-import { useState } from "react";
+// import { useState } from "react";
+// // import { motion } from "framer-motion";
+// import { /* Calendar, */ Clock, /* User, */ Sparkles, ArrowRight } from "lucide-react";
+// import { toast } from "sonner";
+// import Navbar from "../../components/layout/Navbar";
+// import { Footer } from "../../components/layout/Footer";
+
+// import bookingApi from "../../api/BookingApi";
+// import { useEffect } from "react";
 // import { motion } from "framer-motion";
-import { /* Calendar, */ Clock, /* User, */ Sparkles, ArrowRight } from "lucide-react";
+// // ---------------- SERVICE UI DATA ----------------
+
+// // const timeSlots = [
+// //   "10:00 AM",
+// //   "11:00 AM",
+// //   "12:00 PM",
+// //   "2:00 PM",
+// //   "3:00 PM",
+// //   "4:00 PM",
+// //   "5:00 PM",
+// //   "6:00 PM",
+// // ];
+
+// export default function AppointmentBooking() {
+//   const [selectedService, setSelectedService] = useState("");
+//   const [selectedDate, setSelectedDate] = useState("");
+//   const [selectedTime, setSelectedTime] = useState("");
+//   const [services, setServices] = useState<string[]>([]);
+// const [servicesLoading, setServicesLoading] = useState(false);
+//   const [loading, setLoading] = useState(false);
+//   const [showSuccessModal, setShowSuccessModal] = useState(false);
+//   const [formData, setFormData] = useState({
+//     name: "",
+//     email: "",
+//     phone: "",
+//     notes: "",
+//   });
+// const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+//   // Convert AM/PM → backend format HH:mm:ss
+//   const convertTo24Hour = (timeStr: string) => {
+//     const time = new Date(`1970-01-01 ${timeStr}`);
+//     return time.toTimeString().split(" ")[0];
+//   };
+
+//   const storedUser = localStorage.getItem("user");
+// const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
+
+// // backend "HH:mm:ss" → "10:00 AM"
+// const convertTo12Hour = (time24: string) => {
+//   const [h, m] = time24.split(":").map(Number);
+//   const d = new Date();
+//   d.setHours(h, m);
+//   return d.toLocaleTimeString("en-US", {
+//     hour: "numeric",
+//     minute: "2-digit",
+//     hour12: true,
+//   });
+// };
+// const formatServiceName = (service: string) =>
+//   service
+//     .toLowerCase()
+//     .replace(/_/g, " ")
+//     .replace(/\b\w/g, (l) => l.toUpperCase());
+
+//   const getAvailableDates = () => {
+//     const dates: Date[] = [];
+//     const today = new Date();
+//     for (let i = 1; i <= 14; i++) {
+//       const date = new Date(today);
+//       date.setDate(today.getDate() + i);
+//       if (date.getDay() !== 0) dates.push(date); // skip Sunday
+//     }
+//     return dates;
+//   };
+
+//   const formatDate = (date: Date) =>
+//     date.toLocaleDateString("en-US", {
+//       weekday: "short",
+//       month: "short",
+//       day: "numeric",
+//     });
+
+//   const handleChange = (e: any) => {
+//     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+//   };
+
+//   // ---------------- SUBMIT → API CALL ----------------
+// const handleSubmit = async (e: any) => {
+//   e.preventDefault();
+
+//   if (!selectedService || !selectedDate || !selectedTime) {
+//     toast.error("Please complete all required fields");
+//     return;
+//   }
+
+//   try {
+//     setLoading(true);
+
+//     const baseData = {
+//       appointmentDate: selectedDate,
+//       appointmentTime: convertTo24Hour(selectedTime),
+//       serviceType: selectedService,
+//       notes: formData.notes || "",
+//     };
+
+//     let response;
+
+//     if (loggedInUser) {
+//       // ✅ LOGGED-IN USER
+//       response = await bookingApi.createAppointment(baseData);
+//     } else {
+//       // ✅ GUEST USER
+//       response = await bookingApi.createGuestAppointment({
+//         ...baseData,
+//         guestName: formData.name,
+//         guestEmail: formData.email,
+//         guestPhone: formData.phone,
+//       });
+//     }
+
+//     toast.success("Appointment booked successfully!");
+//     console.log("APPOINTMENT CREATED:", response);
+//     setShowSuccessModal(true);
+
+//     // reset
+//     setSelectedService("");
+//     setSelectedDate("");
+//     setSelectedTime("");
+//     setFormData({ name: "", email: "", phone: "", notes: "" });
+
+//   } catch (error: any) {
+//     console.error(error);
+//     toast.error(
+//       error?.response?.data?.message || "Failed to book appointment"
+//     );
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+// useEffect(() => {
+//   if (!selectedDate) {
+//     setAvailableSlots([]);
+//     return;
+//   }
+
+//   const loadAvailableSlots = async () => {
+//     try {
+//       const slots24 =
+//         await bookingApi.getAvailableSlots(selectedDate);
+
+//       // convert backend 24h → frontend AM/PM
+//       const slots12 = slots24.map(convertTo12Hour);
+
+//       setAvailableSlots(slots12);
+//     } catch (err) {
+//       console.error("Failed to load available slots", err);
+//       setAvailableSlots([]);
+//     }
+//   };
+
+//   loadAvailableSlots();
+// }, [selectedDate]);
+
+
+
+// useEffect(() => {
+//   if (loggedInUser) {
+//     setFormData({
+//       name: loggedInUser.name || "",
+//       email: loggedInUser.email || "",
+//       phone: loggedInUser.phone || "",
+//       notes: "",
+//     });
+//   }
+// }, []);
+
+// useEffect(() => {
+//   const loadServices = async () => {
+//     try {
+//       setServicesLoading(true);
+//       const data = await bookingApi.getAppointmentTypes();
+//       setServices(data);
+//     } catch (err) {
+//       toast.error("Failed to load services");
+//     } finally {
+//       setServicesLoading(false);
+//     }
+//   };
+
+//   loadServices();
+// }, []);
+
+//   return (
+//     <div>
+//       {/* HEADER */}
+//       <section className="py-20 md:py-32 border-b">
+//         <Navbar />
+//         <div className="max-w-5xl mx-auto px-6 text-center">
+//           <p className="text-[#6E9F7D] tracking-[0.3em] uppercase text-xs mb-4">
+//             Personal Service
+//           </p>
+
+//           <h1 className="font-serif text-5xl md:text-7xl mb-6">
+//             Book an Appointment
+//           </h1>
+
+//           <p className="text-gray-500 max-w-xl mx-auto">
+//             Experience personalized styling services at our flagship boutique.
+//           </p>
+//         </div>
+//       </section>
+
+//       {/* FORM */}
+//       <section className="py-20">
+//         <div className="max-w-4xl mx-auto px-6">
+//           <form onSubmit={handleSubmit} className="space-y-16">
+//             {/* SERVICE SELECT */}
+//            <div>
+//   <h2 className="font-serif text-2xl mb-8">Select Service</h2>
+
+//   {servicesLoading ? (
+//     <p className="text-gray-500">Loading services…</p>
+//   ) : (
+//     <div className="grid md:grid-cols-3 gap-4">
+//       {services.map((service) => (
+//         <button
+//           key={service}
+//           type="button"
+//           onClick={() => setSelectedService(service)}
+//           className={`p-8 border text-left transition-all rounded-lg
+//             ${
+//               selectedService === service
+//                 ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+//                 : "hover:border-black/40"
+//             }`}
+//         >
+//           <Sparkles className="w-8 h-8 text-[#6E9F7D] mb-5" />
+
+//           <h3 className="font-medium mb-2">
+//             {formatServiceName(service)}
+//           </h3>
+
+//           <p className="text-sm text-gray-500">
+//             Premium personalized service
+//           </p>
+//         </button>
+//       ))}
+//     </div>
+//   )}
+// </div>
+
+//             {/* DATE */}
+//             <div>
+//               <h2 className="font-serif text-2xl mb-8">Select Date</h2>
+
+//               <div className="flex gap-3 overflow-auto pb-2">
+//                 {getAvailableDates().map((date) => {
+//                   const dateStr = date.toISOString().split("T")[0];
+//                   return (
+//                     <button
+//                       key={dateStr}
+//                       type="button"
+//                       onClick={() => setSelectedDate(dateStr)}
+//                       className={`px-5 py-4 border min-w-[110px] ${
+//                         selectedDate === dateStr
+//                           ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+//                           : "hover:border-black/40"
+//                       }`}
+//                     >
+//                       <p className="text-sm">{formatDate(date)}</p>
+//                     </button>
+//                   );
+//                 })}
+//               </div>
+//             </div>
+
+//             {/* TIME */}
+//             <div>
+//               <h2 className="font-serif text-2xl mb-8">Select Time</h2>
+// <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+//   {availableSlots.length === 0 ? (
+//     <p className="col-span-full text-sm text-gray-500">
+//       No slots available for this date
+//     </p>
+//   ) : (
+//     availableSlots.map((time) => (
+//       <button
+//         key={time}
+//         type="button"
+//         onClick={() => setSelectedTime(time)}
+//         className={`px-3 py-3 border text-xs tracking-wide transition
+//           ${
+//             selectedTime === time
+//               ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+//               : "hover:border-black/40"
+//           }
+//         `}
+//       >
+//         {time}
+//       </button>
+//     ))
+//   )}
+// </div>
+//             </div>
+
+//             {/* USER INFO */}
+//             <div>
+//               <h2 className="font-serif text-2xl mb-8">Your Information</h2>
+
+//               <div className="grid md:grid-cols-2 gap-6">
+//                 <div>
+//                   <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
+//                     Full Name *
+//                   </label>
+//                   <input
+//                     name="name"
+//                     value={formData.name}
+//                     onChange={handleChange}
+//                     required
+//                    className="w-full h-14 px-5 
+// bg-[#F4EBE6] 
+// border border-[#E2D6CF] 
+// text-gray-900 
+// placeholder-gray-500 
+// focus:border-[#6E9F7D] 
+// focus:bg-[#F8F1ED]
+// outline-none transition rounded-md"
+
+//                     placeholder="Your name"
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
+//                     Email *
+//                   </label>
+//                   <input
+//                     name="email"
+//                     type="email"
+//                     value={formData.email}
+//                     onChange={handleChange}
+//                     required
+//                     className="w-full h-14 px-5 
+// bg-[#F4EBE6] 
+// border border-[#E2D6CF] 
+// text-gray-900 
+// placeholder-gray-500 
+// focus:border-[#6E9F7D] 
+// focus:bg-[#F8F1ED]
+// outline-none transition rounded-md"
+
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
+//                     Phone *
+//                   </label>
+//                   <input
+//                     name="phone"
+//                     value={formData.phone}
+//                     onChange={handleChange}
+//                     required
+//                     className="w-full h-14 px-5 
+// bg-[#F4EBE6] 
+// border border-[#E2D6CF] 
+// text-gray-900 
+// placeholder-gray-500 
+// focus:border-[#6E9F7D] 
+// focus:bg-[#F8F1ED]
+// outline-none transition rounded-md"
+//                     placeholder="+91 **********"
+//                   />
+//                 </div>
+//               </div>
+
+//              <div className="mt-6">
+//   <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
+//     Additional Notes
+//   </label>
+//   <textarea
+//     name="notes"
+//     value={formData.notes}
+//     onChange={handleChange}
+//     rows={4}
+//     placeholder="Any special requests or preferences..."
+//     className="w-full px-5 py-4 
+//     bg-[#F4EBE6] 
+//     border border-[#E2D6CF] 
+//     text-gray-900 
+//     placeholder-gray-500 
+//     focus:border-[#6E9F7D] 
+//     focus:bg-[#F8F1ED]
+//     outline-none transition rounded-md"
+//   />
+// </div>
+
+//             </div>
+
+//             {/* SUBMIT */}
+//             <div className="flex flex-col items-center">
+//               <button
+//                 type="submit"
+//                 disabled={loading}
+//                 className="px-14 py-5 bg-[#6E9F7D] text-black uppercase tracking-wide flex items-center gap-3 justify-center hover:bg-[#628c71] transition shadow-[0_0_25px_#00000040]"
+//               >
+//                 {loading ? "Booking..." : (
+//                   <>
+//                     <Clock className="w-4 h-4" />
+//                     Confirm Appointment
+//                     <ArrowRight className="w-4 h-4" />
+//                   </>
+//                 )}
+//               </button>
+
+//               <p className="text-sm text-gray-500 mt-6 mb-24 text-center">
+//                 You'll receive a confirmation email with all the details.
+//               </p>
+//             </div>
+//           </form>
+//         </div>
+// {showSuccessModal && (
+//   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+//     <motion.div
+//       initial={{ opacity: 0, scale: 0.85 }}
+//       animate={{ opacity: 1, scale: 1 }}
+//       exit={{ opacity: 0, scale: 0.85 }}
+//       transition={{ type: "spring", stiffness: 260, damping: 20 }}
+//       className="relative bg-white rounded-2xl max-w-lg w-full p-10 text-center shadow-2xl overflow-hidden"
+//     >
+//       {/* CONFETTI DOTS */}
+//       <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle,#6E9F7D_1px,transparent_1px)] bg-[length:20px_20px]" />
+
+//       {/* CHECK ICON */}
+//       <div className="relative z-10 w-24 h-24 mx-auto mb-6 rounded-full border-4 border-green-500 flex items-center justify-center">
+//         <svg
+//           className="w-12 h-12 text-green-500"
+//           fill="none"
+//           stroke="currentColor"
+//           strokeWidth={3}
+//           viewBox="0 0 24 24"
+//         >
+//           <path
+//             strokeLinecap="round"
+//             strokeLinejoin="round"
+//             d="M5 13l4 4L19 7"
+//           />
+//         </svg>
+//       </div>
+
+//       {/* TITLE */}
+//       <h2 className="relative z-10 text-3xl font-serif font-semibold mb-2 text-gray-900">
+//         Appointment Booked Successfully
+//       </h2>
+
+//       <p className="relative z-10 text-gray-600 mb-8">
+//         Thank you for patronizing us today. <br />
+//         We value you!
+//       </p>
+
+//       {/* CTA */}
+//       <button
+//         onClick={() => setShowSuccessModal(false)}
+//         className="relative z-10 px-10 py-3 bg-[#6E9F7D] text-white rounded-md font-medium hover:bg-[#628c71] transition"
+//       >
+//         Return Home
+//       </button>
+//     </motion.div>
+//   </div>
+// )}
+//         <Footer />
+//       </section>
+//     </div>
+//   );
+// }
+
+
+
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Clock, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
-
 import bookingApi from "../../api/BookingApi";
 import { useEffect } from "react";
-import { motion } from "framer-motion";
-// ---------------- SERVICE UI DATA ----------------
-
-// const timeSlots = [
-//   "10:00 AM",
-//   "11:00 AM",
-//   "12:00 PM",
-//   "2:00 PM",
-//   "3:00 PM",
-//   "4:00 PM",
-//   "5:00 PM",
-//   "6:00 PM",
-// ];
 
 export default function AppointmentBooking() {
   const [selectedService, setSelectedService] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [services, setServices] = useState<string[]>([]);
-const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesLoading, setServicesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -319,32 +785,42 @@ const [servicesLoading, setServicesLoading] = useState(false);
     phone: "",
     notes: "",
   });
-const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-  // Convert AM/PM → backend format HH:mm:ss
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  
+  // Added: Form validation states
+  const [formErrors, setFormErrors] = useState({
+    service: "",
+    date: "",
+    time: "",
+    name: "",
+    email: "",
+    phone: ""
+  });
+
   const convertTo24Hour = (timeStr: string) => {
     const time = new Date(`1970-01-01 ${timeStr}`);
     return time.toTimeString().split(" ")[0];
   };
 
   const storedUser = localStorage.getItem("user");
-const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
+  const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
 
-// backend "HH:mm:ss" → "10:00 AM"
-const convertTo12Hour = (time24: string) => {
-  const [h, m] = time24.split(":").map(Number);
-  const d = new Date();
-  d.setHours(h, m);
-  return d.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-};
-const formatServiceName = (service: string) =>
-  service
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase());
+  const convertTo12Hour = (time24: string) => {
+    const [h, m] = time24.split(":").map(Number);
+    const d = new Date();
+    d.setHours(h, m);
+    return d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+  
+  const formatServiceName = (service: string) =>
+    service
+      .toLowerCase()
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase());
 
   const getAvailableDates = () => {
     const dates: Date[] = [];
@@ -364,116 +840,222 @@ const formatServiceName = (service: string) =>
       day: "numeric",
     });
 
-  const handleChange = (e: any) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+const handleChange = (e: any) => {
+  const { name, value } = e.target;
 
-  // ---------------- SUBMIT → API CALL ----------------
-const handleSubmit = async (e: any) => {
-  e.preventDefault();
-
-  if (!selectedService || !selectedDate || !selectedTime) {
-    toast.error("Please complete all required fields");
-    return;
+  if (name === "phone") {
+    const numericValue = value.replace(/\D/g, ""); // Allow only digits
+    if (numericValue.length <= 10) {
+      setFormData((prev) => ({ ...prev, phone: numericValue }));
+    }
+  } else {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
-  try {
-    setLoading(true);
-
-    const baseData = {
-      appointmentDate: selectedDate,
-      appointmentTime: convertTo24Hour(selectedTime),
-      serviceType: selectedService,
-      notes: formData.notes || "",
-    };
-
-    let response;
-
-    if (loggedInUser) {
-      // ✅ LOGGED-IN USER
-      response = await bookingApi.createAppointment(baseData);
-    } else {
-      // ✅ GUEST USER
-      response = await bookingApi.createGuestAppointment({
-        ...baseData,
-        guestName: formData.name,
-        guestEmail: formData.email,
-        guestPhone: formData.phone,
-      });
-    }
-
-    toast.success("Appointment booked successfully!");
-    console.log("APPOINTMENT CREATED:", response);
-    setShowSuccessModal(true);
-
-    // reset
-    setSelectedService("");
-    setSelectedDate("");
-    setSelectedTime("");
-    setFormData({ name: "", email: "", phone: "", notes: "" });
-
-  } catch (error: any) {
-    console.error(error);
-    toast.error(
-      error?.response?.data?.message || "Failed to book appointment"
-    );
-  } finally {
-    setLoading(false);
+  // Clear error when user starts typing
+  if (formErrors[name as keyof typeof formErrors]) {
+    setFormErrors(prev => ({ ...prev, [name]: "" }));
   }
 };
 
-useEffect(() => {
-  if (!selectedDate) {
-    setAvailableSlots([]);
-    return;
-  }
-
-  const loadAvailableSlots = async () => {
-    try {
-      const slots24 =
-        await bookingApi.getAvailableSlots(selectedDate);
-
-      // convert backend 24h → frontend AM/PM
-      const slots12 = slots24.map(convertTo12Hour);
-
-      setAvailableSlots(slots12);
-    } catch (err) {
-      console.error("Failed to load available slots", err);
-      setAvailableSlots([]);
-    }
+  // Validation functions
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
-  loadAvailableSlots();
-}, [selectedDate]);
+const validatePhone = (phone: string) => {
+  const phoneRegex = /^[0-9]{10}$/; // Exactly 10 digits only
+  return phoneRegex.test(phone);
+};
 
+  // Added: Validate form before submission
+  const validateForm = () => {
+    const errors = {
+      service: "",
+      date: "",
+      time: "",
+      name: "",
+      email: "",
+      phone: ""
+    };
 
+    let isValid = true;
 
-useEffect(() => {
-  if (loggedInUser) {
-    setFormData({
-      name: loggedInUser.name || "",
-      email: loggedInUser.email || "",
-      phone: loggedInUser.phone || "",
-      notes: "",
-    });
-  }
-}, []);
+    // Validate service
+    if (!selectedService.trim()) {
+      errors.service = "Please select a service";
+      isValid = false;
+    }
 
-useEffect(() => {
-  const loadServices = async () => {
+    // Validate date
+    if (!selectedDate.trim()) {
+      errors.date = "Please select a date";
+      isValid = false;
+    }
+
+    // Validate time
+    if (!selectedTime.trim()) {
+      errors.time = "Please select a time";
+      isValid = false;
+    }
+
+    // Validate name
+    if (!formData.name.trim()) {
+      errors.name = "Name is required";
+      isValid = false;
+    }
+
+    // Validate email
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!validateEmail(formData.email)) {
+      errors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    // Validate phone
+    if (!formData.phone.trim()) {
+      errors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!validatePhone(formData.phone)) {
+      errors.phone = "Phone number must be exactly 10 digits";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  // ---------------- SUBMIT → API CALL ----------------
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+
+    // Validate all fields before submission
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
+
     try {
-      setServicesLoading(true);
-      const data = await bookingApi.getAppointmentTypes();
-      setServices(data);
-    } catch (err) {
-      toast.error("Failed to load services");
+      setLoading(true);
+
+      const baseData = {
+        appointmentDate: selectedDate,
+        appointmentTime: convertTo24Hour(selectedTime),
+        serviceType: selectedService,
+        notes: formData.notes || "",
+      };
+
+      let response;
+
+      if (loggedInUser) {
+        // ✅ LOGGED-IN USER
+        response = await bookingApi.createAppointment(baseData);
+      } else {
+        // ✅ GUEST USER
+        response = await bookingApi.createGuestAppointment({
+          ...baseData,
+          guestName: formData.name,
+          guestEmail: formData.email,
+          guestPhone: formData.phone,
+        });
+      }
+
+      toast.success("Appointment booked successfully!");
+      console.log("APPOINTMENT CREATED:", response);
+      setShowSuccessModal(true);
+
+      // reset
+      setSelectedService("");
+      setSelectedDate("");
+      setSelectedTime("");
+      setFormData({ name: "", email: "", phone: "", notes: "" });
+      setFormErrors({ service: "", date: "", time: "", name: "", email: "", phone: "" });
+
+    } catch (error: any) {
+      console.error(error);
+      toast.error(
+        error?.response?.data?.message || "Failed to book appointment"
+      );
     } finally {
-      setServicesLoading(false);
+      setLoading(false);
     }
   };
 
-  loadServices();
-}, []);
+  useEffect(() => {
+    if (!selectedDate) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    const loadAvailableSlots = async () => {
+      try {
+        const slots24 = await bookingApi.getAvailableSlots(selectedDate);
+        const slots12 = slots24.map(convertTo12Hour);
+        setAvailableSlots(slots12);
+      } catch (err) {
+        console.error("Failed to load available slots", err);
+        setAvailableSlots([]);
+      }
+    };
+
+    loadAvailableSlots();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (loggedInUser) {
+      setFormData({
+        name: loggedInUser.name || "",
+        email: loggedInUser.email || "",
+        phone: loggedInUser.phone || "",
+        notes: "",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        setServicesLoading(true);
+        const data = await bookingApi.getAppointmentTypes();
+        setServices(data);
+      } catch (err) {
+        toast.error("Failed to load services");
+      } finally {
+        setServicesLoading(false);
+      }
+    };
+
+    loadServices();
+  }, []);
+
+  // Added: Clear error when selecting service
+  const handleServiceSelect = (service: string) => {
+    setSelectedService(service);
+    if (formErrors.service) {
+      setFormErrors(prev => ({ ...prev, service: "" }));
+    }
+  };
+
+  // Added: Clear error when selecting date
+  const handleDateSelect = (dateStr: string) => {
+    setSelectedDate(dateStr);
+    if (formErrors.date) {
+      setFormErrors(prev => ({ ...prev, date: "" }));
+    }
+    // Reset time when date changes
+    setSelectedTime("");
+  };
+
+  // Added: Clear error when selecting time
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+    if (formErrors.time) {
+      setFormErrors(prev => ({ ...prev, time: "" }));
+    }
+  };
 
   return (
     <div>
@@ -500,44 +1082,50 @@ useEffect(() => {
         <div className="max-w-4xl mx-auto px-6">
           <form onSubmit={handleSubmit} className="space-y-16">
             {/* SERVICE SELECT */}
-           <div>
-  <h2 className="font-serif text-2xl mb-8">Select Service</h2>
+            <div>
+              <h2 className="font-serif text-2xl mb-8">Select Service *</h2>
+              {formErrors.service && (
+                <p className="text-red-500 text-sm mb-2">{formErrors.service}</p>
+              )}
+              {servicesLoading ? (
+                <p className="text-gray-500">Loading services…</p>
+              ) : (
+                <div className="grid md:grid-cols-3 gap-4">
+                  {services.map((service) => (
+                    <button
+                      key={service}
+                      type="button"
+                      onClick={() => handleServiceSelect(service)}
+                      className={`p-8 border text-left transition-all rounded-lg
+                        ${
+                          selectedService === service
+                            ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+                            : "hover:border-black/40"
+                        }
+                        ${formErrors.service ? "border-red-200" : ""}
+                      `}
+                    >
+                      <Sparkles className="w-8 h-8 text-[#6E9F7D] mb-5" />
 
-  {servicesLoading ? (
-    <p className="text-gray-500">Loading services…</p>
-  ) : (
-    <div className="grid md:grid-cols-3 gap-4">
-      {services.map((service) => (
-        <button
-          key={service}
-          type="button"
-          onClick={() => setSelectedService(service)}
-          className={`p-8 border text-left transition-all rounded-lg
-            ${
-              selectedService === service
-                ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
-                : "hover:border-black/40"
-            }`}
-        >
-          <Sparkles className="w-8 h-8 text-[#6E9F7D] mb-5" />
+                      <h3 className="font-medium mb-2">
+                        {formatServiceName(service)}
+                      </h3>
 
-          <h3 className="font-medium mb-2">
-            {formatServiceName(service)}
-          </h3>
-
-          <p className="text-sm text-gray-500">
-            Premium personalized service
-          </p>
-        </button>
-      ))}
-    </div>
-  )}
-</div>
+                      <p className="text-sm text-gray-500">
+                        Premium personalized service
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* DATE */}
             <div>
-              <h2 className="font-serif text-2xl mb-8">Select Date</h2>
-
+              <h2 className="font-serif text-2xl mb-8">Select Date *</h2>
+              {formErrors.date && (
+                <p className="text-red-500 text-sm mb-2">{formErrors.date}</p>
+              )}
               <div className="flex gap-3 overflow-auto pb-2">
                 {getAvailableDates().map((date) => {
                   const dateStr = date.toISOString().split("T")[0];
@@ -545,12 +1133,14 @@ useEffect(() => {
                     <button
                       key={dateStr}
                       type="button"
-                      onClick={() => setSelectedDate(dateStr)}
-                      className={`px-5 py-4 border min-w-[110px] ${
-                        selectedDate === dateStr
-                          ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
-                          : "hover:border-black/40"
-                      }`}
+                      onClick={() => handleDateSelect(dateStr)}
+                      className={`px-5 py-4 border min-w-[110px] rounded-md
+                        ${formErrors.date ? "border-red-200" : ""}
+                        ${
+                          selectedDate === dateStr
+                            ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+                            : "hover:border-black/40"
+                        }`}
                     >
                       <p className="text-sm">{formatDate(date)}</p>
                     </button>
@@ -561,31 +1151,35 @@ useEffect(() => {
 
             {/* TIME */}
             <div>
-              <h2 className="font-serif text-2xl mb-8">Select Time</h2>
-<div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-  {availableSlots.length === 0 ? (
-    <p className="col-span-full text-sm text-gray-500">
-      No slots available for this date
-    </p>
-  ) : (
-    availableSlots.map((time) => (
-      <button
-        key={time}
-        type="button"
-        onClick={() => setSelectedTime(time)}
-        className={`px-3 py-3 border text-xs tracking-wide transition
-          ${
-            selectedTime === time
-              ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
-              : "hover:border-black/40"
-          }
-        `}
-      >
-        {time}
-      </button>
-    ))
-  )}
-</div>
+              <h2 className="font-serif text-2xl mb-8">Select Time *</h2>
+              {formErrors.time && (
+                <p className="text-red-500 text-sm mb-2">{formErrors.time}</p>
+              )}
+              <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+                {availableSlots.length === 0 ? (
+                  <p className="col-span-full text-sm text-gray-500">
+                    No slots available for this date
+                  </p>
+                ) : (
+                  availableSlots.map((time) => (
+                    <button
+                      key={time}
+                      type="button"
+                      onClick={() => handleTimeSelect(time)}
+                      className={`px-3 py-3 border text-xs tracking-wide transition rounded-md
+                        ${formErrors.time ? "border-red-200" : ""}
+                        ${
+                          selectedTime === time
+                            ? "border-[#6E9F7D] bg-[#6E9F7D]/10"
+                            : "hover:border-black/40"
+                        }
+                      `}
+                    >
+                      {time}
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
 
             {/* USER INFO */}
@@ -601,18 +1195,21 @@ useEffect(() => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    required
-                   className="w-full h-14 px-5 
-bg-[#F4EBE6] 
-border border-[#E2D6CF] 
-text-gray-900 
-placeholder-gray-500 
-focus:border-[#6E9F7D] 
-focus:bg-[#F8F1ED]
-outline-none transition rounded-md"
-
+                    className={`w-full h-14 px-5 rounded-md
+                      bg-[#F4EBE6] 
+                      border
+                      text-gray-900 
+                      placeholder-gray-500 
+                      focus:border-[#6E9F7D] 
+                      focus:bg-[#F8F1ED]
+                      outline-none transition
+                      ${formErrors.name ? "border-red-500" : "border-[#E2D6CF]"}
+                    `}
                     placeholder="Your name"
                   />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                  )}
                 </div>
 
                 <div>
@@ -624,17 +1221,21 @@ outline-none transition rounded-md"
                     type="email"
                     value={formData.email}
                     onChange={handleChange}
-                    required
-                    className="w-full h-14 px-5 
-bg-[#F4EBE6] 
-border border-[#E2D6CF] 
-text-gray-900 
-placeholder-gray-500 
-focus:border-[#6E9F7D] 
-focus:bg-[#F8F1ED]
-outline-none transition rounded-md"
-
+                    className={`w-full h-14 px-5 rounded-md
+                      bg-[#F4EBE6] 
+                      border
+                      text-gray-900 
+                      placeholder-gray-500 
+                      focus:border-[#6E9F7D] 
+                      focus:bg-[#F8F1ED]
+                      outline-none transition
+                      ${formErrors.email ? "border-red-500" : "border-[#E2D6CF]"}
+                    `}
+                    placeholder="example@email.com"
                   />
+                  {formErrors.email && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -645,41 +1246,47 @@ outline-none transition rounded-md"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    required
-                    className="w-full h-14 px-5 
-bg-[#F4EBE6] 
-border border-[#E2D6CF] 
-text-gray-900 
-placeholder-gray-500 
-focus:border-[#6E9F7D] 
-focus:bg-[#F8F1ED]
-outline-none transition rounded-md"
-                    placeholder="+91 **********"
+                    maxLength={10}
+  inputMode="numeric"
+  pattern="[0-9]{10}"
+                    className={`w-full h-14 px-5 rounded-md
+                      bg-[#F4EBE6] 
+                      border
+                      text-gray-900 
+                      placeholder-gray-500 
+                      focus:border-[#6E9F7D] 
+                      focus:bg-[#F8F1ED]
+                      outline-none transition
+                      ${formErrors.phone ? "border-red-500" : "border-[#E2D6CF]"}
+                    `}
+                    placeholder="+91 9876543210"
                   />
+                  {formErrors.phone && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
+                  )}
                 </div>
               </div>
 
              <div className="mt-6">
-  <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
-    Additional Notes
-  </label>
-  <textarea
-    name="notes"
-    value={formData.notes}
-    onChange={handleChange}
-    rows={4}
-    placeholder="Any special requests or preferences..."
-    className="w-full px-5 py-4 
-    bg-[#F4EBE6] 
-    border border-[#E2D6CF] 
-    text-gray-900 
-    placeholder-gray-500 
-    focus:border-[#6E9F7D] 
-    focus:bg-[#F8F1ED]
-    outline-none transition rounded-md"
-  />
-</div>
-
+                <label className="text-xs tracking-widest uppercase block mb-2 text-gray-800">
+                  Additional Notes
+                </label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Any special requests or preferences..."
+                  className="w-full px-5 py-4 rounded-md
+                    bg-[#F4EBE6] 
+                    border border-[#E2D6CF] 
+                    text-gray-900 
+                    placeholder-gray-500 
+                    focus:border-[#6E9F7D] 
+                    focus:bg-[#F8F1ED]
+                    outline-none transition"
+                />
+              </div>
             </div>
 
             {/* SUBMIT */}
@@ -687,7 +1294,7 @@ outline-none transition rounded-md"
               <button
                 type="submit"
                 disabled={loading}
-                className="px-14 py-5 bg-[#6E9F7D] text-black uppercase tracking-wide flex items-center gap-3 justify-center hover:bg-[#628c71] transition shadow-[0_0_25px_#00000040]"
+                className="px-14 py-5 bg-[#6E9F7D] text-black uppercase tracking-wide flex items-center gap-3 justify-center hover:bg-[#628c71] transition shadow-[0_0_25px_#00000040] rounded-md"
               >
                 {loading ? "Booking..." : (
                   <>
@@ -699,66 +1306,62 @@ outline-none transition rounded-md"
               </button>
 
               <p className="text-sm text-gray-500 mt-6 mb-24 text-center">
-                You'll receive a confirmation email with all the details.
+                All fields marked with * are mandatory
               </p>
             </div>
           </form>
         </div>
-{showSuccessModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.85 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20 }}
-      className="relative bg-white rounded-2xl max-w-lg w-full p-10 text-center shadow-2xl overflow-hidden"
-    >
-      {/* CONFETTI DOTS */}
-      <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle,#6E9F7D_1px,transparent_1px)] bg-[length:20px_20px]" />
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              className="relative bg-white rounded-2xl max-w-lg w-full p-10 text-center shadow-2xl overflow-hidden"
+            >
+              {/* CONFETTI DOTS */}
+              <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle,#6E9F7D_1px,transparent_1px)] bg-[length:20px_20px]" />
 
-      {/* CHECK ICON */}
-      <div className="relative z-10 w-24 h-24 mx-auto mb-6 rounded-full border-4 border-green-500 flex items-center justify-center">
-        <svg
-          className="w-12 h-12 text-green-500"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={3}
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M5 13l4 4L19 7"
-          />
-        </svg>
-      </div>
+              {/* CHECK ICON */}
+              <div className="relative z-10 w-24 h-24 mx-auto mb-6 rounded-full border-4 border-green-500 flex items-center justify-center">
+                <svg
+                  className="w-12 h-12 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
 
-      {/* TITLE */}
-      <h2 className="relative z-10 text-3xl font-serif font-semibold mb-2 text-gray-900">
-        Appointment Booked Successfully
-      </h2>
+              {/* TITLE */}
+              <h2 className="relative z-10 text-3xl font-serif font-semibold mb-2 text-gray-900">
+                Appointment Booked Successfully
+              </h2>
 
-      <p className="relative z-10 text-gray-600 mb-8">
-        Thank you for patronizing us today. <br />
-        We value you!
-      </p>
+              <p className="relative z-10 text-gray-600 mb-8">
+                Thank you for patronizing us today. <br />
+                We value you!
+              </p>
 
-      {/* CTA */}
-      <button
-        onClick={() => setShowSuccessModal(false)}
-        className="relative z-10 px-10 py-3 bg-[#6E9F7D] text-white rounded-md font-medium hover:bg-[#628c71] transition"
-      >
-        Return Home
-      </button>
-    </motion.div>
-  </div>
-)}
+              {/* CTA */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="relative z-10 px-10 py-3 bg-[#6E9F7D] text-white rounded-md font-medium hover:bg-[#628c71] transition"
+              >
+                Return Home
+              </button>
+            </motion.div>
+          </div>
+        )}
         <Footer />
       </section>
     </div>
   );
 }
-
-
-
-
