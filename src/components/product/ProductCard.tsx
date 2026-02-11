@@ -445,12 +445,19 @@ const handleWishlistClick = async (
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
-  // Get size attributes from backend - using "type": "Size" (from your JSON)
-  const sizeAttributes = product.attributes
-    ?.filter(attr => attr?.type?.toLowerCase() === 'size')
+ // Get ALL sizes first
+const allSizes =
+  product.attributes
+    ?.filter(attr => attr?.type?.toLowerCase() === "size")
     .map(attr => attr.value)
-    .filter(Boolean) // Remove null/undefined
-    .slice(0, 4) || []; // Take only first 4 sizes
+    .filter(Boolean) || [];
+
+// Show only first 4
+const visibleSizes = allSizes.slice(0, 4);
+
+// Remaining size count
+const remainingSizes = allSizes.length - visibleSizes.length;
+
 
   return (
     // <Link to={`/products/${product.id}`}>
@@ -557,41 +564,46 @@ const handleWishlistClick = async (
               style={{ top: 0, left: 0, right: 0 }}
             >
               {/* Size Options */}
-              <div className="mb-1">
-                <span className="text-xs text-gray-500 font-medium block text-center mb-0.5">
-                  Sizes:
-                </span>
-                <div className="flex flex-wrap justify-center gap-1">
-                  {sizeAttributes.length > 0 ? (
-                    sizeAttributes.map((size, index) => (
-                      <button
-                        key={index}
-                        className="px-1.5 py-0.5 text-xs border border-gray-300 text-gray-800 rounded hover:border-gray-900 hover:bg-gray-50 transition-all duration-200"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        {size}
-                      </button>
-                    ))
-                  ) : (
-                    ['S', 'M', 'L', 'XL'].slice(0, 4).map((size, index) => (
-                      <button
-                        key={index}
-                        className="px-1.5 py-0.5 text-xs border border-gray-300 text-gray-800 rounded hover:border-gray-900 hover:bg-gray-50 transition-all duration-200"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        {size}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
+              <div className="flex flex-wrap justify-center gap-1">
+  {visibleSizes.length > 0 ? (
+    <>
+      {visibleSizes.map((size, index) => (
+        <button
+          key={index}
+          className="px-1.5 py-0.5 text-xs border border-gray-300 text-gray-800 rounded hover:border-gray-900 hover:bg-gray-50 transition-all duration-200"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          {size}
+        </button>
+      ))}
 
+      {/* +N Indicator */}
+      {remainingSizes > 0 && (
+        <button
+          className="px-1.5 py-0.5 text-xs border border-gray-300 text-gray-600 rounded bg-gray-100 cursor-default"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          +{remainingSizes}
+        </button>
+      )}
+    </>
+  ) : (
+    ["S", "M", "L", "XL"].map((size, index) => (
+      <button
+        key={index}
+        className="px-1.5 py-0.5 text-xs border border-gray-300 text-gray-800 rounded"
+      >
+        {size}
+      </button>
+    ))
+  )}
+</div>
               {/* Price on hover */}
               <div className="flex items-center justify-center gap-1 mt-1">
                 <span className="text-sm font-bold text-gray-900">

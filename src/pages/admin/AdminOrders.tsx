@@ -3162,6 +3162,7 @@
 // export default AdminOrders;
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiEye,
@@ -3799,6 +3800,14 @@ const AdminOrders = () => {
   const totalPages = Math.ceil(totalOrders / rowsPerPage);
   const rowsPerPageOptions = [5, 10, 20, 50, 100];
 
+  useEffect(() => {
+    const isModalOpen = showDetailsModal || showTimelineModal || updateStatusModal;
+    document.body.style.overflow = isModalOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showDetailsModal, showTimelineModal, updateStatusModal]);
+
   // Get timeline with all statuses
   const timelineData = getTimelineWithAllStatuses(selectedOrder, orderTimeline);
 
@@ -4163,23 +4172,24 @@ const AdminOrders = () => {
       </div>
 
       {/* --- ORDER DETAILS MODAL --- */}
-      <AnimatePresence>
-        {showDetailsModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowDetailsModal(false)}
-              className="backdrop-overlay"
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {showDetailsModal && (
+            <>
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
-              >
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowDetailsModal(false)}
+                className="backdrop-overlay"
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
+                >
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-dark-900">
@@ -4309,30 +4319,33 @@ const AdminOrders = () => {
                     )}
                   </div>
                 )}
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       {/* --- TIMELINE MODAL (Showing all statuses from update modal) --- */}
-      <AnimatePresence>
-        {showTimelineModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowTimelineModal(false)}
-              className="backdrop-overlay"
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {showTimelineModal && (
+            <>
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
-              >
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowTimelineModal(false)}
+                className="backdrop-overlay"
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="glass-card rounded-2xl p-6 ring-1 ring-[#8FAE8B] max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
+                >
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-2xl font-bold text-dark-900">
@@ -4629,30 +4642,33 @@ const AdminOrders = () => {
                     </div>
                   </div>
                 )}
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       {/* --- UPDATE STATUS MODAL --- */}
-      <AnimatePresence>
-        {updateStatusModal && selectedOrder && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setUpdateStatusModal(false)}
-              className="backdrop-overlay"
-            />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {createPortal(
+        <AnimatePresence>
+          {updateStatusModal && selectedOrder && (
+            <>
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="glass-card rounded-2xl p-6 max-w-md w-full"
-              >
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setUpdateStatusModal(false)}
+                className="backdrop-overlay"
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="glass-card rounded-2xl p-6 max-w-md w-full"
+                >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-dark-900">
                     Update Order Status
@@ -4708,15 +4724,22 @@ const AdminOrders = () => {
                     </button>
                   </div>
                 </div>
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
 
       <style>{`
         .backdrop-overlay {
-          @apply fixed inset-0 bg-black/50 z-40;
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.48);
+          backdrop-filter: blur(2px);
+          -webkit-backdrop-filter: blur(2px);
+          z-index: 9990;
         }
         .glass-card {
           @apply bg-white/95 backdrop-blur-sm;

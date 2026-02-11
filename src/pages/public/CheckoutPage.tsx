@@ -612,13 +612,13 @@ const CheckoutPage = () => {
                   <FiMapPin className="text-sage" size={24} />
                   <h2 className="text-xl font-bold text-dark-900">Shipping Address</h2>
                 </div>
-                <button
+                {/* <button
                   type="button"
                   onClick={openAddressModal}
                   className="rounded-full border border-sage/40 px-4 py-2 text-sm font-semibold text-sage hover:bg-sage/10"
                 >
                   {selectedAddress ? 'Change Address' : 'Select Delivery Address'}
-                </button>
+                </button> */}
               </div>
 
               <div className="mb-6 rounded-xl border border-sage/20 bg-sage/5 p-4">
@@ -689,9 +689,9 @@ const CheckoutPage = () => {
                     </span>
                     <span>{items.length}/{items.length} ITEMS SELECTED</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-wide text-dark-500">
+                  {/* <div className="text-[10px] uppercase tracking-wide text-dark-500">
                     REMOVE &nbsp;|&nbsp; MOVE TO WISHLIST
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar pr-1">

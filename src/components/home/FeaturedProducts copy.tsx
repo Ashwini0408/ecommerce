@@ -255,7 +255,7 @@ export const FeaturedProducts = () => {
             className="mt-6 md:mt-0"
           >
             <Link
-              to="/shop"
+              to="/products"
               className="group inline-flex items-center gap-3
                          rounded-full border border-white/40
                          px-7 py-3 text-white

@@ -1849,6 +1849,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { signup } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
 import logo from '../../assets/logo.png';
+import { mergeGuestCartAfterLogin } from "../../utils/cartMerge";
 
 /* ================== ANIMATIONS ================== */
 const cardVariants: Variants = {
@@ -2090,6 +2091,7 @@ const SignUpPage = () => {
           phone: formData.phone || undefined,
         })
       ).unwrap();
+      await mergeGuestCartAfterLogin(dispatch); // Merge cart after successful signup
       toast.success('Account created successfully!');
       navigate('/'); // Navigate immediately after successful signup
     } catch (err: any) {
@@ -2350,11 +2352,14 @@ const SignUpPage = () => {
                   <FiX size={12} /> {errors.confirmPassword}
                 </p>
               )}
-              {formData.confirmPassword && !errors.confirmPassword && (
-                <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
-                  <FiCheck size={12} /> Passwords match
-                </p>
-              )}
+              {formData.confirmPassword &&
+ formData.password &&
+ !validationRules.password(formData.password) && // password must be valid
+ formData.confirmPassword === formData.password && (
+  <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
+    <FiCheck size={12} /> Passwords match
+  </p>
+)}
             </motion.div>
 
             {/* Terms */}

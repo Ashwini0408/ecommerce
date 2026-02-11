@@ -17432,6 +17432,7 @@ const AdminProducts = () => {
     item: "",
     subcategory: "",
     category: "",
+    stock: "",
     status: "",
   });
 
@@ -17676,13 +17677,25 @@ const AdminProducts = () => {
         const matchesCategory = (prod.category || "")
           .toLowerCase()
           .includes(columnFilters.category.toLowerCase());
+        const stockQuery = columnFilters.stock.trim().toLowerCase();
+        const stockValue =
+          prod.stock != null ? String(prod.stock).toLowerCase() : "";
+        const stockLabel = (prod.stock || 0) > 0 ? "in stock" : "out of stock";
+        const matchesStock =
+          stockQuery === "" ||
+          stockValue.includes(stockQuery) ||
+          stockLabel.includes(stockQuery);
         const matchesStatus =
           columnFilters.status === "" ||
           (columnFilters.status === "ACTIVE" && prod.isActive) ||
           (columnFilters.status === "INACTIVE" && !prod.isActive);
 
         return (
-          matchesItem && matchesSubcategory && matchesCategory && matchesStatus
+          matchesItem &&
+          matchesSubcategory &&
+          matchesCategory &&
+          matchesStock &&
+          matchesStatus
         );
       })
       .sort((a, b) => b.id - a.id);
@@ -18211,6 +18224,14 @@ const AdminProducts = () => {
   // --- ROWS PER PAGE OPTIONS ---
   const rowsPerPageOptions = [5, 10, 20, 50, 100];
 
+  useEffect(() => {
+    const isModalOpen = activeModal !== "NONE" || showEditReviewModal;
+    document.body.style.overflow = isModalOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [activeModal, showEditReviewModal]);
+
   return (
     <div className="h-full flex flex-col">
       {/* --- HEADER --- */}
@@ -18552,6 +18573,18 @@ const AdminProducts = () => {
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">
                             <div className="flex flex-col">
                               <span className="mb-1">Stock</span>
+                              <input
+                                type="text"
+                                placeholder="Search Stock"
+                                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#8FAE8B] focus:border-[#8FAE8B]"
+                                value={columnFilters.stock}
+                                onChange={(e) =>
+                                  handleColumnFilterChange(
+                                    "stock",
+                                    e.target.value,
+                                  )
+                                }
+                              />
                             </div>
                           </th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32">
@@ -18624,14 +18657,17 @@ const AdminProducts = () => {
                                 <div className="flex flex-col">
                                   <div className="font-semibold">
                                     ₹
-                                    {product.price != null
-                                      ? product.price.toFixed(2)
-                                      : "0.00"}
+                                    {product.salePrice != null &&
+                                    product.salePrice > 0
+                                      ? product.salePrice.toFixed(2)
+                                      : product.price != null
+                                        ? product.price.toFixed(2)
+                                        : "0.00"}
                                   </div>
                                   {product.salePrice != null &&
                                     product.salePrice > 0 && (
                                       <div className="text-xs text-red-600 line-through">
-                                        ₹{product.salePrice.toFixed(2)}
+                                        ₹{product.price != null ? product.price.toFixed(2) : "0.00"}
                                       </div>
                                     )}
                                 </div>
@@ -18826,7 +18862,7 @@ const AdminProducts = () => {
               onClick={closeModal}
               className="backdrop-overlay"
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -19721,7 +19757,7 @@ const AdminProducts = () => {
               onClick={() => setShowEditReviewModal(false)}
               className="backdrop-overlay"
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -20010,7 +20046,12 @@ const AdminProducts = () => {
           @apply px-6 py-2 bg-gray-100 text-gray-800 font-semibold rounded-lg hover:bg-gray-200 transition-colors;
         }
         .backdrop-overlay {
-          @apply fixed inset-0 bg-black/50 z-40;
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.48);
+          backdrop-filter: blur(2px);
+          -webkit-backdrop-filter: blur(2px);
+          z-index: 60;
         }
         
         /* Rich Text Editor Specific Styles */

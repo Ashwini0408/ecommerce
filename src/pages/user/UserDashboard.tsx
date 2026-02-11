@@ -576,20 +576,36 @@ const UserDashboard = () => {
 
   const getPasswordChecks = (password: string) => ({
     length: password.length >= 8,
-    upper: /[A-Z]/.test(password),
-    lower: /[a-z]/.test(password),
-    number: /\d/.test(password),
-    special: /[^\w\s]/.test(password),
+    upper: /(?=.*[A-Z])/.test(password),
+    lower: /(?=.*[a-z])/.test(password),
+    number: /(?=.*\d)/.test(password),
+    special: /(?=.*[@$!%*?&#^()_+\-=[\]{};':"\\|,.<>/?])/.test(password),
   });
 
   const getPasswordError = (password: string) => {
     const checks = getPasswordChecks(password);
-    if (!checks.length) return 'Password must be at least 8 characters';
-    if (!checks.upper) return 'Password must include an uppercase letter';
-    if (!checks.lower) return 'Password must include a lowercase letter';
-    if (!checks.number) return 'Password must include a number';
-    if (!checks.special) return 'Password must include a special character';
+    if (!checks.length) return 'At least 8 characters';
+    if (!checks.lower) return 'One lowercase letter';
+    if (!checks.upper) return 'One uppercase letter';
+    if (!checks.number) return 'One number';
+    if (!checks.special) return 'One special character';
     return '';
+  };
+
+  const getPasswordStrength = (password: string) => {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/(?=.*[a-z])/.test(password)) score++;
+    if (/(?=.*[A-Z])/.test(password)) score++;
+    if (/(?=.*\d)/.test(password)) score++;
+    if (/(?=.*[@$!%*?&#^()_+\-=[\]{};':"\\|,.<>/?])/.test(password)) score++;
+
+    return {
+      score,
+      percentage: (score / 5) * 100,
+      label: score <= 2 ? 'Weak' : score <= 4 ? 'Good' : 'Strong',
+      color: score <= 2 ? 'bg-red-500' : score <= 4 ? 'bg-yellow-500' : 'bg-green-500',
+    };
   };
 
   const handleChangePassword = async () => {
@@ -784,6 +800,7 @@ const UserDashboard = () => {
     return a.isDefault ? -1 : 1;
   });
   const passwordChecks = getPasswordChecks(passwordForm.newPassword);
+  const passwordStrength = getPasswordStrength(passwordForm.newPassword);
   const memberSince = profile?.createdAt
     ? format(new Date(profile.createdAt), 'MMMM yyyy')
     : null;
@@ -1606,47 +1623,89 @@ const UserDashboard = () => {
                           </button>
                         </div>
                         {passwordForm.newPassword.length > 0 && (
-                          <div className="mt-2 space-y-1 text-xs text-dark-600">
-                            <p className="text-dark-500">Password must include:</p>
-                            <div className="flex items-center gap-2">
-                              {passwordChecks.length ? (
-                                <FiCheck className="text-green-500" size={12} />
-                              ) : (
-                                <FiX className="text-red-500" size={12} />
-                              )}
-                              <span>At least 8 characters</span>
+                          <div className="mt-2 space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-dark-500">Password strength:</span>
+                              <span
+                                className={`font-medium ${
+                                  passwordStrength.score <= 2
+                                    ? 'text-red-500'
+                                    : passwordStrength.score <= 4
+                                    ? 'text-yellow-500'
+                                    : 'text-green-500'
+                                }`}
+                              >
+                                {passwordStrength.label}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {passwordChecks.upper ? (
-                                <FiCheck className="text-green-500" size={12} />
-                              ) : (
-                                <FiX className="text-red-500" size={12} />
-                              )}
-                              <span>One uppercase letter (A-Z)</span>
+                            <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                                style={{ width: `${passwordStrength.percentage}%` }}
+                              />
                             </div>
-                            <div className="flex items-center gap-2">
-                              {passwordChecks.lower ? (
-                                <FiCheck className="text-green-500" size={12} />
-                              ) : (
-                                <FiX className="text-red-500" size={12} />
-                              )}
-                              <span>One lowercase letter (a-z)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {passwordChecks.number ? (
-                                <FiCheck className="text-green-500" size={12} />
-                              ) : (
-                                <FiX className="text-red-500" size={12} />
-                              )}
-                              <span>One number (0-9)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {passwordChecks.special ? (
-                                <FiCheck className="text-green-500" size={12} />
-                              ) : (
-                                <FiX className="text-red-500" size={12} />
-                              )}
-                              <span>One special character (!@#$...)</span>
+
+                            <div className="grid grid-cols-2 gap-1 text-xs text-dark-600 mt-2">
+                              <div
+                                className={`flex items-center gap-1 ${
+                                  passwordChecks.length ? 'text-green-500' : ''
+                                }`}
+                              >
+                                {passwordChecks.length ? (
+                                  <FiCheck size={12} />
+                                ) : (
+                                  <FiX size={12} />
+                                )}
+                                <span>8+ characters</span>
+                              </div>
+                              <div
+                                className={`flex items-center gap-1 ${
+                                  passwordChecks.lower ? 'text-green-500' : ''
+                                }`}
+                              >
+                                {passwordChecks.lower ? (
+                                  <FiCheck size={12} />
+                                ) : (
+                                  <FiX size={12} />
+                                )}
+                                <span>Lowercase letter</span>
+                              </div>
+                              <div
+                                className={`flex items-center gap-1 ${
+                                  passwordChecks.upper ? 'text-green-500' : ''
+                                }`}
+                              >
+                                {passwordChecks.upper ? (
+                                  <FiCheck size={12} />
+                                ) : (
+                                  <FiX size={12} />
+                                )}
+                                <span>Uppercase letter</span>
+                              </div>
+                              <div
+                                className={`flex items-center gap-1 ${
+                                  passwordChecks.number ? 'text-green-500' : ''
+                                }`}
+                              >
+                                {passwordChecks.number ? (
+                                  <FiCheck size={12} />
+                                ) : (
+                                  <FiX size={12} />
+                                )}
+                                <span>Number</span>
+                              </div>
+                              <div
+                                className={`flex items-center gap-1 ${
+                                  passwordChecks.special ? 'text-green-500' : ''
+                                }`}
+                              >
+                                {passwordChecks.special ? (
+                                  <FiCheck size={12} />
+                                ) : (
+                                  <FiX size={12} />
+                                )}
+                                <span>Special character</span>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1675,6 +1734,21 @@ const UserDashboard = () => {
                             {showPassword.confirm ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                           </button>
                         </div>
+                        {passwordForm.confirmPassword &&
+                          passwordForm.newPassword &&
+                          !getPasswordError(passwordForm.newPassword) &&
+                          passwordForm.confirmPassword === passwordForm.newPassword && (
+                            <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
+                              <FiCheck size={12} /> Passwords match
+                            </p>
+                          )}
+                        {passwordForm.confirmPassword &&
+                          passwordForm.newPassword &&
+                          passwordForm.confirmPassword !== passwordForm.newPassword && (
+                            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                              <FiX size={12} /> Passwords do not match
+                            </p>
+                          )}
                       </div>
                     </div>
 
