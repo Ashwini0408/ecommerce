@@ -231,6 +231,7 @@ import ProductsPage from './pages/public/ProductsPage';
 import ProductDetailPage from './pages/public/ProductDetailPage';
 import CartPage from './pages/public/CartPage';
 import CheckoutPage from './pages/public/CheckoutPage';
+import PaymentStatusPage from './pages/public/PaymentStatusPage';
 import About from './pages/public/About';
 import Contact from './pages/public/ContactUs';
 import Appointment from './pages/public/AppointmentBooking';
@@ -336,6 +337,14 @@ function App() {
           element={
             <ProtectedRoute>
               <OrderDetailsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment-status"
+          element={
+            <ProtectedRoute>
+              <PaymentStatusPage />
             </ProtectedRoute>
           }
         />

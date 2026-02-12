@@ -7,6 +7,18 @@ import type {
   PaginatedResponse,
 } from '../types';
 
+export interface InitiatePaymentResponse {
+  razorpayOrderId: string;
+  amount: number;
+  currency: string;
+}
+
+export interface VerifyPaymentRequest {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}
+
 export const orderApi = {
   // Create order
   createOrder: async (orderData: CreateOrderRequest): Promise<Order> => {
@@ -59,7 +71,7 @@ updateOrderStatus: async (
   );
   return response.data;
 },
-// Fetch order timeline (User / Admin)
+  // Fetch order timeline (User / Admin)
 getOrderTimeline: async (id: number): Promise<
   {
     status: string;
@@ -76,6 +88,22 @@ getOrderTimeline: async (id: number): Promise<
   >(`/orders/${id}/timeline`);
   return response.data;
 },
+
+  // Initiate Razorpay payment for an order
+  initiatePayment: async (orderId: number): Promise<InitiatePaymentResponse> => {
+    const response = await axiosInstance.post<InitiatePaymentResponse>(
+      `/orders/${orderId}/pay`
+    );
+    return response.data;
+  },
+
+  verifyPayment: async (orderId: number, payload: VerifyPaymentRequest): Promise<{ message: string }> => {
+    const response = await axiosInstance.post<{ message: string }>(
+      `/orders/${orderId}/verify-payment`,
+      payload
+    );
+    return response.data;
+  },
 
 
   // Get order statistics (Admin only)

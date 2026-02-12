@@ -4157,7 +4157,7 @@ const getCurrentMediaUrl = () => {
           <span className="text-foreground font-medium">{product.name}</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Column - Media */}
           <div className="space-y-3">
             {/* Main Media Display */}
@@ -4431,7 +4431,7 @@ const getCurrentMediaUrl = () => {
           </div>
 
           {/* Right Column - Product Info */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-24 self-start">
             {/* Category and Stock */}
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-sage uppercase tracking-wider">
@@ -4644,7 +4644,7 @@ const getCurrentMediaUrl = () => {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
-                  className="btn-ghost flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed h-12 text-sm"
+                  className="btn-primary flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed h-12 text-sm"
                 >
                   <FiShoppingCart className="w-5 h-5" />
                   <span>Add to Cart</span>
@@ -4721,201 +4721,197 @@ const getCurrentMediaUrl = () => {
         </div>
 
         {/* Ratings & Reviews Section */}
-        <section className="mt-12 border-t border-border pt-8">
-          <div className="max-w-4xl space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-foreground">Ratings</h3>
-                  <span className="text-xs text-muted-foreground">{reviewCount} Verified Buyers</span>
-                </div>
-                <div className="grid grid-cols-[130px_1fr] gap-5">
-                  <div className="space-y-2 border-r border-border pr-4">
-                    <p className="text-5xl leading-none font-bold text-foreground">
-                      {averageRating.toFixed(1)}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, index) => (
-                        <FiStar
-                          key={index}
-                          className={`h-4 w-4 ${
-                            index < Math.round(averageRating)
-                              ? 'text-yellow-500 fill-yellow-500'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {ratingScale.map((rating, index) => {
-                      const count = ratingDistribution[index] ?? 0;
-                      const percent = totalRecentRatings
-                        ? Math.round((count / totalRecentRatings) * 100)
-                        : 0;
-
-                      return (
-                        <div key={rating} className="flex items-center gap-2 text-xs">
-                          <span className="w-6 text-muted-foreground">{rating}★</span>
-                          <div className="flex-1 h-1.5 rounded-full bg-sage/10 overflow-hidden">
-                            <div className="h-full bg-sage" style={{ width: `${percent}%` }} />
-                          </div>
-                          <span className="w-8 text-right text-muted-foreground">{count}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-3">
-                <h3 className="text-base font-semibold text-foreground">What Customers Said</h3>
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-muted-foreground">Fit</span>
-                      <span className="font-semibold text-foreground">Just Right ({fitPercent}%)</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-sage/10 overflow-hidden">
-                      <div className="h-full bg-sage" style={{ width: `${fitPercent}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-muted-foreground">Length</span>
-                      <span className="font-semibold text-foreground">Just Right ({lengthPercent}%)</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-sage/10 overflow-hidden">
-                      <div className="h-full bg-sage" style={{ width: `${lengthPercent}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-muted-foreground">Transparency</span>
-                      <span className="font-semibold text-foreground">Low ({transparencyPercent}%)</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-sage/10 overflow-hidden">
-                      <div className="h-full bg-sage" style={{ width: `${transparencyPercent}%` }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <section className="mt-8 space-y-6 lg:w-[calc(50%-1rem)] lg:ml-auto">
+          <div className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-foreground">Ratings</h3>
+              <span className="text-xs text-muted-foreground">{reviewCount} Verified Buyers</span>
             </div>
-
-            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-foreground">
-                  Customer Photos ({photoItems.length})
-                </h3>
-                {photoItems.length > 4 && (
-                  <button
-                    type="button"
-                    onClick={handleOpenAllPhotos}
-                    className="text-sm font-semibold text-sage hover:underline"
-                  >
-                    View All Photos
-                  </button>
-                )}
-              </div>
-              {previewPhotos.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No photos yet. Be the first to share your product photo.
+            <div className="grid grid-cols-[130px_1fr] gap-5">
+              <div className="space-y-2 border-r border-border pr-4">
+                <p className="text-5xl leading-none font-bold text-foreground">
+                  {averageRating.toFixed(1)}
                 </p>
-              ) : (
-                <div className="grid grid-cols-4 gap-3">
-                  {previewPhotos.map((photoItem, index) => {
-                    const isOverlayTile = index === previewPhotos.length - 1 && extraPhotoCount > 0;
-                    return (
-                      <button
-                        key={`${photoItem.url}-${index}`}
-                        type="button"
-                        onClick={() =>
-                          isOverlayTile ? handleOpenAllPhotos() : openPhotoViewer(index)
-                        }
-                        className="relative aspect-square overflow-hidden rounded-lg border border-border"
-                      >
-                        <img
-                          src={getImageUrl(photoItem.url)}
-                          alt={`Customer photo ${index + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                        {isOverlayTile && (
-                          <div className="absolute inset-0 bg-black/55 text-white flex items-center justify-center text-xl font-semibold">
-                            +{extraPhotoCount}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-foreground">
-                  Customer Reviews ({reviewCount})
-                </h3>
-                {reviewCount > REVIEW_PREVIEW_LIMIT && (
-                  <button
-                    type="button"
-                    onClick={handleOpenAllReviews}
-                    className="text-sm font-semibold text-sage hover:underline"
-                  >
-                    View All Reviews
-                  </button>
-                )}
-              </div>
-
-              {previewReviews.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
-                  No reviews yet. Be the first to review this product.
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {previewReviews.map((review) => (
-                    <div key={review.id} className="py-4 first:pt-0 last:pb-0 space-y-3">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          {(review.username || 'Verified Buyer')} | {formatReviewDate(review.createdAt)}
-                        </span>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="rounded bg-sage px-1.5 py-0.5 text-[11px] font-semibold text-white">
-                          {Math.round(review.rating)}★
-                        </div>
-                        <p className="text-base text-foreground leading-relaxed">{review.body}</p>
-                      </div>
-                      {review.imageUrls?.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pl-9">
-                          {review.imageUrls.slice(0, 4).map((imageUrl, imageIndex) => {
-                            const photoIndex = getPhotoIndexByUrl(imageUrl);
-                            return (
-                              <button
-                                key={`${review.id}-${imageIndex}`}
-                                type="button"
-                                className="h-20 w-20 overflow-hidden rounded border border-border"
-                                onClick={() => {
-                                  if (photoIndex >= 0) {
-                                    openPhotoViewer(photoIndex);
-                                  }
-                                }}
-                              >
-                                <img
-                                  src={getImageUrl(imageUrl)}
-                                  alt={`Review image ${imageIndex + 1}`}
-                                  className="h-full w-full object-cover"
-                                />
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, index) => (
+                    <FiStar
+                      key={index}
+                      className={`h-4 w-4 ${
+                        index < Math.round(averageRating)
+                          ? 'text-yellow-500 fill-yellow-500'
+                          : 'text-gray-300'
+                      }`}
+                    />
                   ))}
                 </div>
+              </div>
+              <div className="space-y-2">
+                {ratingScale.map((rating, index) => {
+                  const count = ratingDistribution[index] ?? 0;
+                  const percent = totalRecentRatings
+                    ? Math.round((count / totalRecentRatings) * 100)
+                    : 0;
+
+                  return (
+                    <div key={rating} className="flex items-center gap-2 text-xs">
+                      <span className="w-6 text-muted-foreground">{rating}★</span>
+                      <div className="flex-1 h-1.5 rounded-full bg-sage/10 overflow-hidden">
+                        <div className="h-full bg-sage" style={{ width: `${percent}%` }} />
+                      </div>
+                      <span className="w-8 text-right text-muted-foreground">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-3">
+            <h3 className="text-base font-semibold text-foreground">What Customers Said</h3>
+            <div className="space-y-4 text-sm">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-muted-foreground">Fit</span>
+                  <span className="font-semibold text-foreground">Just Right ({fitPercent}%)</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-sage/10 overflow-hidden">
+                  <div className="h-full bg-sage" style={{ width: `${fitPercent}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-muted-foreground">Length</span>
+                  <span className="font-semibold text-foreground">Just Right ({lengthPercent}%)</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-sage/10 overflow-hidden">
+                  <div className="h-full bg-sage" style={{ width: `${lengthPercent}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-muted-foreground">Transparency</span>
+                  <span className="font-semibold text-foreground">Low ({transparencyPercent}%)</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-sage/10 overflow-hidden">
+                  <div className="h-full bg-sage" style={{ width: `${transparencyPercent}%` }} />
+                </div>
+              </div>
+            </div>
+          </div> */}
+
+          <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-foreground">
+                Customer Photos ({photoItems.length})
+              </h3>
+              {photoItems.length > 4 && (
+                <button
+                  type="button"
+                  onClick={handleOpenAllPhotos}
+                  className="text-sm font-semibold text-sage hover:underline"
+                >
+                  View All Photos
+                </button>
               )}
             </div>
+            {previewPhotos.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No photos yet. Be the first to share your product photo.
+              </p>
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {previewPhotos.map((photoItem, index) => {
+                  const isOverlayTile = index === previewPhotos.length - 1 && extraPhotoCount > 0;
+                  return (
+                    <button
+                      key={`${photoItem.url}-${index}`}
+                      type="button"
+                      onClick={() =>
+                        isOverlayTile ? handleOpenAllPhotos() : openPhotoViewer(index)
+                      }
+                      className="relative aspect-square overflow-hidden rounded-lg border border-border"
+                    >
+                      <img
+                        src={getImageUrl(photoItem.url)}
+                        alt={`Customer photo ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      {isOverlayTile && (
+                        <div className="absolute inset-0 bg-black/55 text-white flex items-center justify-center text-xl font-semibold">
+                          +{extraPhotoCount}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-foreground">
+                Customer Reviews ({reviewCount})
+              </h3>
+              {reviewCount > REVIEW_PREVIEW_LIMIT && (
+                <button
+                  type="button"
+                  onClick={handleOpenAllReviews}
+                  className="text-sm font-semibold text-sage hover:underline"
+                >
+                  View All Reviews
+                </button>
+              )}
+            </div>
+
+            {previewReviews.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+                No reviews yet. Be the first to review this product.
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {previewReviews.map((review) => (
+                  <div key={review.id} className="py-4 first:pt-0 last:pb-0 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        {(review.username || 'Verified Buyer')} | {formatReviewDate(review.createdAt)}
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="rounded bg-sage px-1.5 py-0.5 text-[11px] font-semibold text-white">
+                        {Math.round(review.rating)}★
+                      </div>
+                      <p className="text-base text-foreground leading-relaxed">{review.body}</p>
+                    </div>
+                    {review.imageUrls?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pl-9">
+                        {review.imageUrls.slice(0, 4).map((imageUrl, imageIndex) => {
+                          const photoIndex = getPhotoIndexByUrl(imageUrl);
+                          return (
+                            <button
+                              key={`${review.id}-${imageIndex}`}
+                              type="button"
+                              className="h-20 w-20 overflow-hidden rounded border border-border"
+                              onClick={() => {
+                                if (photoIndex >= 0) {
+                                  openPhotoViewer(photoIndex);
+                                }
+                              }}
+                            >
+                              <img
+                                src={getImageUrl(imageUrl)}
+                                alt={`Review image ${imageIndex + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

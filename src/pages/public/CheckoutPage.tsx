@@ -25,13 +25,16 @@ import {
   type UserAddress,
 } from '../../api/userProfileApi';
 import { formatINR } from '../../utils/currency';
+import {
+  getRazorpayConstructor,
+  getRazorpayFailureReason,
+  loadRazorpayScript,
+  type PaymentStatusState,
+  type RazorpayPaymentSuccessResponse,
+} from '../../utils/razorpay';
 import toast from 'react-hot-toast';
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
+const PAYMENT_STATUS_STORAGE_KEY = 'latestPaymentStatus';
 
 type AddressType = 'HOME' | 'WORK' | 'OTHER';
 
@@ -208,6 +211,12 @@ const CheckoutPage = () => {
     document.body.style.overflow = '';
   }, [showAddressModal, showAddEditAddressModal]);
 
+  useEffect(() => {
+    if (paymentMethod === 'razorpay') {
+      void loadRazorpayScript();
+    }
+  }, [paymentMethod]);
+
   const openAddressModal = () => {
     if (addresses.length === 0) {
       setShowAddressModal(true);
@@ -339,8 +348,42 @@ const CheckoutPage = () => {
   //   }
   // };
 
+  const clearServerCartAfterOrder = async () => {
+    try {
+      const localBackendItemIds = Array.from(
+        new Set(items.map((item) => Number(item.itemId)).filter((id) => Number.isFinite(id) && id > 0))
+      );
+
+      let backendItemIds = localBackendItemIds;
+      if (backendItemIds.length === 0) {
+        const cartResponse = await cartApi.getCart();
+        backendItemIds = (cartResponse?.items || [])
+          .map((item: { id: number }) => Number(item.id))
+          .filter((id: number) => Number.isFinite(id) && id > 0);
+      }
+
+      if (backendItemIds.length > 0) {
+        await Promise.allSettled(backendItemIds.map((itemId) => cartApi.removeItem(itemId)));
+      }
+    } catch (cartClearError) {
+      console.warn('Order placed, but failed to fully clear server cart.', cartClearError);
+    }
+  };
+
+  const navigateToPaymentStatus = (paymentState: PaymentStatusState) => {
+    sessionStorage.setItem(PAYMENT_STATUS_STORAGE_KEY, JSON.stringify(paymentState));
+    navigate('/payment-status', { state: paymentState });
+  };
+
+  const finalizeSuccessfulOrder = async (orderId: number) => {
+    await clearServerCartAfterOrder();
+    dispatch(clearCart());
+    toast.success('Order placed successfully!');
+    navigate(`/orders/${orderId}`);
+  };
+
   const handlePlaceOrder = async () => {
-    // For demo purposes, simulate successful order without Razorpay
+    // Create order and proceed based on selected payment mode
     if (!isAuthenticated) {
       toast.error('Please login to continue');
       navigate('/login');
@@ -380,30 +423,103 @@ const CheckoutPage = () => {
 
       const order = await orderApi.createOrder(orderData);
 
-      // Clear backend cart for authenticated users so cart does not repopulate.
-      try {
-        const localBackendItemIds = Array.from(
-          new Set(items.map((item) => Number(item.itemId)).filter((id) => Number.isFinite(id) && id > 0))
-        );
-
-        let backendItemIds = localBackendItemIds;
-        if (backendItemIds.length === 0) {
-          const cartResponse = await cartApi.getCart();
-          backendItemIds = (cartResponse?.items || [])
-            .map((item: { id: number }) => Number(item.id))
-            .filter((id: number) => Number.isFinite(id) && id > 0);
+      if (paymentMethod === 'razorpay') {
+        const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+        if (!razorpayKeyId || razorpayKeyId === 'your_razorpay_key_id') {
+          throw new Error('Razorpay key is not configured in .env');
         }
 
-        if (backendItemIds.length > 0) {
-          await Promise.allSettled(backendItemIds.map((itemId) => cartApi.removeItem(itemId)));
+        const paymentInit = await orderApi.initiatePayment(order.id);
+
+        const razorpayLoaded = await loadRazorpayScript();
+        if (!razorpayLoaded || !getRazorpayConstructor()) {
+          throw new Error('Failed to load Razorpay checkout');
         }
-      } catch (cartClearError) {
-        console.warn('Order placed, but failed to fully clear server cart.', cartClearError);
+
+        sessionStorage.setItem('razorpayOrderId', paymentInit.razorpayOrderId);
+        sessionStorage.setItem('orderId', String(order.id));
+        sessionStorage.setItem('amount', String(paymentInit.amount));
+        await new Promise<void>((resolve, reject) => {
+          let paymentFlowHandled = false;
+          const markHandled = () => {
+            if (paymentFlowHandled) return false;
+            paymentFlowHandled = true;
+            return true;
+          };
+
+          const buildPaymentState = (
+            status: PaymentStatusState['status'],
+            failureReason?: string
+          ): PaymentStatusState => ({
+            status,
+            orderId: order.id,
+            amount: paymentInit.amount,
+            currency: paymentInit.currency,
+            razorpayOrderId: paymentInit.razorpayOrderId,
+            failureReason,
+            attemptedAt: new Date().toISOString(),
+          });
+
+          const options = {
+            key: razorpayKeyId,
+            order_id: paymentInit.razorpayOrderId,
+            name: 'STYLISTE',
+            description: `Order #${order.id}`,
+            prefill: {
+              name: user?.name || '',
+              email: user?.email || '',
+              contact: formData.phone,
+            },
+            notes: {
+              orderId: String(order.id),
+            },
+            theme: {
+              color: '#6B7D60',
+            },
+            handler: async (response: RazorpayPaymentSuccessResponse) => {
+              if (!markHandled()) return;
+              try {
+                await orderApi.verifyPayment(order.id, {
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                });
+                await finalizeSuccessfulOrder(order.id);
+                resolve();
+              } catch (handlerError) {
+                reject(handlerError);
+              }
+            },
+            modal: {
+              ondismiss: () => {
+                if (!markHandled()) return;
+                navigateToPaymentStatus(
+                  buildPaymentState('cancelled', 'Payment was cancelled by user')
+                );
+                resolve();
+              },
+            },
+          };
+
+          const RazorpayConstructor = getRazorpayConstructor();
+          if (!RazorpayConstructor) {
+            reject(new Error('Failed to load Razorpay checkout'));
+            return;
+          }
+
+          const razorpayInstance = new RazorpayConstructor(options);
+          razorpayInstance.on('payment.failed', (response: unknown) => {
+            if (!markHandled()) return;
+            const reason = getRazorpayFailureReason(response);
+            navigateToPaymentStatus(buildPaymentState('failed', reason));
+            resolve();
+          });
+          razorpayInstance.open();
+        });
+        return;
       }
 
-      toast.success('Order placed successfully!');
-      dispatch(clearCart());
-      navigate(`/dashboard?orderSuccess=${order.id}`);
+      await finalizeSuccessfulOrder(order.id);
     } catch (error: any) {
       toast.error(error.message || 'Failed to place order');
     } finally {
@@ -1240,8 +1356,6 @@ const CheckoutPage = () => {
         </div>
       )}
 
-      {/* Razorpay Script */}
-      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       <Footer />
     </div>
   );
