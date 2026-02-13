@@ -26,26 +26,15 @@ import sareeSalwar from "../../assets/saree-salwar.jpg";
 import sareeCroptop from "../../assets/saree-croptop.jpg";
 import sareeHomedecor from "../../assets/saree-homedecor.jpg";
 import authorImage from "../../assets/author-babita.jpg";
+import Navbar from "../../components/layout/Navbar";
+import { Footer } from "../../components/layout/Footer";
 // Simple Layout Component
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
+    
     <div className="min-h-screen bg-background text-foreground font-sans">
+      <Navbar />  
       {/* Simple Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="font-serif text-2xl text-sage">
-              SareeRevive
-            </Link>
-            <nav className="hidden md:flex items-center gap-8">
-              <Link to="/" className="text-sm hover:text-sage transition-colors">Home</Link>
-              <Link to="/blog" className="text-sm hover:text-sage transition-colors">Blog</Link>
-              <Link to="/services" className="text-sm hover:text-sage transition-colors">Services</Link>
-              <Link to="/contact" className="text-sm hover:text-sage transition-colors">Contact</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
       <main>{children}</main>
       {/* Simple Footer */}
       <footer className="border-t border-border bg-secondary/30 mt-16">
@@ -894,6 +883,7 @@ const BlogPost = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </Layout>
   );
 };

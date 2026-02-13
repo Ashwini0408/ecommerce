@@ -283,9 +283,14 @@ function ScrollToTop() {
 }
 
 function App() {
+  const { pathname } = useLocation();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === "ADMIN";
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password";
 
   useEffect(() => {
     dispatch(loadUserFromStorage());
@@ -375,7 +380,7 @@ function App() {
       </Routes>
 
       {/* Floating buttons only for non-admin */}
-      {(!isAuthenticated || !isAdmin) && (
+      {(!isAuthenticated || !isAdmin) && !isAuthRoute && (
         <>
           <FloatingAppointmentButton />
           <WhatsAppButton />

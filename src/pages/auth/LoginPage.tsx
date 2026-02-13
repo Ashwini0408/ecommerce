@@ -1,1303 +1,123 @@
-// import { useState, useEffect } from 'react';
-// import { Link, useNavigate } from 'react-router-dom';
-// import { motion } from 'framer-motion';
-// import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
-// import { useAuth } from '../../hooks/useAuth';
-// import { login } from '../../store/slices/authSlice';
-// import toast from 'react-hot-toast';
-// import {
-//   containerVariants,
-//   itemVariants,
-//   cardVariants,
-// } from '../../animations/authAnimations';
-
-
-// const LoginPage = () => {
-//   const navigate = useNavigate();
-//   const { isAuthenticated, isLoading, error, dispatch } = useAuth();
-
-//   const [formData, setFormData] = useState({
-//     email: '',
-//     password: '',
-//   });
-
-//   useEffect(() => {
-//     if (isAuthenticated) {
-//       navigate('/');
-//     }
-//   }, [isAuthenticated, navigate]);
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     if (!formData.email || !formData.password) {
-//       toast.error('Please fill in all fields');
-//       return;
-//     }
-
-//     try {
-//       await dispatch(login(formData)).unwrap();
-//       toast.success('Login successful!');
-//       navigate('/');
-//     } catch (err: any) {
-//       toast.error(err || 'Login failed');
-//     }
-//   };
-
-//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setFormData({
-//       ...formData,
-//       [e.target.name]: e.target.value,
-//     });
-//   };
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 px-4 py-12">
-//       {/* Animated Background */}
-//       <div className="absolute inset-0 overflow-hidden">
-//         <motion.div
-//           animate={{
-//             scale: [1, 1.2, 1],
-//             rotate: [0, 90, 0],
-//           }}
-//           transition={{
-//             duration: 20,
-//             repeat: Infinity,
-//             ease: 'linear',
-//           }}
-//           className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl"
-//         />
-//         <motion.div
-//           animate={{
-//             scale: [1, 1.3, 1],
-//             rotate: [0, -90, 0],
-//           }}
-//           transition={{
-//             duration: 25,
-//             repeat: Infinity,
-//             ease: 'linear',
-//           }}
-//           className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl"
-//         />
-//       </div>
-
-//       {/* Login Card */}
-//       <motion.div
-//         initial={{ opacity: 0, y: 20 }}
-//         animate={{ opacity: 1, y: 0 }}
-//         className="relative z-10 w-full max-w-md"
-//       >
-//         <div className="glass-card rounded-2xl p-8">
-//           {/* Header */}
-//           <div className="text-center mb-8">
-//             <Link to="/">
-//               <h1 className="text-3xl font-display font-bold gradient-text mb-2">STYLISTE</h1>
-//             </Link>
-//             <p className="text-dark-400">Welcome back! Please login to your account</p>
-//           </div>
-
-//           {/* Form */}
-//           <form onSubmit={handleSubmit} className="space-y-6">
-//             {/* Email */}
-//             <div>
-//               <label className="text-sm font-semibold text-dark-300 mb-2 block">
-//                 Email Address
-//               </label>
-//               <div className="relative">
-//                 <input
-//                   type="email"
-//                   name="email"
-//                   value={formData.email}
-//                   onChange={handleInputChange}
-//                   placeholder="your@email.com"
-//                   className="input-field pl-10"
-//                   required
-//                 />
-//                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
-//               </div>
-//             </div>
-
-//             {/* Password */}
-//             <div>
-//               <label className="text-sm font-semibold text-dark-300 mb-2 block">
-//                 Password
-//               </label>
-//               <div className="relative">
-//                 <input
-//                   type="password"
-//                   name="password"
-//                   value={formData.password}
-//                   onChange={handleInputChange}
-//                   placeholder="••••••••"
-//                   className="input-field pl-10"
-//                   required
-//                 />
-//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
-//               </div>
-//             </div>
-
-//             {/* Remember & Forgot */}
-//             <div className="flex items-center justify-between text-sm">
-//               <label className="flex items-center space-x-2 cursor-pointer">
-//                 <input
-//                   type="checkbox"
-//                   className="accent-primary-500"
-//                 />
-//                 <span className="text-dark-300">Remember me</span>
-//               </label>
-//               <a href="#" className="text-primary-400 hover:text-primary-300 transition-colors">
-//                 Forgot password?
-//               </a>
-//             </div>
-
-//             {/* Submit Button */}
-//             <motion.button
-//               type="submit"
-//               disabled={isLoading}
-//               whileHover={{ scale: 1.02 }}
-//               whileTap={{ scale: 0.98 }}
-//               className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-50"
-//             >
-//               <span>{isLoading ? 'Logging in...' : 'Login'}</span>
-//               {!isLoading && <FiArrowRight />}
-//             </motion.button>
-//           </form>
-
-//           {/* Divider */}
-//           <div className="flex items-center my-6">
-//             <div className="flex-1 border-t border-white/10"></div>
-//             <span className="px-4 text-sm text-dark-500">OR</span>
-//             <div className="flex-1 border-t border-white/10"></div>
-//           </div>
-
-//           {/* Sign Up Link */}
-//           <div className="text-center">
-//             <p className="text-dark-400">
-//               Don't have an account?{' '}
-//               <Link to="/signup" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors">
-//                 Sign Up
-//               </Link>
-//             </p>
-//           </div>
-
-//           {/* Back to Home */}
-//           <div className="text-center mt-6">
-//             <Link to="/" className="text-sm text-dark-500 hover:text-dark-300 transition-colors">
-//               ← Back to Home
-//             </Link>
-//           </div>
-//         </div>
-//       </motion.div>
-//     </div>
-//   );
-// };
-
-// export default LoginPage;
-
-
-
-// import { useState, useEffect } from 'react';
-// import { Link, useNavigate } from 'react-router-dom';
-// import { motion, type Variants } from 'framer-motion';
-// import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
-// import { useAuth } from '../../hooks/useAuth';
-// import { login } from '../../store/slices/authSlice';
-// import toast from 'react-hot-toast';
-// import logo from '../../assets/logo.png';
-
-// /* ================== ANIMATIONS (TS SAFE) ================== */
-// const cardVariants: Variants = {
-//   hidden: {
-//     opacity: 0,
-//     y: 30,
-//     scale: 0.96,
-//   },
-//   show: {
-//     opacity: 1,
-//     y: 0,
-//     scale: 1,
-//     transition: {
-//       duration: 0.8,
-//       ease: [0.22, 1, 0.36, 1],
-//     },
-//   },
-// };
-
-// const containerVariants: Variants = {
-//   hidden: {},
-//   show: {
-//     transition: {
-//       staggerChildren: 0.08,
-//     },
-//   },
-// };
-
-// const itemVariants: Variants = {
-//   hidden: {
-//     opacity: 0,
-//     y: 18,
-//     scale: 0.98,
-//   },
-//   show: {
-//     opacity: 1,
-//     y: 0,
-//     scale: 1,
-//     transition: {
-//       duration: 0.6,
-//       ease: [0.22, 1, 0.36, 1],
-//     },
-//   },
-// };
-// /* ========================================================== */
-// const FullPageLoader = () => (
-//   <motion.div
-//     initial={{ opacity: 0 }}
-//     animate={{ opacity: 1 }}
-//     exit={{ opacity: 0 }}
-//     className="
-//       fixed inset-0 z-50 
-//       flex items-center justify-center
-//       bg-sage/40 backdrop-blur-sm
-//     "
-//   >
-//     {/* Floating Loader Card */}
-//     <motion.div
-//       initial={{ scale: 0.9, opacity: 0 }}
-//       animate={{ scale: 1, opacity: 1 }}
-//       transition={{ duration: 0.25, ease: 'easeOut' }}
-//       className="
-//         w-[220px] 
-//         rounded-xl 
-//         bg-white/90
-//         shadow-xl
-//         p-6 
-//         flex flex-col items-center
-//       "
-//     >
-//       {/* Spinner */}
-//       <div className="h-10 w-10 rounded-full border-2 border-sage border-t-transparent animate-spin mb-4" />
-
-//       {/* Text */}
-//       <p className="text-sm font-medium text-slate">
-//         Logging you in…
-//       </p>
-//     </motion.div>
-//   </motion.div>
-// );
-
-// const LoginPage = () => {
-//   const navigate = useNavigate();
-//   const { isAuthenticated, isLoading, dispatch } = useAuth();
-
-//   const [formData, setFormData] = useState({
-//     email: "",
-//     password: "",
-//   });
-
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     if (!formData.email || !formData.password) {
-//       toast.error("Please fill in all fields");
-//       return;
-//     }
-
-//     try {
-//       const res = await dispatch(login(formData)).unwrap();
-
-//       toast.success('Login successful!');
-
-//       if (res.role === 'ADMIN') {
-//         navigate('/admin', { replace: true });
-//       } else {
-//         navigate('/', { replace: true });
-//       }
-//     } catch (err: any) {
-//       toast.error(err || "Login failed");
-//     }
-
-//   };
-
-//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setFormData({
-//       ...formData,
-//       [e.target.name]: e.target.value,
-//     });
-//   };
-// if (isLoading) {
-//   return <FullPageLoader />;
-// }
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-//       {/* Animated Card */}
-//       <motion.div
-//         variants={cardVariants}
-//         initial="hidden"
-//         animate="show"
-//         className="relative z-10 w-full max-w-sm"
-//       >
-//        <div className="glass-card rounded-xl p-6">
-//           {/* Header */}
-//           <motion.div
-//             variants={itemVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="text-center mb-4"
-//           >
-//             <Link to="/" className="inline-flex items-center gap-4 mb-6">
-//     {/* LOGO */}
-//     <img
-//       src={logo}
-//       alt="Styliste Couturier Logo"
-//       className="w-22 h-14 object-contain"
-//     />
-//   </Link>
-//             <p className="text-muted-foreground">
-//               Welcome back! Please login to your account
-//             </p>
-//           </motion.div>
-
-//           {/* Form */}
-//           <motion.form
-//             onSubmit={handleSubmit}
-//             variants={containerVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="space-y-3"
-//           >
-//             {/* Email */}
-//             <motion.div variants={itemVariants}>
-//               {/* <label className="text-sm font-medium text-foreground mb-2 block">
-//                 Email Address
-//               </label> */}
-//               <div className="relative">
-//                 <input
-//                   type="email"
-//                   name="email"
-//                   value={formData.email}
-//                   onChange={handleInputChange}
-//                   className="input-field pl-10 focus:scale-[1.01]"
-//                   placeholder="Enter Email"
-//                   required
-//                 />
-//                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-//               </div>
-//             </motion.div>
-
-//             {/* Password */}
-//             <motion.div variants={itemVariants}>
-//               {/* <label className="text-sm font-medium text-foreground mb-2 block">
-//                 Password
-//               </label> */}
-//               <div className="relative">
-//                 <input
-//                   type="password"
-//                   name="password"
-//                   value={formData.password}
-//                   onChange={handleInputChange}
-//                   className="input-field pl-10 focus:scale-[1.01]"
-//                   placeholder="Enter Password"
-//                   required
-//                 />
-//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-//               </div>
-//             </motion.div>
-
-//             {/* Submit */}
-//             <motion.button
-//   variants={itemVariants}
-//   type="submit"
-//   disabled={isLoading}
-//   whileHover={{ scale: 1.03 }}
-//   whileTap={{ scale: 0.97 }}
-//   className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
-// >
-
-//               <span>{isLoading ? 'Logging in...' : 'Login'}</span>
-//               {!isLoading && <FiArrowRight />}
-//             </motion.button>
-//           </motion.form>
-
-//           {/* Footer */}
-//           <motion.div
-//             variants={itemVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="text-center mt-3"
-//           >
-//             <p className="text-muted-foreground">
-//               Don&apos;t have an account?{' '}
-//               <Link
-//                 to="/signup"
-//                 className="text-sage font-medium hover:underline"
-//               >
-//                 Sign Up
-//               </Link>
-//             </p>
-//           </motion.div>
-//           {/* Back to Home */}
-// <motion.div
-//   variants={itemVariants}
-//   initial="hidden"
-//   animate="show"
-//   className="text-center mt-3"
-// >
-//   <Link
-//     to="/"
-//     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-//   >
-//     ← Back to Home
-//   </Link>
-// </motion.div>
-
-//         </div>
-//       </motion.div>
-//     </div>
-//   );
-// };
-
-// export default LoginPage;
-
-
-
-// import { useState, useEffect } from 'react';
-// import { Link, useNavigate } from 'react-router-dom';
-// import { motion, type Variants } from 'framer-motion';
-// import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
-// import { useAuth } from '../../hooks/useAuth';
-// import { login } from '../../store/slices/authSlice';
-// import toast from 'react-hot-toast';
-// import logo from '../../assets/logo.png';
-
-// /* ================== ANIMATIONS (TS SAFE) ================== */
-// const cardVariants: Variants = {
-//   hidden: {
-//     opacity: 0,
-//     y: 30,
-//     scale: 0.96,
-//   },
-//   show: {
-//     opacity: 1,
-//     y: 0,
-//     scale: 1,
-//     transition: {
-//       duration: 0.8,
-//       ease: [0.22, 1, 0.36, 1],
-//     },
-//   },
-// };
-
-// const containerVariants: Variants = {
-//   hidden: {},
-//   show: {
-//     transition: {
-//       staggerChildren: 0.08,
-//     },
-//   },
-// };
-
-// const itemVariants: Variants = {
-//   hidden: {
-//     opacity: 0,
-//     y: 18,
-//     scale: 0.98,
-//   },
-//   show: {
-//     opacity: 1,
-//     y: 0,
-//     scale: 1,
-//     transition: {
-//       duration: 0.6,
-//       ease: [0.22, 1, 0.36, 1],
-//     },
-//   },
-// };
-// /* ========================================================== */
-
-// const FullPageLoader = () => (
-//   <motion.div
-//     initial={{ opacity: 0 }}
-//     animate={{ opacity: 1 }}
-//     exit={{ opacity: 0 }}
-//     className="
-//       fixed inset-0 z-50 
-//       flex items-center justify-center
-//       bg-sage/40 backdrop-blur-sm
-//     "
-//   >
-//     <motion.div
-//       initial={{ scale: 0.9, opacity: 0 }}
-//       animate={{ scale: 1, opacity: 1 }}
-//       transition={{ duration: 0.25, ease: 'easeOut' }}
-//       className="
-//         w-[220px] 
-//         rounded-xl 
-//         bg-white/90
-//         shadow-xl
-//         p-6 
-//         flex flex-col items-center
-//       "
-//     >
-//       <div className="h-10 w-10 rounded-full border-2 border-sage border-t-transparent animate-spin mb-4" />
-//       <p className="text-sm font-medium text-slate">Logging you in…</p>
-//     </motion.div>
-//   </motion.div>
-// );
-
-// const LoginPage = () => {
-//   const navigate = useNavigate();
-//   const { isAuthenticated, isLoading, dispatch } = useAuth();
-
-//   const [formData, setFormData] = useState({
-//     email: "",
-//     password: "",
-//   });
-
-//   const [errors, setErrors] = useState({
-//     email: "",
-//     password: "",
-//   });
-
-//   const [touched, setTouched] = useState({
-//     email: false,
-//     password: false,
-//   });
-
-//   const [showPassword, setShowPassword] = useState(false);
-
-//   /* ================== VALIDATION RULES ================== */
-//   const validationRules = {
-//     email: (value: string) => {
-//       if (!value) return 'Email is required';
-//       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
-//       return '';
-//     },
-//     password: (value: string) => {
-//       if (!value) return 'Password is required';
-//       if (value.length < 6) return 'Password must be at least 6 characters';
-//       return '';
-//     },
-//   };
-
-//   /* ================== VALIDATION CHECKS ================== */
-//   const validateField = (name: keyof typeof formData, value: string) => {
-//     switch (name) {
-//       case 'email':
-//         return validationRules.email(value);
-//       case 'password':
-//         return validationRules.password(value);
-//       default:
-//         return '';
-//     }
-//   };
-
-//   /* ================== INPUT HANDLERS ================== */
-//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const { name, value } = e.target;
-//     setFormData(prev => ({ ...prev, [name]: value }));
-    
-//     // Validate on change if field has been touched
-//     if (touched[name as keyof typeof touched]) {
-//       const error = validateField(name as keyof typeof formData, value);
-//       setErrors(prev => ({ ...prev, [name]: error }));
-//     }
-//   };
-
-//   const handleBlur = (field: keyof typeof touched) => {
-//     setTouched(prev => ({ ...prev, [field]: true }));
-//     const error = validateField(field, formData[field]);
-//     setErrors(prev => ({ ...prev, [field]: error }));
-//   };
-
-//   /* ================== FORM SUBMISSION ================== */
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-    
-//     // Mark all fields as touched
-//     const allTouched = Object.keys(touched).reduce((acc, key) => ({
-//       ...acc,
-//       [key]: true
-//     }), {} as typeof touched);
-//     setTouched(allTouched);
-    
-//     // Validate all fields
-//     const newErrors = {
-//       email: validationRules.email(formData.email),
-//       password: validationRules.password(formData.password),
-//     };
-    
-//     setErrors(newErrors);
-    
-//     // Check if there are any errors
-//     const hasErrors = Object.values(newErrors).some(error => error !== '');
-//     if (hasErrors) {
-//       toast.error('Please fix the errors in the form');
-//       return;
-//     }
-    
-//     try {
-//       const res = await dispatch(login(formData)).unwrap();
-//       toast.success('Login successful!');
-
-//       if (res.role === 'ADMIN') {
-//         navigate('/admin', { replace: true });
-//       } else {
-//         navigate('/', { replace: true });
-//       }
-//     } catch (err: any) {
-//       toast.error(err?.message || "Login failed");
-//     }
-//   };
-
-//   /* ================== USE EFFECT ================== */
-//   useEffect(() => {
-//     if (isAuthenticated) navigate('/');
-//   }, [isAuthenticated, navigate]);
-
-//   if (isLoading) {
-//     return <FullPageLoader />;
-//   }
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-//       <motion.div
-//         variants={cardVariants}
-//         initial="hidden"
-//         animate="show"
-//         className="relative z-10 w-full max-w-sm"
-//       >
-//         <div className="glass-card rounded-xl p-6">
-//           {/* Header */}
-//           <motion.div
-//             variants={itemVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="text-center mb-4"
-//           >
-//             <Link to="/" className="inline-flex items-center gap-4 mb-6">
-//               <img
-//                 src={logo}
-//                 alt="Styliste Couturier Logo"
-//                 className="w-22 h-14 object-contain"
-//               />
-//             </Link>
-//             <p className="text-muted-foreground">
-//               Welcome back! Please login to your account
-//             </p>
-//           </motion.div>
-
-//           {/* Form */}
-//           <motion.form
-//             onSubmit={handleSubmit}
-//             variants={containerVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="space-y-4"
-//           >
-//             {/* Email */}
-//             <motion.div variants={itemVariants}>
-//               <div className="relative">
-//                 <input
-//                   type="email"
-//                   name="email"
-//                   value={formData.email}
-//                   onChange={handleInputChange}
-//                   onBlur={() => handleBlur('email')}
-//                   placeholder="Enter Email"
-//                   className={`input-field pl-10 pr-8 focus:scale-[1.01] ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
-//                   required
-//                 />
-//                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-//                 {touched.email && (
-//                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
-//                     {errors.email ? (
-//                       <FiX className="text-red-500" size={16} />
-//                     ) : (
-//                       <FiCheck className="text-green-500" size={16} />
-//                     )}
-//                   </div>
-//                 )}
-//               </div>
-//               {errors.email && (
-//                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-//                   <FiX size={12} /> {errors.email}
-//                 </p>
-//               )}
-//             </motion.div>
-
-//             {/* Password */}
-//             <motion.div variants={itemVariants}>
-//               <div className="relative">
-//                 <input
-//                   type={showPassword ? 'text' : 'password'}
-//                   name="password"
-//                   value={formData.password}
-//                   onChange={handleInputChange}
-//                   onBlur={() => handleBlur('password')}
-//                   placeholder="Enter Password"
-//                   className={`input-field pl-10 pr-10 focus:scale-[1.01] ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
-//                   required
-//                 />
-//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-//                 <button
-//                   type="button"
-//                   onClick={() => setShowPassword(!showPassword)}
-//                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-//                 >
-//                   {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-//                 </button>
-//               </div>
-//               {errors.password && (
-//                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-//                   <FiX size={12} /> {errors.password}
-//                 </p>
-//               )}
-//               {formData.password && !errors.password && formData.password.length >= 6 && (
-//                 <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
-//                   <FiCheck size={12} /> Password is valid
-//                 </p>
-//               )}
-//               {formData.password && formData.password.length < 6 && !errors.password && (
-//                 <p className="text-yellow-500 text-xs mt-1">
-//                   Minimum 6 characters required
-//                 </p>
-//               )}
-//             </motion.div>
-
-//             {/* Forgot Password Link */}
-//             <motion.div variants={itemVariants} className="text-right">
-//               <Link
-//                 to="/forgot-password"
-//                 className="text-xs text-sage hover:underline"
-//               >
-//                 Forgot your password?
-//               </Link>
-//             </motion.div>
-
-//             {/* Submit Button */}
-//             <motion.button
-//               variants={itemVariants}
-//               type="submit"
-//               disabled={isLoading}
-//               whileHover={{ scale: 1.03 }}
-//               whileTap={{ scale: 0.97 }}
-//               className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
-//             >
-//               <span>{isLoading ? 'Logging in...' : 'Login'}</span>
-//               {!isLoading && <FiArrowRight />}
-//             </motion.button>
-//           </motion.form>
-
-//           {/* Footer Links */}
-//           <motion.div
-//             variants={itemVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="space-y-3 mt-4"
-//           >
-//             {/* Sign Up Link */}
-//             <div className="text-center">
-//               <p className="text-muted-foreground">
-//                 Don&apos;t have an account?{' '}
-//                 <Link
-//                   to="/signup"
-//                   className="text-sage font-medium hover:underline"
-//                 >
-//                   Sign Up
-//                 </Link>
-//               </p>
-//             </div>
-
-//             {/* Back to Home */}
-//             <div className="text-center">
-//               <Link
-//                 to="/"
-//                 className="text-sm text-muted-foreground hover:text-foreground transition-colors hover:underline"
-//               >
-//                 ← Back to Home
-//               </Link>
-//             </div>
-//           </motion.div>
-//         </div>
-//       </motion.div>
-//     </div>
-//   );
-// };
-
-// export default LoginPage;
-
-
-
-// import { useState } from 'react';
-// import { Link, useNavigate } from 'react-router-dom';
-// import { motion, type Variants } from 'framer-motion';
-// import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
-// import { useAuth } from '../../hooks/useAuth';
-// import { login } from '../../store/slices/authSlice';
-// import toast from 'react-hot-toast';
-// import logo from '../../assets/logo.png';
-
-// /* ================== ANIMATIONS (TS SAFE) ================== */
-// const cardVariants: Variants = {
-//   hidden: {
-//     opacity: 0,
-//     y: 30,
-//     scale: 0.96,
-//   },
-//   show: {
-//     opacity: 1,
-//     y: 0,
-//     scale: 1,
-//     transition: {
-//       duration: 0.8,
-//       ease: [0.22, 1, 0.36, 1],
-//     },
-//   },
-// };
-
-// const containerVariants: Variants = {
-//   hidden: {},
-//   show: {
-//     transition: {
-//       staggerChildren: 0.08,
-//     },
-//   },
-// };
-
-// const itemVariants: Variants = {
-//   hidden: {
-//     opacity: 0,
-//     y: 18,
-//     scale: 0.98,
-//   },
-//   show: {
-//     opacity: 1,
-//     y: 0,
-//     scale: 1,
-//     transition: {
-//       duration: 0.6,
-//       ease: [0.22, 1, 0.36, 1],
-//     },
-//   },
-// };
-// /* ========================================================== */
-
-// const FullPageLoader = () => (
-//   <motion.div
-//     initial={{ opacity: 0 }}
-//     animate={{ opacity: 1 }}
-//     exit={{ opacity: 0 }}
-//     className="
-//       fixed inset-0 z-50 
-//       flex items-center justify-center
-//       bg-sage/40 backdrop-blur-sm
-//     "
-//   >
-//     <motion.div
-//       initial={{ scale: 0.9, opacity: 0 }}
-//       animate={{ scale: 1, opacity: 1 }}
-//       transition={{ duration: 0.25, ease: 'easeOut' }}
-//       className="
-//         w-[220px] 
-//         rounded-xl 
-//         bg-white/90
-//         shadow-xl
-//         p-6 
-//         flex flex-col items-center
-//       "
-//     >
-//       <div className="h-10 w-10 rounded-full border-2 border-sage border-t-transparent animate-spin mb-4" />
-//       <p className="text-sm font-medium text-slate">Logging you in…</p>
-//     </motion.div>
-//   </motion.div>
-// );
-
-// const LoginPage = () => {
-//   const navigate = useNavigate();
-//   const { isLoading, dispatch } = useAuth(); // Removed isAuthenticated
-
-//   const [formData, setFormData] = useState({
-//     email: "",
-//     password: "",
-//   });
-
-//   const [errors, setErrors] = useState({
-//     email: "",
-//     password: "",
-//   });
-
-//   const [touched, setTouched] = useState({
-//     email: false,
-//     password: false,
-//   });
-
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [isSubmitting, setIsSubmitting] = useState(false); // Added local submitting state
-
-//   /* ================== VALIDATION RULES ================== */
-//   const validationRules = {
-//     email: (value: string) => {
-//       if (!value) return 'Email is required';
-//       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
-//       return '';
-//     },
-//     password: (value: string) => {
-//       if (!value) return 'Password is required';
-//       if (value.length < 6) return 'Password must be at least 6 characters';
-//       return '';
-//     },
-//   };
-
-//   /* ================== VALIDATION CHECKS ================== */
-//   const validateField = (name: keyof typeof formData, value: string) => {
-//     switch (name) {
-//       case 'email':
-//         return validationRules.email(value);
-//       case 'password':
-//         return validationRules.password(value);
-//       default:
-//         return '';
-//     }
-//   };
-
-//   /* ================== INPUT HANDLERS ================== */
-//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const { name, value } = e.target;
-//     setFormData(prev => ({ ...prev, [name]: value }));
-    
-//     // Validate on change if field has been touched
-//     if (touched[name as keyof typeof touched]) {
-//       const error = validateField(name as keyof typeof formData, value);
-//       setErrors(prev => ({ ...prev, [name]: error }));
-//     }
-//   };
-
-//   const handleBlur = (field: keyof typeof touched) => {
-//     setTouched(prev => ({ ...prev, [field]: true }));
-//     const error = validateField(field, formData[field]);
-//     setErrors(prev => ({ ...prev, [field]: error }));
-//   };
-
-//   /* ================== FORM SUBMISSION ================== */
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-    
-//     // Mark all fields as touched
-//     const allTouched = Object.keys(touched).reduce((acc, key) => ({
-//       ...acc,
-//       [key]: true
-//     }), {} as typeof touched);
-//     setTouched(allTouched);
-    
-//     // Validate all fields
-//     const newErrors = {
-//       email: validationRules.email(formData.email),
-//       password: validationRules.password(formData.password),
-//     };
-    
-//     setErrors(newErrors);
-    
-//     // Check if there are any errors
-//     const hasErrors = Object.values(newErrors).some(error => error !== '');
-//     if (hasErrors) {
-//       toast.error('Please fix the errors in the form');
-//       return;
-//     }
-    
-//     setIsSubmitting(true); // Set local submitting state
-    
-//     try {
-//       const res = await dispatch(login(formData)).unwrap();
-//       toast.success('Login successful!');
-
-//       // Navigate immediately after successful login
-//       if (res.role === 'ADMIN') {
-//         navigate('/admin', { replace: true });
-//       } else {
-//         navigate('/', { replace: true });
-//       }
-      
-//     } catch (err: any) {
-//       toast.error(err?.message || "Login failed");
-//       setIsSubmitting(false); // Reset on error
-//     }
-//   };
-
-//   // Show loader if either global loading OR local submitting
-//   if (isLoading || isSubmitting) {
-//     return <FullPageLoader />;
-//   }
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-//       <motion.div
-//         variants={cardVariants}
-//         initial="hidden"
-//         animate="show"
-//         className="relative z-10 w-full max-w-sm"
-//       >
-//         <div className="glass-card rounded-xl p-6">
-//           {/* Header */}
-//           <motion.div
-//             variants={itemVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="text-center mb-4"
-//           >
-//             <Link to="/" className="inline-flex items-center gap-4 mb-6">
-//               <img
-//                 src={logo}
-//                 alt="Styliste Couturier Logo"
-//                 className="w-22 h-14 object-contain"
-//               />
-//             </Link>
-//             <p className="text-muted-foreground">
-//               Welcome back! Please login to your account
-//             </p>
-//           </motion.div>
-
-//           {/* Form */}
-//           <motion.form
-//             onSubmit={handleSubmit}
-//             variants={containerVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="space-y-4"
-//           >
-//             {/* Email */}
-//             <motion.div variants={itemVariants}>
-//               <div className="relative">
-//                 <input
-//                   type="email"
-//                   name="email"
-//                   value={formData.email}
-//                   onChange={handleInputChange}
-//                   onBlur={() => handleBlur('email')}
-//                   placeholder="Enter Email"
-//                   className={`input-field pl-10 pr-8 focus:scale-[1.01] ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
-//                   required
-//                 />
-//                 <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-//                 {touched.email && (
-//                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
-//                     {errors.email ? (
-//                       <FiX className="text-red-500" size={16} />
-//                     ) : (
-//                       <FiCheck className="text-green-500" size={16} />
-//                     )}
-//                   </div>
-//                 )}
-//               </div>
-//               {errors.email && (
-//                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-//                   <FiX size={12} /> {errors.email}
-//                 </p>
-//               )}
-//             </motion.div>
-
-//             {/* Password */}
-//             <motion.div variants={itemVariants}>
-//               <div className="relative">
-//                 <input
-//                   type={showPassword ? 'text' : 'password'}
-//                   name="password"
-//                   value={formData.password}
-//                   onChange={handleInputChange}
-//                   onBlur={() => handleBlur('password')}
-//                   placeholder="Enter Password"
-//                   className={`input-field pl-10 pr-10 focus:scale-[1.01] ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
-//                   required
-//                 />
-//                 <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-//                 <button
-//                   type="button"
-//                   onClick={() => setShowPassword(!showPassword)}
-//                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-//                 >
-//                   {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-//                 </button>
-//               </div>
-//               {errors.password && (
-//                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-//                   <FiX size={12} /> {errors.password}
-//                 </p>
-//               )}
-//               {formData.password && !errors.password && formData.password.length >= 6 && (
-//                 <p className="text-green-500 text-xs mt-1 flex items-center gap-1">
-//                   <FiCheck size={12} /> Password is valid
-//                 </p>
-//               )}
-//               {formData.password && formData.password.length < 6 && !errors.password && (
-//                 <p className="text-yellow-500 text-xs mt-1">
-//                   Minimum 6 characters required
-//                 </p>
-//               )}
-//             </motion.div>
-
-//             {/* Forgot Password Link */}
-//             <motion.div variants={itemVariants} className="text-right">
-//               <Link
-//                 to="/forgot-password"
-//                 className="text-xs text-sage hover:underline"
-//               >
-//                 Forgot your password?
-//               </Link>
-//             </motion.div>
-
-//             {/* Submit Button */}
-//             <motion.button
-//               variants={itemVariants}
-//               type="submit"
-//               disabled={isLoading || isSubmitting}
-//               whileHover={{ scale: 1.03 }}
-//               whileTap={{ scale: 0.97 }}
-//               className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
-//             >
-//               <span>{isSubmitting ? 'Logging in...' : 'Login'}</span>
-//               {!isSubmitting && <FiArrowRight />}
-//             </motion.button>
-//           </motion.form>
-
-//           {/* Footer Links */}
-//           <motion.div
-//             variants={itemVariants}
-//             initial="hidden"
-//             animate="show"
-//             className="space-y-3 mt-4"
-//           >
-//             {/* Sign Up Link */}
-//             <div className="text-center">
-//               <p className="text-muted-foreground">
-//                 Don&apos;t have an account?{' '}
-//                 <Link
-//                   to="/signup"
-//                   className="text-sage font-medium hover:underline"
-//                 >
-//                   Sign Up
-//                 </Link>
-//               </p>
-//             </div>
-
-//             {/* Back to Home */}
-//             <div className="text-center">
-//               <Link
-//                 to="/"
-//                 className="text-sm text-muted-foreground hover:text-foreground transition-colors hover:underline"
-//               >
-//                 ← Back to Home
-//               </Link>
-//             </div>
-//           </motion.div>
-//         </div>
-//       </motion.div>
-//     </div>
-//   );
-// };
-
-// export default LoginPage;
-
-
-
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
-import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
-import { useAuth } from '../../hooks/useAuth';
-import { login } from '../../store/slices/authSlice';
+import {
+  FiChevronLeft,
+  FiChevronRight,
+  FiEye,
+  FiEyeOff,
+  FiLock,
+  FiMail,
+} from 'react-icons/fi';
 import toast from 'react-hot-toast';
+
 import logo from '../../assets/logo.png';
-import { mergeGuestCartAfterLogin } from "../../utils/cartMerge";
-import { useAppDispatch } from "../../hooks/useAuth";
-import { useLocation } from 'react-router-dom';
+import heroOne from '../../assets/saree1.png';
+import heroTwo from '../../assets/img1.png';
+// import lehngaFront from '../../assets/jacket1.jpg';
+// import sareeGown from '../../assets/saree-gown.jpg';
 
-/* ================== ANIMATIONS (TS SAFE) ================== */
+import { useAuth, useAppDispatch } from '../../hooks/useAuth';
+import { login } from '../../store/slices/authSlice';
+import { mergeGuestCartAfterLogin } from '../../utils/cartMerge';
+
+type LoginLocationState = {
+  prefillEmail?: string;
+};
+
+type Slide = {
+  image: string;
+  title: string;
+  caption: string;
+  position?: string;
+};
+
+const sliderImages: Slide[] = [
+  {
+    image: heroOne,
+    // title: 'New Edit',
+    // caption: 'Premium custom styling and tailoring for every occasion.',
+    position: 'center',
+    title: '',
+    caption: ''
+  },
+  {
+    image: heroTwo,
+    title: '',
+    caption: '',
+    position: 'center',
+  },
+  // {
+  //   image: lehngaFront,
+  //   title: '',
+  //   caption: '',
+  //   position: 'center',
+  // },
+  // {
+  //   image: sareeGown,
+  //   title: 'Classic Revival',
+  //   caption: 'Traditional saree art transformed into modern statement pieces.',
+  //   position: 'center',
+  // },
+];
+
 const cardVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 30,
-    scale: 0.96,
-  },
+  hidden: { opacity: 0, y: 24 },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
     transition: {
-      duration: 0.8,
-      ease: [0.22, 1, 0.36, 1],
+      duration: 0.7,
+      ease: [0.16, 1, 0.3, 1],
     },
   },
 };
 
-const containerVariants: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 18,
-    scale: 0.98,
-  },
+const formItemVariants: Variants = {
+  hidden: { opacity: 0, y: 14 },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.6,
-      ease: [0.22, 1, 0.36, 1],
-    },
+    transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] },
   },
 };
-/* ========================================================== */
+
 const FullPageLoader = () => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="
-      fixed inset-0 z-50 
-      flex items-center justify-center
-      bg-sage/40 backdrop-blur-sm
-    "
+    className="fixed inset-0 z-50 flex items-center justify-center bg-sage/40 backdrop-blur-sm"
   >
     <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
+      initial={{ scale: 0.94, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="
-        w-[220px] 
-        rounded-xl 
-        bg-white/90
-        shadow-xl
-        p-6 
-        flex flex-col items-center
-      "
+      className="w-[220px] rounded-xl bg-white/90 p-6 shadow-xl"
     >
-      <div className="h-10 w-10 rounded-full border-2 border-sage border-t-transparent animate-spin mb-4" />
-      <p className="text-sm font-medium text-slate">Logging you in…</p>
+      <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-sage border-t-transparent" />
+      <p className="text-center text-sm font-medium text-slate">Logging you in...</p>
     </motion.div>
   </motion.div>
 );
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { isLoading, dispatch, isAdmin } = useAuth(); // Added isAuthenticated and isAdmin
+  const location = useLocation();
+  const { isLoading, dispatch, isAdmin } = useAuth();
+  const reduxDispatch = useAppDispatch();
+  const locationState = location.state as LoginLocationState | null;
+  const prefilledEmail =
+    typeof locationState?.prefillEmail === 'string' ? locationState.prefillEmail : '';
 
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: prefilledEmail,
+    password: '',
   });
 
   const [errors, setErrors] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
   });
 
   const [touched, setTouched] = useState({
@@ -1308,256 +128,303 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-const reduxDispatch = useAppDispatch();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-  if (!loginSuccess || isLoading) return;
-
-  if (isAdmin) {
-    navigate('/admin', { replace: true });
-  } else {
-    navigate('/', { replace: true });
-  }
-}, [loginSuccess, isAdmin, isLoading, navigate]);
-
- useEffect(() => {
-    if (location.state?.prefillEmail) {
-      setFormData(prev => ({ ...prev, email: location.state.prefillEmail }));
+    if (!loginSuccess || isLoading) {
+      return;
     }
-  }, [location.state]);
-  /* ================== VALIDATION RULES ================== */
- const validationRules = {
-  email: (value: string) => {
-    if (!value) return 'Email is required';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-      return 'Please enter a valid email address';
+
+    if (isAdmin) {
+      navigate('/admin', { replace: true });
+      return;
+    }
+
+    navigate('/', { replace: true });
+  }, [loginSuccess, isLoading, isAdmin, navigate]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const goToPreviousSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
+  };
+
+  const goToNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+  };
+
+  const validateField = (name: keyof typeof formData, value: string) => {
+    if (name === 'email') {
+      if (!value) return 'Email is required';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address';
+      return '';
+    }
+
+    if (name === 'password') {
+      if (!value) return 'Password is required';
+      if (value.length < 6) return 'Password must be at least 6 characters';
+    }
+
     return '';
-  },
-};
+  };
 
-  /* ================== VALIDATION CHECKS ================== */
- const validateField = (name: keyof typeof formData, value: string) => {
-  if (name === 'email') {
-    return validationRules.email(value);
-  }
-  return '';
-};
-
-
-  /* ================== INPUT HANDLERS ================== */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    if (touched[name as keyof typeof touched]) {
-      const error = validateField(name as keyof typeof formData, value);
-      setErrors(prev => ({ ...prev, [name]: error }));
+    const field = name as keyof typeof formData;
+
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (touched[field]) {
+      setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
     }
   };
 
-  const handleBlur = (field: keyof typeof touched) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    const error = validateField(field, formData[field]);
-    setErrors(prev => ({ ...prev, [field]: error }));
+  const handleBlur = (field: keyof typeof formData) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, formData[field]) }));
   };
 
-  /* ================== FORM SUBMISSION ================== */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mark all fields as touched
-    const allTouched = Object.keys(touched).reduce((acc, key) => ({
-      ...acc,
-      [key]: true
-    }), {} as typeof touched);
-    setTouched(allTouched);
-    
-    // Validate all fields
+
+    setTouched({ email: true, password: true });
+
     const newErrors = {
-      email: validationRules.email(formData.email),
-      password: '',
+      email: validateField('email', formData.email),
+      password: validateField('password', formData.password),
     };
-    
+
     setErrors(newErrors);
-    
-    // Check if there are any errors
-    const hasErrors = Object.values(newErrors).some(error => error !== '');
-    if (hasErrors) {
+
+    if (newErrors.email || newErrors.password) {
       toast.error('Please fix the errors in the form');
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      // Dispatch login action
-await dispatch(login(formData)).unwrap();
-
-// 🔥 MERGE GUEST CART → BACKEND CART
-await mergeGuestCartAfterLogin(reduxDispatch);
-
-toast.success('Login successful!');
-setLoginSuccess(true);
-
-      
-      // Navigation will be handled by the useEffect above
-      // Don't navigate here - let the useEffect handle it
-      
-    } catch (err: any) {
-      toast.error(err?.message || "Login failed");
+      await dispatch(login(formData)).unwrap();
+      await mergeGuestCartAfterLogin(reduxDispatch);
+      toast.success('Login successful!');
+      setLoginSuccess(true);
+    } catch (error: unknown) {
+      const message =
+        typeof error === 'string'
+          ? error
+          : error instanceof Error
+            ? error.message
+            : 'Login failed';
+      toast.error(message);
       setIsSubmitting(false);
     }
   };
 
-  // Show loader if either global loading OR local submitting
   if (isLoading || isSubmitting) {
     return <FullPageLoader />;
   }
 
+  const currentSlideData = sliderImages[currentSlide];
+  const slideCount = String(sliderImages.length).padStart(2, '0');
+  const slideNumber = String(currentSlide + 1).padStart(2, '0');
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="h-[100dvh] overflow-hidden">
       <motion.div
         variants={cardVariants}
         initial="hidden"
         animate="show"
-        className="relative z-10 w-full max-w-sm"
+        className="relative h-full w-full overflow-hidden bg-black"
       >
-        <div className="glass-card rounded-xl p-6">
-          {/* Header */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="show"
-            className="text-center mb-4"
-          >
-            <Link to="/" className="inline-flex items-center gap-4 mb-6">
-              <img
-                src={logo}
-                alt="Styliste Couturier Logo"
-                className="w-22 h-14 object-contain"
-              />
-            </Link>
-            <p className="text-muted-foreground">
-              Welcome back! Please login to your account
-            </p>
-          </motion.div>
+        {sliderImages.map((slide, index) => (
+          <motion.img
+            key={slide.image}
+            src={slide.image}
+            alt={slide.title}
+            style={{ objectPosition: slide.position ?? 'center' }}
+            className="absolute inset-0 h-full w-full object-cover"
+            initial={false}
+            animate={{ opacity: index === currentSlide ? 1 : 0 }}
+            transition={{ duration: 0.65, ease: 'easeInOut' }}
+          />
+        ))}
 
-          {/* Form */}
-          <motion.form
-            onSubmit={handleSubmit}
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="space-y-4"
-          >
-            {/* Email */}
-            <motion.div variants={itemVariants}>
-              <div className="relative">
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  onBlur={() => handleBlur('email')}
-                  placeholder="Enter Email"
-                  className={`input-field pl-10 pr-8 focus:scale-[1.01] ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''}`}
-                  required
-                />
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                {touched.email && (
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    {errors.email ? (
-                      <FiX className="text-red-500" size={16} />
-                    ) : (
-                      <FiCheck className="text-green-500" size={16} />
-                    )}
-                  </div>
-                )}
-              </div>
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                  <FiX size={12} /> {errors.email}
-                </p>
-              )}
-            </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/72 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/10" />
 
-            {/* Password */}
-            {/* Password */}
-<motion.div variants={itemVariants}>
-  <div className="relative">
-    <input
-      type={showPassword ? 'text' : 'password'}
-      name="password"
-      value={formData.password}
-      onChange={handleInputChange}
-      placeholder="Enter Password"
-      className="input-field pl-10 pr-10 focus:scale-[1.01]"
-      required
-    />
-    <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-    >
-      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-    </button>
-  </div>
-</motion.div>
-            {/* Forgot Password Link */}
-            <motion.div variants={itemVariants} className="text-right">
-              <Link
-                to="/forgot-password"
-                className="text-xs text-sage hover:underline"
-              >
-                Forgot your password?
-              </Link>
-            </motion.div>
-
-            {/* Submit Button */}
-            <motion.button
-              variants={itemVariants}
-              type="submit"
-              disabled={isLoading || isSubmitting}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
-            >
-              <span>{isSubmitting ? 'Logging in...' : 'Login'}</span>
-              {!isSubmitting && <FiArrowRight />}
-            </motion.button>
-          </motion.form>
-
-          {/* Footer Links */}
-          <motion.div
-            variants={itemVariants}
-            initial="hidden"
-            animate="show"
-            className="space-y-3 mt-4"
-          >
-            {/* Sign Up Link */}
-            <div className="text-center">
-              <p className="text-muted-foreground">
-                Don&apos;t have an account?{' '}
+        <div className="relative z-10 grid h-full md:grid-cols-[1.08fr_0.92fr]">
+          <section className="flex h-full flex-col justify-center px-4 py-4 sm:px-5 sm:py-5 md:order-1">
+            <div className="text-left">
+              {/* <p className="text-[11px] uppercase tracking-[0.22em] text-neutral-600">Largest Fashion Store</p> */}
+              {/* <h1 className="mt-3 font-serif text-[1.62rem] leading-tight text-neutral-900 sm:text-[1.9rem]">
+                OFFERS POWERED
+                <br />
+                BY <span className="text-sage">DESIGNERS</span>
+                <br />
+                AROUND THE WORLD.
+              </h1> */}
+              <div className="mt-4 flex flex-col items-start gap-1.5">
+                {/* <p className="text-sm text-neutral-700">Don&apos;t have an account?</p>
                 <Link
                   to="/signup"
-                  className="text-sage font-medium hover:underline"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 transition hover:text-sage"
                 >
-                  Sign Up
+                  Create account <FiArrowRight size={14} />
                 </Link>
-              </p>
+                <Link to="/" className="text-xs text-neutral-700 transition hover:text-neutral-900">
+                  Back to home
+                </Link> */}
+              </div>
             </div>
+          </section>
 
-            {/* Back to Home */}
-            <div className="text-center">
-              <Link
-                to="/"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors hover:underline"
+          <section className="flex h-full items-center justify-center px-4 py-4 sm:px-5 sm:py-5 md:order-2">
+            <div className="w-full max-w-[400px] rounded-[18px] border border-white/30 bg-sage/80 p-3.5 shadow-[0_18px_30px_rgba(40,58,34,0.45)] backdrop-blur-md">
+              <div className="mb-3 flex items-center justify-center">
+                <img src={logo} alt="Styliste" className="h-11 w-80 object-contain" />
+              </div>
+
+              <motion.form
+                onSubmit={handleSubmit}
+                initial="hidden"
+                animate="show"
+                className="w-full rounded-[16px] border border-black/5 bg-white/95 p-4 shadow-[0_12px_22px_rgba(17,14,11,0.18)]"
               >
-                ← Back to Home
-              </Link>
+                <motion.h2
+                  variants={formItemVariants}
+                  className="text-center text-[13px] font-semibold text-neutral-700"
+                >
+                  Welcome back! Please login to your account.
+                </motion.h2>
+
+                <div className="mt-4 space-y-4">
+                  <motion.div variants={formItemVariants}>
+                    <label htmlFor="email" className="text-sm font-semibold text-[#242748]">
+                      Email
+                    </label>
+                    <div className="relative mt-2">
+                      <FiMail
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8f93a2]"
+                        size={16}
+                      />
+                      <input
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        onBlur={() => handleBlur('email')}
+                        placeholder="Enter Email"
+                        className="w-full rounded-xl bg-[#f1f2f8] py-3 pl-10 pr-4 text-sm text-[#1f2336] outline-none ring-1 ring-transparent transition placeholder:text-[#a0a5b8] focus:ring-[#d5d9e8]"
+                        autoComplete="email"
+                        required
+                      />
+                    </div>
+                    {errors.email ? <p className="mt-1 text-xs text-red-500">{errors.email}</p> : null}
+                  </motion.div>
+
+                  <motion.div variants={formItemVariants}>
+                    <div className="mb-2 flex items-center justify-between">
+                      <label htmlFor="password" className="text-sm font-semibold text-[#242748]">
+                        Password
+                      </label>
+                      <Link
+                        to="/forgot-password"
+                        className="text-[13px] font-semibold text-[#6d6fde] transition hover:text-[#5658c6]"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <div className="relative">
+                      <FiLock
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#8f93a2]"
+                        size={16}
+                      />
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        onBlur={() => handleBlur('password')}
+                        placeholder="Enter Password"
+                        className="w-full rounded-xl bg-[#f1f2f8] py-3 pl-10 pr-10 text-sm text-[#1f2336] outline-none ring-1 ring-transparent transition placeholder:text-[#a0a5b8] focus:ring-[#d5d9e8]"
+                        autoComplete="current-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f93a2] transition hover:text-[#4f5266]"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                      </button>
+                    </div>
+                    {errors.password ? (
+                      <p className="mt-1 text-xs text-red-500">{errors.password}</p>
+                    ) : null}
+                  </motion.div>
+                </div>
+
+                <motion.button
+                  variants={formItemVariants}
+                  type="submit"
+                  className="mt-4 w-full rounded-full bg-sage/100 py-2 text-sm font-medium text-white transition hover:bg-sage/80"
+                >
+                  Login
+                </motion.button>
+
+                <motion.div variants={formItemVariants} className="mt-3 text-center text-xs text-neutral-500">
+                  <span>Need an account? </span>
+                  <Link to="/signup" className="font-medium text-neutral-900 transition hover:text-sage">
+                    Create account
+                  </Link>
+                </motion.div>
+
+                <motion.div variants={formItemVariants} className="mt-2 text-center">
+                  <Link to="/" className="text-[11px] text-neutral-600 transition hover:text-neutral-900">
+                    Back to home
+                  </Link>
+                </motion.div>
+              </motion.form>
             </div>
-          </motion.div>
+          </section>
+        </div>
+
+        <div className="absolute left-4 top-4 z-20 rounded-full bg-white/85 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-700">
+          {currentSlideData.title}
+        </div>
+        <p className="absolute left-4 top-14 z-20 max-w-[220px] text-xs text-white/95 sm:text-sm">
+          {currentSlideData.caption}
+        </p>
+
+        <div className="absolute bottom-4 left-4 z-20 text-sm font-medium tracking-wide text-white">
+          {slideNumber}/{slideCount}
+        </div>
+        <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={goToPreviousSlide}
+            className="grid h-8 w-8 place-items-center rounded-full border border-white/70 bg-white/20 text-white backdrop-blur transition hover:bg-white/35"
+            aria-label="Previous slide"
+          >
+            <FiChevronLeft size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={goToNextSlide}
+            className="grid h-8 w-8 place-items-center rounded-full border border-white/70 bg-white/20 text-white backdrop-blur transition hover:bg-white/35"
+            aria-label="Next slide"
+          >
+            <FiChevronRight size={16} />
+          </button>
         </div>
       </motion.div>
     </div>
