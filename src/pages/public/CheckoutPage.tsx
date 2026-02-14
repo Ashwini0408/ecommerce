@@ -94,8 +94,8 @@ const CheckoutPage = () => {
   });
 
   const shippingCost = totalPrice > 50 ? 0 : 10;
-  const tax = totalPrice * 0.1;
-  const finalTotal = totalPrice + shippingCost + tax;
+  // const tax = totalPrice * 0.1;
+  const finalTotal = totalPrice + shippingCost ;
 
   const addressTypeOptions = [
     { value: 'HOME' as const, label: 'Home', icon: FiHome },
