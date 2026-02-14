@@ -1598,8 +1598,8 @@ const CartPage = () => {
   const safeTotalPrice = totalPrice || 0;
   const safeTotalItems = totalItems || 0;
   const shippingCost = safeTotalPrice > 50 ? 0 : 10;
-  const tax = safeTotalPrice * 0.1;
-  const finalTotal = safeTotalPrice + shippingCost + tax;
+  // const tax = safeTotalPrice * 0.1;
+  const finalTotal = safeTotalPrice + shippingCost ;
 
   if (isLoading) {
     return (
@@ -1819,10 +1819,10 @@ const CartPage = () => {
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between text-dark-300">
+                {/* <div className="flex justify-between text-dark-300">
                   <span>Tax (10%)</span>
                   <span className="font-semibold">{formatINR(tax || 0)}</span>
-                </div>
+                </div> */}
                 <div className="border-t border-white/10 pt-4">
                   <div className="flex justify-between text-dark-500 text-xl font-bold">
                     <span>Total</span>

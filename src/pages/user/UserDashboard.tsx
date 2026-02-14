@@ -466,7 +466,7 @@ const UserDashboard = () => {
         city: '',
         state: '',
         postalCode: '',
-        country: 'USA',
+        country: '',
         contactPhone: profile?.phone || user?.phone || '',
         isDefault: false,
         ...overrides,
@@ -695,7 +695,7 @@ const UserDashboard = () => {
       city: address.city,
       state: address.state,
       postalCode: address.postalCode,
-      country: address.country || 'USA',
+      country: address.country || '',
       contactPhone: address.contactPhone || profile?.phone || user?.phone || '',
       isDefault: address.isDefault,
     });
@@ -826,7 +826,7 @@ const UserDashboard = () => {
       icon: FiCalendar,
       meta: `${profile?.appointmentCount ?? appointments.length} booked`,
     },
-  ] as const;
+  ] ;
 
   const orderStatusLabels: Record<OrderStatusFilter, string> = {
     ALL: 'All',
@@ -895,7 +895,7 @@ const UserDashboard = () => {
                   key={card.title}
                   whileHover={{ y: -3 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab(card.id)}
+                 onClick={() => setActiveTab(card.id as AccountTab)}
                   className="group text-left rounded-2xl border border-[#E6E2D6] bg-white p-6 shadow-sm transition-all hover:shadow-md"
                 >
                   <div className="flex items-start gap-4">
@@ -1028,6 +1028,17 @@ const UserDashboard = () => {
                                     >
                                       {order.status.replace(/_/g, ' ')}
                                     </span>
+                                    {order.paymentMethod && (
+                                      <span
+                                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                                          order.paymentMethod === 'RAZORPAY'
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-amber-100 text-amber-700'
+                                        }`}
+                                      >
+                                        {order.paymentMethod === 'RAZORPAY' ? 'Paid via Razorpay' : 'Pay on Delivery'}
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-sm font-semibold text-dark-900">
                                     {firstItem?.productName || 'Order items'}
@@ -1037,6 +1048,13 @@ const UserDashboard = () => {
                                     <span className="font-semibold text-dark-700">
                                       {formatINR(order.totalAmount)}
                                     </span>
+                                    {order.transactionId && (
+                                      <span className="px-2 py-1 rounded-full bg-[#F2F0E8] text-dark-600 font-semibold">
+                                        {order.transactionId === 'COD_PENDING'
+                                          ? 'Pay on Delivery'
+                                          : `Ref: ${order.transactionId.substring(0, 12)}...`}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </div>

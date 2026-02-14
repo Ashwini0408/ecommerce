@@ -105,6 +105,13 @@ getOrderTimeline: async (id: number): Promise<
     return response.data;
   },
 
+  // Download invoice for an order
+  downloadInvoice: async (orderId: number): Promise<Blob> => {
+    const response = await axiosInstance.get<Blob>(`/invoices/order/${orderId}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 
   // Get order statistics (Admin only)
   getOrderStatistics: async (): Promise<OrderStatistics> => {

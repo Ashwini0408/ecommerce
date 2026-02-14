@@ -784,44 +784,68 @@ const handleLogout = async () => {
 
               {isAuthenticated ? (
                 <div className="relative">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/10 text-white"
-                  >
-                    <FiUser size={18} />
-                    <span className="text-sm font-medium">
-                      {profileName || user?.name}
-                    </span>
-                  </motion.button>
+  <motion.button
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+    className="p-2 rounded-xl bg-white/10 text-white"
+  >
+    <FiUser size={20} />
+  </motion.button>
 
-                  <AnimatePresence initial={false}>
-                    {isUserMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-2 w-48 bg-[#7F8F72] rounded-xl shadow-xl overflow-hidden"
-                      >
-                        <Link
-                          to={isAdmin ? "/admin" : "/dashboard"}
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="block px-4 py-3 text-white/90 hover:bg-white/10"
-                        >
-                          Dashboard
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-3 flex items-center gap-2 text-red-300 hover:bg-white/10"
-                        >
-                          <FiLogOut />
-                          Logout
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+  <AnimatePresence initial={false}>
+    {isUserMenuOpen && (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        className="absolute right-0 mt-2 w-48 bg-[#7F8F72] rounded-xl shadow-xl overflow-hidden"
+      >
+
+        {/* 🔓 NOT LOGGED IN */}
+        {!isAuthenticated && (
+          <>
+            <Link
+              to="/login"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block px-4 py-3 text-white hover:bg-white/10"
+            >
+              Login
+            </Link>
+            <Link
+              to="/signup"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block px-4 py-3 text-white hover:bg-white/10"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
+
+        {/* 🔐 LOGGED IN */}
+        {isAuthenticated && (
+          <>
+            <Link
+              to={isAdmin ? "/admin" : "/dashboard"}
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block px-4 py-3 text-white hover:bg-white/10"
+            >
+              Dashboard
+            </Link>
+
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-3 flex items-center gap-2 text-red-300 hover:bg-white/10"
+            >
+              <FiLogOut />
+              Logout
+            </button>
+          </>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
               ) : (
                 <div className="flex items-center space-x-3">
                   <Link to="/login">
@@ -839,13 +863,54 @@ const handleLogout = async () => {
             </div>
 
             {/* ---------------- MOBILE MENU BUTTON ---------------- */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-white"
-            >
-              {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-            </motion.button>
+            {/* ---------------- MOBILE RIGHT ICONS ---------------- */}
+<div className="flex items-center gap-3 md:hidden">
+
+  {!isAdmin && (
+    <button
+      onClick={() => navigate("/wishlist")}
+      className="relative text-white"
+    >
+      <FiHeart size={20} />
+      {wishlistIds.length > 0 && (
+        <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+          {wishlistIds.length}
+        </span>
+      )}
+    </button>
+  )}
+
+  {!isAdmin && (
+    <button
+      onClick={() => navigate("/cart")}
+      className="relative text-white"
+    >
+      <FiShoppingCart size={20} />
+      {totalItems > 0 && (
+        <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+          {totalItems}
+        </span>
+      )}
+    </button>
+  )}
+
+  <button
+    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+    className="text-white"
+  >
+    <FiUser size={20} />
+  </button>
+
+  {/* Hamburger */}
+  <motion.button
+    whileTap={{ scale: 0.9 }}
+    onClick={() => setIsMenuOpen(!isMenuOpen)}
+    className="text-white"
+  >
+    {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+  </motion.button>
+
+</div>
           </div>
         </div>
 
@@ -859,40 +924,90 @@ const handleLogout = async () => {
       exit={{ opacity: 0, height: 0 }}
       className="md:hidden bg-gradient-to-b from-[#9CAF88] to-[#7F8F72]"
     >
-      {/* 🔒 MOBILE ONLY CONTENT */}
-      <div className="px-4 py-4 space-y-3 md:hidden">
+     {/* 🔒 MOBILE ONLY CONTENT */}
+<div className="px-4 py-4 space-y-3 md:hidden">
 
-        {/* ========== ADMIN MOBILE VIEW ONLY ========== */}
-        {isAdmin && (
-          <>
-            <Link
-              to="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setIsMenuOpen(false)}
-              className="block py-2 text-white font-semibold"
-            >
-              Home
-            </Link>
+  {/* ===== MOBILE ICON ROW ===== */}
+  <div className="flex items-center justify-around mb-4">
 
-            <Link
-              to="/admin"
-              onClick={() => setIsMenuOpen(false)}
-              className="block py-2 text-white font-semibold"
-            >
-              Dashboard
-            </Link>
-          </>
+    {!isAdmin && (
+      <button
+        onClick={() => {
+          navigate("/wishlist");
+          setIsMenuOpen(false);
+        }}
+        className="relative text-white"
+      >
+        <FiHeart size={22} />
+        {wishlistIds.length > 0 && (
+          <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {wishlistIds.length}
+          </span>
         )}
+      </button>
+    )}
 
+    {!isAdmin && (
+      <button
+        onClick={() => {
+          navigate("/cart");
+          setIsMenuOpen(false);
+        }}
+        className="relative text-white"
+      >
+        <FiShoppingCart size={22} />
+        {totalItems > 0 && (
+          <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {totalItems}
+          </span>
+        )}
+      </button>
+    )}
+
+    <button
+      onClick={() => {
+        setIsUserMenuOpen(true);
+        setIsMenuOpen(false);
+      }}
+      className="text-white"
+    >
+      <FiUser size={22} />
+    </button>
+
+  </div>
+
+  {/* ========== ADMIN MOBILE VIEW ONLY ========== */}
+  {isAdmin && (
+    <>
+      <Link
+        to="/"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => setIsMenuOpen(false)}
+        className="block py-2 text-white font-semibold"
+      >
+        Home
+      </Link>
+
+      <Link
+        to="/admin"
+        onClick={() => setIsMenuOpen(false)}
+        className="block py-2 text-white font-semibold"
+      >
+        Dashboard
+      </Link>
+    </>
+  )}
         {/* ========== NON-ADMIN MOBILE VIEW ========== */}
         {!isAdmin &&
           [
             { name: "Home", path: "/" },
-            { name: "Services", path: "/services" },
             { name: "About us", path: "/about" },
-            { name: "Contact us", path: "/contact" },
+            {name: "Products", path: "/products" },
+            { name: "Services", path: "/services" },
+            { name: "Blog", path: "/blog" },
             { name: "Testimonials", path: "/testimonials" },
+            { name: "Contact us", path: "/contact" },
           ].map((item) => (
             <Link
               key={item.name}

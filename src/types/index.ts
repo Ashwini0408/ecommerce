@@ -135,15 +135,31 @@ export interface Order {
   orderNumber: number;
   id: number;
   userId: number;
-  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
+  status:
+    | 'PENDING'
+    | 'PROCESSING'
+    | 'SHIPPED'
+    | 'OUT_FOR_DELIVERY'
+    | 'DELIVERED'
+    | 'CANCELLED'
+    | 'RETURNED';
+  paymentMethod?: 'RAZORPAY' | 'COD';
   paymentStatus: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  itemsSubtotal?: number;
+  shippingCharges?: number;
   totalAmount: number;
+  transactionId?: string;
   discount?: number;
   tax?: number;
   trackingNumber?: string;
   shippingAddress: string;
   createdAt: string;
   updatedAt: string;
+  timeline?: {
+    status: string;
+    message: string;
+    timestamp: string;
+  }[];
   items: OrderItem[];
 }
 
@@ -165,6 +181,7 @@ export interface CreateOrderRequest {
     selectedColor?: string;
   }[];
   shippingAddress: ShippingAddress;
+  paymentMethod: 'RAZORPAY' | 'COD';
 }
 
 export interface UpdateOrderStatusRequest {

@@ -64,7 +64,7 @@ const CheckoutPage = () => {
     city: '',
     state: '',
     postalCode: '',
-    country: 'USA',
+    country: 'India',
     phone: user?.phone || '',
   });
 
@@ -87,7 +87,7 @@ const CheckoutPage = () => {
     city: '',
     state: '',
     postalCode: '',
-    country: 'USA',
+    country: 'India',
     isDefault: false,
     landmark: '',
     addressType: 'HOME',
@@ -419,6 +419,7 @@ const CheckoutPage = () => {
           selectedColor: item.selectedColor,
         })),
         shippingAddress,
+        paymentMethod: paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD',
       };
 
       const order = await orderApi.createOrder(orderData);

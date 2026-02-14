@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -13,7 +13,9 @@ import {
   FiStar,
   FiImage,
   FiX,
+  FiDownload,
 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import Navbar from '../../components/layout/Navbar';
 import { orderApi } from '../../api/orderApi';
 import reviewApi from '../../api/reviewApi';
@@ -45,7 +47,8 @@ const timelineAltSteps: Record<string, TimelineStep[]> = {
   ],
 };
 
-const timelineIcons: Record<string, (props: { size?: number }) => JSX.Element> = {
+const timelineIcons: Record<string, (props: { size?: number }) => React.ReactNode> = {
+  
   PENDING: FiClock,
   PROCESSING: FiPackage,
   SHIPPED: FiTruck,
@@ -98,6 +101,7 @@ const OrderDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const IMAGE_BASE_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
 
   const orderId = useMemo(() => (id ? Number(id) : NaN), [id]);
@@ -165,6 +169,27 @@ const OrderDetailsPage = () => {
       active = false;
     };
   }, [orderId]);
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    setDownloadingInvoice(true);
+    try {
+      const blob = await orderApi.downloadInvoice(order.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-${order.orderNumber || order.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Invoice downloaded successfully');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
 
   const firstItem = order?.items?.[0];
   const orderDate = order?.createdAt ? new Date(order.createdAt) : null;
@@ -550,6 +575,16 @@ const OrderDetailsPage = () => {
                     </p>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadInvoice}
+                  disabled={downloadingInvoice}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#E6E2D6] bg-white px-4 py-2 text-sm font-semibold text-[#6B7D60] hover:bg-[#F6F4EC] disabled:opacity-60"
+                  title="Download Invoice (PDF)"
+                >
+                  <FiDownload size={16} />
+                  {downloadingInvoice ? 'Downloading...' : 'Download Invoice'}
+                </button>
               </div>
             </div>
 
@@ -597,10 +632,10 @@ const OrderDetailsPage = () => {
                       ORDER SUMMARY
                     </p>
                     {(() => {
-                      const orderTax = Number(order.tax || 0);
+                      // const orderTax = Number(order.tax || 0);
                       const orderDiscount = Number(order.discount || 0);
                       const orderTotal = Number(order.totalAmount || 0);
-                      const rawSubtotal = orderTotal - orderTax + orderDiscount;
+                      const rawSubtotal = orderTotal + orderDiscount;
                       const subtotal = Number.isFinite(rawSubtotal) ? rawSubtotal : orderTotal;
                       const rawPaymentMode =
                         (order as any).paymentMethod ||
@@ -617,11 +652,11 @@ const OrderDetailsPage = () => {
                           </div>
                           <div className="flex justify-between">
                             <span>Shipping</span>
-                            <span className="text-[#6B7D60]">Free</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Tax</span>
-                            <span>{formatINR(orderTax)}</span>
+                            <span className="text-[#6B7D60]">
+                              {order.shippingCharges !== undefined && order.shippingCharges !== null
+                                ? formatINR(order.shippingCharges)
+                                : 'Free'}
+                            </span>
                           </div>
                           <div className="border-t border-[#E6E2D6] pt-2 flex justify-between font-semibold text-dark-900">
                             <span>Total</span>
@@ -633,6 +668,13 @@ const OrderDetailsPage = () => {
                           <div className="text-xs text-dark-500">
                             Payment Status: {order.paymentStatus.replace(/_/g, ' ')}
                           </div>
+                          {order.transactionId && (
+                            <div className="mt-2 pt-2 border-t border-[#E6E2D6] text-xs text-dark-500">
+                              <p className="font-semibold text-dark-700">
+                                Ref ID: {order.transactionId === 'COD_PENDING' ? 'Pay on Delivery' : order.transactionId}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
