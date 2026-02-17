@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FiBriefcase,
-  FiCheck,
   FiEdit2,
   FiHome,
   FiLock,
@@ -79,6 +78,8 @@ const CheckoutPage = () => {
   const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
   const [deletingAddressId, setDeletingAddressId] = useState<number | null>(null);
   const [addressMeta, setAddressMeta] = useState<Record<number, AddressMeta>>({});
+  const [shippingCharges, setShippingCharges] = useState(0);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const [addressForm, setAddressForm] = useState<AddressFormState>({
     contactName: user?.name || '',
     contactPhone: user?.phone || '',
@@ -93,9 +94,7 @@ const CheckoutPage = () => {
     addressType: 'HOME',
   });
 
-  const shippingCost = totalPrice > 50 ? 0 : 10;
-  // const tax = totalPrice * 0.1;
-  const finalTotal = totalPrice + shippingCost ;
+  const finalTotal = totalPrice + shippingCharges;
 
   const addressTypeOptions = [
     { value: 'HOME' as const, label: 'Home', icon: FiHome },
@@ -124,7 +123,7 @@ const CheckoutPage = () => {
       city: '',
       state: '',
       postalCode: '',
-      country: 'USA',
+      country: 'India',
       isDefault: false,
       landmark: '',
       addressType: 'HOME',
@@ -142,6 +141,34 @@ const CheckoutPage = () => {
       toast.error('Failed to load addresses');
     } finally {
       setIsAddressLoading(false);
+    }
+  };
+
+  const calculateShipping = async (address?: UserAddress) => {
+    const targetAddress = address || selectedAddress;
+    if (!targetAddress) return;
+
+    setIsCalculatingShipping(true);
+    try {
+      const response = await orderApi.calculateShipping({
+        address: {
+          addressLine1: targetAddress.addressLine1,
+          addressLine2: targetAddress.addressLine2 || '',
+          city: targetAddress.city,
+          state: targetAddress.state,
+          postalCode: targetAddress.postalCode,
+          country: targetAddress.country || 'India',
+          contactPhone: targetAddress.contactPhone || '',
+        },
+        subtotal: totalPrice,
+      });
+      setShippingCharges(response.shippingCharges);
+    } catch (error: any) {
+      console.warn('Failed to calculate shipping', error);
+      // Fallback to 0 shipping if calculation fails
+      setShippingCharges(0);
+    } finally {
+      setIsCalculatingShipping(false);
     }
   };
 
@@ -197,7 +224,7 @@ const CheckoutPage = () => {
       city: selectedAddress.city,
       state: selectedAddress.state,
       postalCode: selectedAddress.postalCode,
-      country: selectedAddress.country || 'USA',
+      country: selectedAddress.country || '',
       phone: selectedAddress.contactPhone || user?.phone || '',
     });
   }, [selectedAddress, user?.phone]);
@@ -216,6 +243,11 @@ const CheckoutPage = () => {
       void loadRazorpayScript();
     }
   }, [paymentMethod]);
+
+  // Calculate shipping when selected address or items change
+  useEffect(() => {
+    calculateShipping();
+  }, [selectedAddress, items.length, totalPrice]);
 
   const openAddressModal = () => {
     if (addresses.length === 0) {
@@ -236,15 +268,6 @@ const CheckoutPage = () => {
   const closeAddressOverlay = () => {
     setShowAddressModal(false);
     setShowAddEditAddressModal(false);
-  };
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (name === 'phone') {
-      setFormData((prev) => ({ ...prev, phone: normalizePhone(value) }));
-      return;
-    }
-    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const validateForm = () => {
@@ -268,85 +291,6 @@ const CheckoutPage = () => {
     return true;
   };
 
-  // const handleRazorpayPayment = async () => {
-  //   if (!isAuthenticated) {
-  //     toast.error('Please login to continue');
-  //     navigate('/login');
-  //     return;
-  //   }
-  //
-  //   if (items.length === 0) {
-  //     toast.error('Your cart is empty');
-  //     navigate('/cart');
-  //     return;
-  //   }
-  //
-  //   if (!validateForm()) return;
-  //
-  //   setLoading(true);
-  //
-  //   try {
-  //     // Create order in backend
-  //     const shippingAddress = {
-  //       addressLine1: formData.addressLine1,
-  //       addressLine2: formData.addressLine2 || undefined,
-  //       city: formData.city,
-  //       state: formData.state,
-  //       postalCode: formData.postalCode,
-  //       country: formData.country,
-  //       contactPhone: formData.phone,
-  //     };
-  //
-  //     const orderData = {
-  //       items: items.map((item) => ({
-  //         productId: item.productId,
-  //         quantity: item.quantity,
-  //         selectedSize: item.selectedSize,
-  //         selectedColor: item.selectedColor,
-  //       })),
-  //       shippingAddress,
-  //     };
-  //
-  //     const order = await orderApi.createOrder(orderData);
-  //
-  //     // Initialize Razorpay
-  //     const options = {
-  //       key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx',
-  //       amount: Math.round(finalTotal * 100), // Convert to paise
-  //       currency: 'INR',
-  //       name: 'STYLISTE',
-  //       description: `Order #${order.id}`,
-  //       order_id: '', // You would get this from your backend Razorpay order creation
-  //       handler: async function (/* response: any */) {
-  //         // Payment successful
-  //         toast.success('Payment successful! Order placed.');
-  //         dispatch(clearCart());
-  //         navigate(`/dashboard?orderSuccess=${order.id}`);
-  //       },
-  //       prefill: {
-  //         name: user?.name || '',
-  //         email: user?.email || '',
-  //         contact: formData.phone,
-  //       },
-  //       theme: {
-  //         color: '#0ea5e9',
-  //       },
-  //       modal: {
-  //         ondismiss: function () {
-  //           setLoading(false);
-  //           toast.error('Payment cancelled');
-  //         },
-  //       },
-  //     };
-  //
-  //     const razorpay = new window.Razorpay(options);
-  //     razorpay.open();
-  //   } catch (error: any) {
-  //     toast.error(error.message || 'Failed to process payment');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const clearServerCartAfterOrder = async () => {
     try {
@@ -420,9 +364,12 @@ const CheckoutPage = () => {
         })),
         shippingAddress,
         paymentMethod: paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD',
+        shippingCharges,
       };
 
-      const order = await orderApi.createOrder(orderData);
+      const paymentMethodType: "RAZORPAY" | "COD" = paymentMethod === "razorpay" ? "RAZORPAY" : "COD";
+      const orderDataWithType = { ...orderData, paymentMethod: paymentMethodType };
+      const order = await orderApi.createOrder(orderDataWithType);
 
       if (paymentMethod === 'razorpay') {
         const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
@@ -816,7 +763,7 @@ const CheckoutPage = () => {
                     const effectivePrice = item.salePrice || item.price;
                     const hasDiscount =
                       typeof item.salePrice === 'number' && item.salePrice < item.price;
-                    const discountValue = hasDiscount ? item.price - item.salePrice : 0;
+                    const discountValue = hasDiscount && item.salePrice ? item.price - item.salePrice : 0;
                     const discountPercent = hasDiscount
                       ? Math.round((discountValue / item.price) * 100)
                       : 0;
@@ -957,16 +904,14 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-dark-700">
                   <span>Shipping</span>
                   <span className="font-semibold">
-                    {shippingCost === 0 ? (
+                    {isCalculatingShipping ? (
+                      <span className="text-dark-500 animate-pulse">Calculating...</span>
+                    ) : shippingCharges === 0 ? (
                       <span className="text-sage">FREE</span>
                     ) : (
-                      formatINR(shippingCost)
+                      formatINR(shippingCharges)
                     )}
                   </span>
-                </div>
-                <div className="flex justify-between text-dark-700">
-                  <span>Tax</span>
-                  <span className="font-semibold">{formatINR(tax)}</span>
                 </div>
                 <div className="border-t border-sage/20 pt-3">
                   <div className="flex justify-between text-dark-900 text-xl font-bold">

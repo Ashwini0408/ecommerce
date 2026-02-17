@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import {formatINR } from "../../utils/currency";
-import type { Footer } from '../../components/layout/Footer';
+
 
 
 type AccountTab = 'overview' | 'orders' | 'profile' | 'appointments' | 'addresses';

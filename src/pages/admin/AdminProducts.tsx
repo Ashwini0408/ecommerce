@@ -17200,7 +17200,6 @@ import {
   FiStar,
   FiUser,
   FiCalendar,
-  FiCheck,
   FiVideo,
   FiRefreshCw,
 } from "react-icons/fi";
@@ -17388,7 +17387,7 @@ const AdminProducts = () => {
   
   // Pagination for reviews
   const [reviewPage, setReviewPage] = useState(0);
-  const [reviewSize, setReviewSize] = useState(10);
+  const [reviewSize] = useState(10);
   const [totalReviews, setTotalReviews] = useState(0);
 
   // --- MODAL STATE ---
@@ -17442,7 +17441,7 @@ const AdminProducts = () => {
 
   // --- HELPER: RESOLVE IMAGE/VIDEO URL ---
   const getMediaUrl = (path?: string) => {
-    if (!path) return null;
+    if (!path) return undefined;
     if (path.startsWith("http") || path.startsWith("blob:")) return path;
     return `${SERVER_URL}${path.startsWith("/") ? "" : "/"}${path}`;
   };
@@ -19682,7 +19681,7 @@ const AdminProducts = () => {
                               <div className="mb-4">
                                 <p className="text-sm text-dark-500 mb-2">Videos:</p>
                                 <div className="flex flex-wrap gap-2">
-                                  {review.videoUrls.map((videoUrl, idx) => (
+                                  {review.videoUrls.map((_, idx) => (
                                     <div
                                       key={idx}
                                       className="h-20 w-20 flex items-center justify-center bg-gray-100 rounded-lg border border-gray-200"
@@ -19870,7 +19869,7 @@ const AdminProducts = () => {
                           Existing Videos (Click X to remove)
                         </label>
                         <div className="flex flex-wrap gap-3 mb-4">
-                          {editingReview.videoUrls.map((videoUrl, index) => (
+                          {editingReview.videoUrls.map((_, index) => (
                             <div key={index} className="relative group">
                               <div className="h-24 w-24 flex flex-col items-center justify-center bg-gray-100 rounded-lg border border-gray-200">
                                 <FiVideo className="text-gray-400 mb-1" size={24} />

@@ -110,6 +110,7 @@
 
 // export default AdminLayout;
 
+import { useState } from "react";
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -121,6 +122,8 @@ import {
   FiLogOut,
   FiExternalLink,
   FiMail,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
 import logo from "../../assets/logo.png";
@@ -132,6 +135,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const { user, dispatch } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   // Main navigation items
   const mainMenuItems = [
     { name: "Dashboard", path: "/admin", icon: FiHome },
@@ -175,8 +179,26 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Static Sidebar */}
-      <div className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-white to-gray-50 text-gray-800 shadow-lg z-40 border-r border-gray-200">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center px-4">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="text-gray-700 w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded">
+          {sidebarOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
+        <img src={logo} alt="Logo" className="h-10 w-auto ml-3" />
+      </div>
+
+      {/* Backdrop for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Responsive */}
+      <div className={`fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-white to-gray-50 text-gray-800 shadow-lg z-40 border-r border-gray-200 transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo/Header */}
         <div className="p-6 bg-[#5E6E54] border-b border-[#4F5D47]">
           <div className="flex justify-center items-center">
@@ -269,9 +291,8 @@ const AdminLayout = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="ml-64 w-[calc(100%-16rem)] min-h-screen p-6 bg-gray-50">
+      <main className="md:ml-64 min-h-screen p-4 md:p-6 bg-gray-50 pt-20 md:pt-6">
         <div className="w-full min-h-full">
-          {/* Header Bar - You can remove this if you want just the sidebar navigation */}
           <Outlet />
         </div>
       </main>

@@ -4,6 +4,7 @@ import { ArrowRight, Calendar, User, Clock } from "lucide-react";
 import Navbar from "../../../src/components/layout/Navbar";
 import { Footer } from "../../../src/components/layout/Footer";      
 import sareeUpcycleHero from "../../assets/saree-upcycle-hero.jpg";
+import heroBlog from "../../assets/hero-blog.jpg";
 
 const blogPosts = [
   {
@@ -88,10 +89,10 @@ const Blog = () => {
           <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
               <div className="absolute inset-0">
                   <img
-                      src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=1920&q=80"
-                      alt="STYLISTE blog"
-                      className="w-full h-full object-cover opacity-10" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
+                      src={heroBlog}
+                      alt="Styliste blog"
+                      className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
               </div>
               <div className="container mx-auto px-6 relative z-10">
                   <div className="max-w-3xl">

@@ -19,6 +19,23 @@ export interface VerifyPaymentRequest {
   razorpaySignature: string;
 }
 
+export interface CalculateShippingRequest {
+  address: {
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    contactPhone: string;
+  };
+  subtotal: number;
+}
+
+export interface CalculateShippingResponse {
+  shippingCharges: number;
+}
+
 export const orderApi = {
   // Create order
   createOrder: async (orderData: CreateOrderRequest): Promise<Order> => {
@@ -93,6 +110,15 @@ getOrderTimeline: async (id: number): Promise<
   initiatePayment: async (orderId: number): Promise<InitiatePaymentResponse> => {
     const response = await axiosInstance.post<InitiatePaymentResponse>(
       `/orders/${orderId}/pay`
+    );
+    return response.data;
+  },
+
+  // Calculate shipping charges based on address and subtotal
+  calculateShipping: async (payload: CalculateShippingRequest): Promise<CalculateShippingResponse> => {
+    const response = await axiosInstance.post<CalculateShippingResponse>(
+      '/orders/calculate-shipping',
+      payload
     );
     return response.data;
   },

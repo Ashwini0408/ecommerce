@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Calendar /* , Sparkles */ } from "lucide-react";
+import { useVisibleSectionTheme } from "../../hooks/useVisibleSectionTheme";
 
 export const FloatingAppointmentButton = () => {
+  const theme = useVisibleSectionTheme();
+  const isDarkSection = theme === "dark";
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0, y: 100 }}
@@ -32,7 +36,9 @@ export const FloatingAppointmentButton = () => {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="absolute inset-0 rounded-full bg-sage opacity-30 blur-xl"
+            className={`absolute inset-0 rounded-full opacity-30 blur-xl transition-colors duration-300 ${
+              isDarkSection ? "bg-white" : "bg-sage"
+            }`}
           />
           
           {/* Pulsing outer ring */}
@@ -46,11 +52,17 @@ export const FloatingAppointmentButton = () => {
               repeat: Infinity,
               ease: "easeOut"
             }}
-            className="absolute inset-0 rounded-full border-2 border-sage"
+            className={`absolute inset-0 rounded-full border-2 transition-colors duration-300 ${
+              isDarkSection ? "border-white" : "border-sage"
+            }`}
           />
 
           {/* Main button */}
-          <div className="relative flex items-center gap-3 bg-sage hover:bg-sage-light text-primary-foreground px-6 py-4 rounded-full shadow-sage transition-all duration-300 group-hover:shadow-lg">
+          <div className={`relative flex items-center gap-3 px-6 py-4 rounded-full transition-all duration-300 group-hover:shadow-lg ${
+            isDarkSection
+              ? "bg-white text-sage shadow-white/40 hover:shadow-white/60"
+              : "bg-sage hover:bg-sage-light text-primary-foreground shadow-sage"
+          }`}>
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ 

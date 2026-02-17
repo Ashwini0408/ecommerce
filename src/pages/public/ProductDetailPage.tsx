@@ -3141,7 +3141,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft, FiStar, FiPlay, FiPause, FiVolume2, FiVolumeX, FiMaximize, FiX, FiCamera, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft, FiStar, FiPlay, FiPause, FiVolume2, FiVolumeX, FiMaximize, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import Navbar from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { productApi } from '../../api/productApi';
@@ -3241,7 +3241,7 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
+  const quantity = 1;
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const { wishlistIds, toggleWishlist } = useWishlist();
@@ -3318,9 +3318,7 @@ const ProductDetailPage = () => {
     [reviews]
   );
   const currentPhotoItem = photoItems[activePhotoIndex] || null;
-  const fitPercent = Math.min(95, Math.max(45, Math.round((averageRating / 5) * 100)));
-  const lengthPercent = Math.min(90, Math.max(40, fitPercent - 12));
-  const transparencyPercent = Math.min(85, Math.max(35, fitPercent - 18));
+
   const formatReviewDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -3754,10 +3752,6 @@ useEffect(() => {
     setVideoError(false);
   };
 
-  const handleThumbnailVideoLoad = (videoUrl: string) => {
-    console.log('Thumbnail video loaded for:', videoUrl);
-  };
-
   const fetchProduct = async () => {
     try {
       const data = await productApi.getProductById(Number(id));
@@ -3890,23 +3884,6 @@ useEffect(() => {
     setTimeout(() => {
       navigate('/cart');
     }, 300);
-  };
-
-  const handleClearSelection = () => {
-    if (availableSizes.length > 0) {
-      setSelectedSize(availableSizes[0].value);
-    } else {
-      setSelectedSize('');
-    }
-    
-    if (availableColors.length > 0) {
-      setSelectedColor(availableColors[0].value);
-    } else {
-      setSelectedColor('');
-    }
-    
-    setQuantity(1);
-    toast.success('Selection cleared!');
   };
 
   const getColorName = (colorValue: string) => {

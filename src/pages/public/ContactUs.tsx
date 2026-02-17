@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import ContactApi from "../../api/contactApi";
+import heroContact from "../../assets/hero-contact.jpg";
 
 
 const Contact = () => {
@@ -62,39 +63,49 @@ const inputClass =
     <div className="bg-background text-foreground">
 
       {/* ================= HEADER ================= */}
-      <section className="py-20 md:py-32 border-b border-border">
+      <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
-        <div className="container mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center gap-4 mb-4"
-          >
-            <div className="w-8 h-px bg-sage" />
-            <p className="text-sage tracking-[0.3em] text-xs uppercase">
-              Get in Touch
-            </p>
-            <div className="w-8 h-px bg-sage" />
-          </motion.div>
+        <div className="absolute inset-0">
+          <img
+            src={heroContact}
+            alt="Styliste contact"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
+        </div>
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          <div className="max-w-3xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-center gap-4 mb-6"
+            >
+              <div className="w-8 h-px bg-primary-foreground/60" />
+              <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                Get in Touch
+              </p>
+              <div className="w-8 h-px bg-primary-foreground/60" />
+            </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="font-serif text-5xl md:text-7xl mb-6"
-          >
-            Contact Us
-          </motion.h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+            >
+              Contact Us
+            </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-muted-foreground max-w-xl mx-auto leading-relaxed"
-          >
-            We'd love to hear from you. Whether you have a question about our
-            services or need styling advice, our team is here to help.
-          </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-primary-foreground/80 text-lg leading-relaxed"
+            >
+              We'd love to hear from you. Whether you have a question about our
+              services or need styling advice, our team is here to help.
+            </motion.p>
+          </div>
         </div>
       </section>
 

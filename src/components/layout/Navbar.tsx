@@ -583,7 +583,6 @@ import logo from "../../assets/logo.png";
 import { useWishlist } from "../../context/WishlistContext";
 // import { logout } from "../../store/slices/authSlice";
 import { clearCart } from "../../store/slices/cartSlice";
-import type { AsyncThunkAction, AsyncThunkConfig } from "@reduxjs/toolkit";
 import { useAppDispatch } from "../../hooks/useAuth";
 import { userProfileApi } from "../../api/userProfileApi";
 
@@ -652,6 +651,20 @@ useEffect(() => {
     window.removeEventListener("profile:updated", handleProfileUpdated);
   };
 }, [isAuthenticated, user?.id]);
+useEffect(() => {
+  const handleClickOutside = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+
+    // if click is inside navbar, ignore
+    if (target.closest("#navbar-root")) return;
+
+    setIsUserMenuOpen(false);
+  };
+
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
+
 
 const handleLogout = async () => {
   // 🔥 clear Redux cart state
@@ -669,6 +682,7 @@ const handleLogout = async () => {
     <>
       {/* ---------------- NAVBAR ---------------- */}
 <nav
+ id="navbar-root"
   className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
     isScrolled
       ? "bg-gradient-to-r from-[#5E6E54] via-[#6B7D60] to-[#5E6E54] shadow-xl backdrop-blur"
@@ -783,14 +797,17 @@ const handleLogout = async () => {
 
 
               {isAuthenticated ? (
-                <div className="relative">
+                <div
+  className="relative"
+  onClick={(e) => e.stopPropagation()}
+>
   <motion.button
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-    className="p-2 rounded-xl bg-white/10 text-white"
+    className="px-4 py-2 rounded-xl bg-white/10 text-white font-medium"
   >
-    <FiUser size={20} />
+    {profileName || user?.name || "Account"}
   </motion.button>
 
   <AnimatePresence initial={false}>
@@ -799,7 +816,9 @@ const handleLogout = async () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
-        className="absolute right-0 mt-2 w-48 bg-[#7F8F72] rounded-xl shadow-xl overflow-hidden"
+        className="absolute right-0 mt-2 w-48 bg-[#7F8F72] rounded-xl shadow-xl overflow-hidden z-[999]
+md:right-0 md:w-48
+max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
       >
 
         {/* 🔓 NOT LOGGED IN */}
@@ -864,8 +883,7 @@ const handleLogout = async () => {
 
             {/* ---------------- MOBILE MENU BUTTON ---------------- */}
             {/* ---------------- MOBILE RIGHT ICONS ---------------- */}
-<div className="flex items-center gap-3 md:hidden">
-
+<div className="flex items-center gap-3 md:hidden relative z-[60]">
   {!isAdmin && (
     <button
       onClick={() => navigate("/wishlist")}
@@ -895,7 +913,9 @@ const handleLogout = async () => {
   )}
 
   <button
-    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+    onClick={() => {
+  setIsUserMenuOpen((prev) => !prev);
+}}
     className="text-white"
   >
     <FiUser size={20} />
@@ -913,6 +933,68 @@ const handleLogout = async () => {
 </div>
           </div>
         </div>
+
+        {/* MOBILE USER MENU DROPDOWN */}
+<AnimatePresence initial={false}>
+  {isUserMenuOpen && !isMenuOpen && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="md:hidden bg-[#6B7D60] border-t border-white/10"
+    >
+      <div className="px-4 py-3 space-y-2">
+        {isAuthenticated ? (
+          <>
+            <p className="text-white/70 text-sm font-medium mb-3">
+              {profileName || user?.name || "User"}
+            </p>
+            <Link
+              to={isAdmin ? "/admin" : "/dashboard"}
+              onClick={() => {
+                setIsUserMenuOpen(false);
+              }}
+              className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Dashboard
+            </Link>
+            <button
+              onClick={() => {
+                handleLogout();
+                setIsUserMenuOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 flex items-center gap-2 text-red-300 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <FiLogOut />
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              onClick={() => {
+                setIsUserMenuOpen(false);
+              }}
+              className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Login
+            </Link>
+            <Link
+              to="/signup"
+              onClick={() => {
+                setIsUserMenuOpen(false);
+              }}
+              className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
         {/* ---------------- MOBILE MENU ---------------- */}
  {/* ---------------- MOBILE MENU ---------------- */}
@@ -964,13 +1046,13 @@ const handleLogout = async () => {
       </button>
     )}
 
-    <button
-      onClick={() => {
-        setIsUserMenuOpen(true);
-        setIsMenuOpen(false);
-      }}
-      className="text-white"
-    >
+   <button
+  onClick={(e) => {
+    e.stopPropagation();
+    setIsUserMenuOpen((prev) => !prev);
+  }}
+  className="text-white"
+>
       <FiUser size={22} />
     </button>
 

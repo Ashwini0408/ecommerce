@@ -1484,7 +1484,6 @@ const CartPage = () => {
   };
 
   const handleRemoveItem = async (
-    itemId: number,
     productId: number,
     selectedSize?: string,
     selectedColor?: string
@@ -1515,7 +1514,6 @@ const CartPage = () => {
   };
 
   const handleIncrement = async (
-    itemId: number,
     productId: number,
     quantity: number,
     selectedSize?: string,
@@ -1545,7 +1543,6 @@ const CartPage = () => {
   };
 
   const handleDecrement = async (
-    itemId: number,
     productId: number,
     quantity: number,
     selectedSize?: string,
@@ -1597,9 +1594,9 @@ const CartPage = () => {
   // Safe calculations with fallbacks
   const safeTotalPrice = totalPrice || 0;
   const safeTotalItems = totalItems || 0;
-  const shippingCost = safeTotalPrice > 50 ? 0 : 10;
+  // const shippingCost = safeTotalPrice > 50 ? 0 : 10;
   // const tax = safeTotalPrice * 0.1;
-  const finalTotal = safeTotalPrice + shippingCost ;
+  const finalTotal = safeTotalPrice  ;
 
   if (isLoading) {
     return (
@@ -1733,7 +1730,6 @@ const CartPage = () => {
                             whileTap={{ scale: 0.9 }}
                             onClick={() =>
                               handleDecrement(
-                                item.itemId,
                                 item.productId,
                                 safeQuantity,
                                 item.selectedSize,
@@ -1750,7 +1746,6 @@ const CartPage = () => {
                             whileTap={{ scale: 0.9 }}
                             onClick={() =>
                               handleIncrement(
-                                item.itemId,
                                 item.productId,
                                 safeQuantity,
                                 item.selectedSize,
@@ -1782,7 +1777,6 @@ const CartPage = () => {
                       whileTap={{ scale: 0.9 }}
                       onClick={() =>
                         handleRemoveItem(
-                          item.itemId,
                           item.productId,
                           item.selectedSize,
                           item.selectedColor
@@ -1810,14 +1804,14 @@ const CartPage = () => {
                   <span className="font-semibold">{formatINR(safeTotalPrice || 0)}</span>
                 </div>
                 <div className="flex justify-between text-dark-300">
-                  <span>Shipping</span>
-                  <span className="font-semibold">
+                  {/* <span>Shipping</span> */}
+                  {/* <span className="font-semibold">
                     {shippingCost === 0 ? (
                       <span className="text-green-400">FREE</span>
                     ) : (
                       formatINR(shippingCost)
                     )}
-                  </span>
+                  </span> */}
                 </div>
                 {/* <div className="flex justify-between text-dark-300">
                   <span>Tax (10%)</span>
