@@ -345,7 +345,6 @@
 
 
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { FiHeart } from 'react-icons/fi';
 import type { Product } from '../../types';
 import { formatINR } from "../../utils/currency";

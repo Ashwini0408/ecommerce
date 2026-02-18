@@ -1021,7 +1021,7 @@ import type { Product, ProductFilterRequest } from '../../types';
 import toast from 'react-hot-toast';
 import { Footer } from '../../components/layout/Footer';
 import { formatINR } from '../../utils/currency';
-import { wishlistApi } from "../../api/wishlistApi";
+// import { wishlistApi } from "../../api/wishlistApi";
 import productFilterApi from '../../api/productFilterApi';
 import { resolveColor } from "../../utils/colorResolver";
 
@@ -1037,7 +1037,6 @@ const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [wishlistIds, setWishlistIds] = useState<number[]>([]);
   const [expandedSections, setExpandedSections] = useState({
     category: true,
     subcategory: true,
@@ -1104,20 +1103,6 @@ const ProductsPage = () => {
       }
     };
     loadCategories();
-  }, []);
-
-  useEffect(() => {
-    const fetchWishlist = async () => {
-      try {
-        const data = await wishlistApi.getWishlist();
-        const ids = data.products.map(p => p.id);
-        setWishlistIds(ids);
-      } catch {
-        console.error("Failed to fetch wishlist");
-      }
-    };
-
-    fetchWishlist();
   }, []);
 
   // --- 2. CALCULATE SUBCATEGORIES DYNAMICALLY ---
@@ -1858,14 +1843,6 @@ const ProductsPage = () => {
                         product={product}
                         compact={true}
                         className="transform transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1"
-                        isWishlisted={wishlistIds.includes(product.id)}
-                        onWishlistToggle={(productId: number) => {
-                          setWishlistIds(prev =>
-                            prev.includes(productId)
-                              ? prev.filter(id => id !== productId)
-                              : [...prev, productId]
-                          );
-                        }}
                       />
                     </div>
                   ))}

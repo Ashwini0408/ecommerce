@@ -139,7 +139,7 @@ const Separator = ({
 };
 
 const BlogPost = () => {
-  const { id } = useParams();
+  useParams();
 
   const keyTakeaways = [
     {

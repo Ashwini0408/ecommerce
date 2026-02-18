@@ -1,4 +1,4 @@
-// import { useState, useEffect } from "react";
+﻿// import { useState, useEffect } from "react";
 // import { Link } from "react-router-dom";
 // import { FiX, FiShoppingCart, FiHeart, FiChevronRight } from "react-icons/fi";
 // import { motion } from "framer-motion";
@@ -250,7 +250,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FiX, FiShoppingCart, FiHeart, FiChevronRight } from "react-icons/fi";
+import { FiX,  FiHeart, FiChevronRight } from "react-icons/fi";
 import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import {Footer} from "../../components/layout/Footer";

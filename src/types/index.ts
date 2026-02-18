@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { Key, ReactNode } from "react";
 
 // ==================== USER & AUTH ====================
 export interface User {

@@ -974,7 +974,7 @@ const validatePhone = (phone: string) => {
 
     setFormErrors(errors);
     if (firstInvalidField) {
-      window.requestAnimationFrame(() => scrollToInvalidField(firstInvalidField));
+      window.requestAnimationFrame(() => scrollToInvalidField(firstInvalidField!));
     }
     return isValid;
   };
