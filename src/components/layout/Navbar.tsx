@@ -582,9 +582,10 @@ import toast from "react-hot-toast";
 import logo from "../../assets/logo.png";
 import { useWishlist } from "../../context/WishlistContext";
 // import { logout } from "../../store/slices/authSlice";
-import { clearCart } from "../../store/slices/cartSlice";
+import { clearCart, addToCart } from "../../store/slices/cartSlice";
 import { useAppDispatch } from "../../hooks/useAuth";
 import { userProfileApi } from "../../api/userProfileApi";
+import cartApi from "../../api/cartApi";
 
 
 const Navbar = () => {
@@ -651,6 +652,43 @@ useEffect(() => {
     window.removeEventListener("profile:updated", handleProfileUpdated);
   };
 }, [isAuthenticated, user?.id]);
+
+// Fetch cart from backend when user logs in
+useEffect(() => {
+  if (!isAuthenticated) {
+    return;
+  }
+
+  const fetchCartFromBackend = async () => {
+    try {
+      const response = await cartApi.getCart();
+      const cartData = response.items || [];
+      
+      // Clear Redux cart and repopulate with backend items
+      reduxDispatch(clearCart());
+      
+      cartData.forEach((item: any) => {
+        reduxDispatch(addToCart({
+          itemId: item.id,
+          productId: item.productId,
+          name: item.productName,
+          price: item.unitPrice,
+          salePrice: undefined,
+          quantity: item.quantity,
+          image: item.productImage || '',
+          stock: item.stock || 999,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor,
+        }));
+      });
+    } catch (error) {
+      console.error('Failed to fetch cart on login:', error);
+    }
+  };
+
+  fetchCartFromBackend();
+}, [isAuthenticated, reduxDispatch]);
+
 useEffect(() => {
   const handleClickOutside = (e: MouseEvent) => {
     const target = e.target as HTMLElement;

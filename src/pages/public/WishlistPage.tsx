@@ -248,6 +248,9 @@
 // export default Wishlist;
 
 
+
+
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FiX,  FiHeart, FiChevronRight } from "react-icons/fi";
@@ -255,6 +258,7 @@ import { motion } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import {Footer} from "../../components/layout/Footer";
 import { wishlistApi } from "../../api/wishlistApi";
+import { formatINR } from "../../utils/currency";
 import { cartApi } from "../../api/cartApi";
 import { productApi } from "../../api/productApi";
 import { useAppDispatch } from "../../hooks/useAuth";
@@ -473,18 +477,18 @@ useEffect(() => {
               <p className="text-gray-600 mt-2">
                 {totalSavings > 0 && (
                   <span className="text-green-600 font-medium">
-                    Total Savings: â‚¹{totalSavings.toLocaleString()}
+                    Total Savings: {formatINR(totalSavings)}
                   </span>
                 )}
               </p>
             </div>
-            <div className="flex items-center space-x-4">
+            {/* <div className="flex items-center space-x-4">
               {wishlistItems.length > 0 && (
                 <button className="px-6 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-medium transition-colors">
                   Clear All
                 </button>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -533,10 +537,10 @@ useEffect(() => {
                     <div className="mb-1.5"> {/* Reduced from mb-2 to mb-1.5 */}
                       <div className="flex items-center space-x-0.5"> {/* Reduced space further */}
                         <span className="text-xs font-bold text-gray-900"> {/* text-sm to text-xs */}
-                          â‚¹{item.discountedPrice.toLocaleString()}
+                          {formatINR(item.discountedPrice)}
                         </span>
                         <span className="text-[10px] text-gray-500 line-through"> {/* text-xs to text-[10px] */}
-                          â‚¹{item.originalPrice.toLocaleString()}
+                          {formatINR(item.originalPrice)}
                         </span>
                       </div>
                       {item.discount > 0 && (

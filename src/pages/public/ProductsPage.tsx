@@ -1851,34 +1851,104 @@ const ProductsPage = () => {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-                    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
-                      <button
-                        onClick={() => setCurrentPage(0)}
-                        disabled={currentPage === 0}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <FiChevronsLeft size={16} />
-                        Page 1
-                      </button>
-                      <button
-                        onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                        disabled={currentPage === 0}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <FiChevronLeft size={16} />
-                        Previous
-                      </button>
-                      <span className="px-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Page {currentPage + 1} of {totalPages}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-                        disabled={currentPage >= totalPages - 1}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Next
-                        <FiChevronRight size={16} />
-                      </button>
+                    <div className="flex flex-col gap-4">
+                      {/* Navigation Buttons */}
+                      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                        <button
+                          onClick={() => {
+                            setCurrentPage(0);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage === 0}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to first page"
+                        >
+                          <FiChevronsLeft size={16} />
+                          <span className="hidden xs:inline">First</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCurrentPage(Math.max(0, currentPage - 1));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage === 0}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to previous page"
+                        >
+                          <FiChevronLeft size={16} />
+                          <span className="hidden xs:inline">Prev</span>
+                        </button>
+
+                        {/* Page Numbers */}
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => {
+                            // Show first page, last page, and 3 pages around current page
+                            const showFirstPage = i === 0;
+                            const showLastPage = i === totalPages - 1;
+                            const showAroundCurrent = Math.abs(i - currentPage) <= 1;
+                            
+                            if (showFirstPage || showLastPage || showAroundCurrent) {
+                              return (
+                                <button
+                                  key={i}
+                                  onClick={() => {
+                                    setCurrentPage(i);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className={`inline-flex items-center justify-center w-10 h-10 text-sm font-semibold rounded-md transition-colors ${
+                                    i === currentPage
+                                      ? 'bg-sage text-white border border-sage'
+                                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                  }`}
+                                  title={`Go to page ${i + 1}`}
+                                >
+                                  {i + 1}
+                                </button>
+                              );
+                            } else if (
+                              (i === 1 && currentPage > 2) ||
+                              (i === totalPages - 2 && currentPage < totalPages - 3)
+                            ) {
+                              return (
+                                <span key={i} className="px-1 text-gray-400 dark:text-gray-600">
+                                  ...
+                                </span>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setCurrentPage(Math.min(totalPages - 1, currentPage + 1));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage >= totalPages - 1}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to next page"
+                        >
+                          <span className="hidden xs:inline">Next</span>
+                          <FiChevronRight size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCurrentPage(totalPages - 1);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage === totalPages - 1}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to last page"
+                        >
+                          <span className="hidden xs:inline">Last</span>
+                          <FiChevronsLeft size={16} className="rotate-180" />
+                        </button>
+                      </div>
+
+                      {/* Page Info */}
+                      <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                        Page <span className="font-semibold text-gray-900 dark:text-white">{currentPage + 1}</span> of <span className="font-semibold text-gray-900 dark:text-white">{totalPages}</span>
+                      </div>
                     </div>
                   </div>
                 )}
