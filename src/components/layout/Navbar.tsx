@@ -742,7 +742,7 @@ const handleLogout = async () => {
 
             {/* ---------------- DESKTOP NAV ---------------- */}
             {/* <div className="hidden md:flex items-center space-x-8"> */}
-              <div className="hidden md:flex items-center space-x-8">
+              <div className="hidden md:flex items-center space-x-5">
   {/* PUBLIC PAGES — ONLY FOR NON-ADMIN */}
 {/* PUBLIC NAV — SHOW TO USERS & ADMINS OUTSIDE ADMIN PANEL */}
 {(!isAdmin || !isAdminRoute) &&
@@ -754,11 +754,12 @@ const handleLogout = async () => {
     { name: "Blog", path: "/blog" },
     { name: "Contact us", path: "/contact" },
     { name: "Testimonials", path: "/testimonials" },
+    {name: "Measurements", path: "/measurements"}
   ].map((item) => (
     <Link
       key={item.name}
       to={item.path}
-      className={`relative transition-all duration-300
+      className={`relative transition-all duration-300 text-sm
         ${
           isActive(item.path)
             ? "text-white font-medium after:w-full"
@@ -775,7 +776,7 @@ const handleLogout = async () => {
   {isAuthenticated && !isAdmin && (
     <Link
       to="/dashboard"
-      className="text-white/80 hover:text-white transition-colors"
+      className="text-white/80 hover:text-white transition-colors text-sm"
     >
       Dashboard
     </Link>
@@ -785,7 +786,7 @@ const handleLogout = async () => {
 {isAdmin && isAdminRoute && (
   <Link
     to="/admin"
-    className="text-white font-semibold"
+    className="text-white font-semibold text-sm"
   >
     Dashboard
   </Link>
@@ -834,18 +835,17 @@ const handleLogout = async () => {
 )}
 
 
-              {isAuthenticated ? (
-                <div
+              <div
   className="relative"
   onClick={(e) => e.stopPropagation()}
 >
   <motion.button
-    whileHover={{ scale: 1.05 }}
+    whileHover={{ scale: 1.1 }}
     whileTap={{ scale: 0.95 }}
     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-    className="px-4 py-2 rounded-xl bg-white/10 text-white font-medium"
+    className="p-2 text-white/80 hover:text-white"
   >
-    {profileName || user?.name || "Account"}
+    <FiUser size={22} />
   </motion.button>
 
   <AnimatePresence initial={false}>
@@ -874,7 +874,7 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
               onClick={() => setIsUserMenuOpen(false)}
               className="block px-4 py-3 text-white hover:bg-white/10"
             >
-              Sign Up
+              Create New Account
             </Link>
           </>
         )}
@@ -882,6 +882,10 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
         {/* 🔐 LOGGED IN */}
         {isAuthenticated && (
           <>
+            <div className="px-4 py-3 border-b border-white/10">
+              <p className="text-white/70 text-sm">Hello,</p>
+              <p className="text-white font-semibold">{profileName || user?.name || "User"}</p>
+            </div>
             <Link
               to={isAdmin ? "/admin" : "/dashboard"}
               onClick={() => setIsUserMenuOpen(false)}
@@ -903,20 +907,6 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
     )}
   </AnimatePresence>
 </div>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <Link to="/login">
-                    <button className="px-4 py-2 rounded-lg text-white hover:bg-white/10">
-                      Login
-                    </button>
-                  </Link>
-                  <Link to="/signup">
-                    <button className="px-4 py-2 rounded-lg bg-white text-[#7F8F72] font-semibold">
-                      Sign Up
-                    </button>
-                  </Link>
-                </div>
-              )}
             </div>
 
             {/* ---------------- MOBILE MENU BUTTON ---------------- */}
@@ -1128,6 +1118,7 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
             { name: "Blog", path: "/blog" },
             { name: "Testimonials", path: "/testimonials" },
             { name: "Contact us", path: "/contact" },
+            {name: "Measurements", path: "/measurements"}
           ].map((item) => (
             <Link
               key={item.name}

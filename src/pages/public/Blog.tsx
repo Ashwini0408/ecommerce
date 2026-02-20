@@ -266,42 +266,68 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Newsletter */}
+       {/* CTA */}
       <section className="py-28 md:py-40 bg-primary text-primary-foreground">
         <div className="container mx-auto px-6 text-center">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="font-serif text-4xl md:text-5xl mb-6"
+            className="font-serif text-4xl md:text-6xl mb-8"
           >
-            Stay Updated
+            Ready to Transform Your Style?
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-primary-foreground/80 max-w-xl mx-auto mb-10"
+            className="text-primary-foreground/80 max-w-xl mx-auto mb-12 leading-relaxed"
           >
-            Subscribe to our newsletter for the latest fashion tips, trends, and exclusive offers.
+            Book a consultation today and let our experts create the perfect outfit for you.
           </motion.p>
-          <motion.form
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto"
+            className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-6 py-3 bg-primary-foreground/10 border border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50 focus:outline-none focus:border-primary-foreground"
-            />
-            <button className="px-8 py-3 bg-background text-foreground font-sans tracking-wide text-sm hover:bg-background/90 transition-colors">
-              Subscribe
-            </button>
-          </motion.form>
+             <Link
+    to="/appointment"
+    className="
+      group inline-flex items-center justify-center gap-2
+      px-8 py-4 rounded-xl
+      bg-background text-foreground
+      font-medium
+      transition-all duration-300
+      hover:bg-background/90
+    "
+  >
+    Book Appointment
+    <ArrowRight
+      className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+      strokeWidth={1.5}
+    />
+  </Link>
+
+  {/* Contact Us */}
+  <Link
+    to="/contact"
+    className="
+      inline-flex items-center justify-center
+      px-8 py-4 rounded-xl
+      border border-primary-foreground/40
+      text-primary-foreground
+      font-medium
+      transition-all duration-300
+      hover:bg-primary-foreground/10
+      hover:border-primary-foreground
+    "
+  >
+    Contact Us
+  </Link>
+          </motion.div>
         </div>
       </section>
       <Footer />

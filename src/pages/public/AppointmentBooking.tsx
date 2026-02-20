@@ -769,6 +769,7 @@ import { toast } from "sonner";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import bookingApi from "../../api/BookingApi";
+import heroAppointment from "../../assets/hero-appointment.jpg";
 
 export default function AppointmentBooking() {
   type LoggedInUser = {
@@ -1117,21 +1118,48 @@ const validatePhone = (phone: string) => {
 
   return (
     <div>
-      {/* HEADER */}
-      <section className="py-20 md:py-32 border-b">
+      {/* Hero Section */}
+      <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <p className="text-[#6E9F7D] tracking-[0.3em] uppercase text-xs mb-4">
-            Personal Service
-          </p>
+        <div className="absolute inset-0">
+          <img
+            src={heroAppointment}
+            alt="Book Appointment"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
+        </div>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-3xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-4 mb-6"
+            >
+              <div className="w-8 h-px bg-primary-foreground/60" />
+              <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                Personal Service
+              </p>
+            </motion.div>
 
-          <h1 className="font-serif text-5xl md:text-7xl mb-6">
-            Book an Appointment
-          </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+            >
+              Book an Appointment
+            </motion.h1>
 
-          <p className="text-gray-500 max-w-xl mx-auto">
-            Experience personalized styling services at our flagship boutique.
-          </p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-primary-foreground/80 text-lg leading-relaxed max-w-2xl"
+            >
+              Experience personalized styling services at our flagship boutique.
+            </motion.p>
+          </div>
         </div>
       </section>
 
