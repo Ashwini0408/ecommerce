@@ -742,7 +742,7 @@ const handleLogout = async () => {
 
             {/* ---------------- DESKTOP NAV ---------------- */}
             {/* <div className="hidden md:flex items-center space-x-8"> */}
-              <div className="hidden md:flex items-center space-x-5">
+              <div className="hidden md:flex items-center space-x-8">
   {/* PUBLIC PAGES — ONLY FOR NON-ADMIN */}
 {/* PUBLIC NAV — SHOW TO USERS & ADMINS OUTSIDE ADMIN PANEL */}
 {(!isAdmin || !isAdminRoute) &&
@@ -759,7 +759,7 @@ const handleLogout = async () => {
     <Link
       key={item.name}
       to={item.path}
-      className={`relative transition-all duration-300 text-sm
+      className={`relative transition-all duration-300
         ${
           isActive(item.path)
             ? "text-white font-medium after:w-full"
@@ -771,26 +771,6 @@ const handleLogout = async () => {
       {item.name}
     </Link>
   ))}
-
-  {/* USER DASHBOARD */}
-  {isAuthenticated && !isAdmin && (
-    <Link
-      to="/dashboard"
-      className="text-white/80 hover:text-white transition-colors text-sm"
-    >
-      Dashboard
-    </Link>
-  )}
-
-  {/* ADMIN DASHBOARD */}
-{isAdmin && isAdminRoute && (
-  <Link
-    to="/admin"
-    className="text-white font-semibold text-sm"
-  >
-    Dashboard
-  </Link>
-)}
 </div>
             {/* ---------------- RIGHT ACTIONS ---------------- */}
             <div className="hidden md:flex items-center space-x-4">
@@ -886,13 +866,57 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
               <p className="text-white/70 text-sm">Hello,</p>
               <p className="text-white font-semibold">{profileName || user?.name || "User"}</p>
             </div>
-            <Link
-              to={isAdmin ? "/admin" : "/dashboard"}
-              onClick={() => setIsUserMenuOpen(false)}
-              className="block px-4 py-3 text-white hover:bg-white/10"
-            >
-              Dashboard
-            </Link>
+
+            {!isAdmin && (
+              <>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "profile" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "orders" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Orders
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "appointments" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Appointments
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "addresses" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Address
+                </button>
+              </>
+            )}
+
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="block px-4 py-3 text-white hover:bg-white/10"
+              >
+                Dashboard
+              </Link>
+            )}
 
             <button
               onClick={handleLogout}

@@ -1119,7 +1119,7 @@ const validatePhone = (phone: string) => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
+      <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
         <div className="absolute inset-0">
           <img
@@ -1129,8 +1129,9 @@ const validatePhone = (phone: string) => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
         </div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-3xl">
+        <div className="absolute inset-0 z-10 flex items-center px-6 pt-20">
+          <div className="container mx-auto">
+            <div className="max-w-3xl">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1159,6 +1160,7 @@ const validatePhone = (phone: string) => {
             >
               Experience personalized styling services at our flagship boutique.
             </motion.p>
+            </div>
           </div>
         </div>
       </section>
@@ -1166,7 +1168,7 @@ const validatePhone = (phone: string) => {
       {/* FORM */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6">
-          <form onSubmit={handleSubmit} className="space-y-16">
+          <form onSubmit={handleSubmit} noValidate className="space-y-16">
             {/* SERVICE SELECT */}
             <div ref={serviceSectionRef}>
               <h2 className="font-serif text-2xl mb-8">Select Service *</h2>

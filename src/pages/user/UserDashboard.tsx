@@ -85,6 +85,13 @@ const UserDashboard = () => {
   const [reviewImagesToDelete, setReviewImagesToDelete] = useState<Record<string, string[]>>(
     {}
   );
+  const [cancelModal, setCancelModal] = useState<{
+    order: Order;
+    mode: 'FULL' | 'PARTIAL';
+    reason: string;
+    selectedItemIds: number[];
+  } | null>(null);
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
   const fallbackImageBaseUrl = apiBaseUrl
     ? apiBaseUrl.replace(/\/api\/?$/i, '')
@@ -387,12 +394,12 @@ const UserDashboard = () => {
     }, [location.state, activeTab]);
 
     useEffect(() => {
-      const isModalOpen = isOrderFilterOpen || reviewModal !== null;
+      const isModalOpen = isOrderFilterOpen || reviewModal !== null || cancelModal !== null;
       document.body.style.overflow = isModalOpen ? 'hidden' : '';
       return () => {
         document.body.style.overflow = '';
       };
-    }, [isOrderFilterOpen, reviewModal]);
+    }, [isOrderFilterOpen, reviewModal, cancelModal]);
 
     useEffect(() => {
       if (!user?.id || orders.length === 0) return;
@@ -780,6 +787,120 @@ const UserDashboard = () => {
     return colors[status] || 'bg-dark-700 text-dark-300';
   };
 
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object') {
+      const maybe = error as { message?: unknown; error?: unknown };
+      if (typeof maybe.message === 'string' && maybe.message.trim()) {
+        return maybe.message;
+      }
+      if (typeof maybe.error === 'string' && maybe.error.trim()) {
+        return maybe.error;
+      }
+    }
+    return fallback;
+  };
+
+  const isOrderCancellable = (status: string) =>
+    status === 'PENDING' || status === 'PROCESSING';
+
+  const getItemStatus = (item: Order['items'][number]) =>
+    ((item as unknown as { itemStatus?: string }).itemStatus || 'ACTIVE').toUpperCase();
+
+  const getCancellableItems = (order: Order) =>
+    (order.items || []).filter((item) => getItemStatus(item) !== 'CANCELLED');
+
+  const getItemStatusBadgeColor = (status: string) => {
+    const colors: Record<string, string> = {
+      ACTIVE: 'bg-gray-100 text-gray-700',
+      CANCELLED: 'bg-red-100 text-red-700',
+      RETURNED: 'bg-orange-100 text-orange-700',
+      RETURN_REQUESTED: 'bg-yellow-100 text-yellow-700',
+      REQUESTED: 'bg-yellow-100 text-yellow-700',
+      APPROVED: 'bg-blue-100 text-blue-700',
+      PICKED_UP: 'bg-purple-100 text-purple-700',
+      REFUND_INITIATED: 'bg-amber-100 text-amber-700',
+      REFUNDED: 'bg-green-100 text-green-700',
+      REJECTED: 'bg-red-100 text-red-700',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
+  };
+
+  const isReturnWindowExpiredForOrder = (order: Order) => {
+    const deliveredLikeDate = new Date(order.updatedAt || order.createdAt);
+    if (Number.isNaN(deliveredLikeDate.getTime())) return false;
+    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
+    return Date.now() > deliveredLikeDate.getTime() + returnWindowMs;
+  };
+
+  const canRequestReturnFromDashboard = (
+    order: Order,
+    item: Order['items'][number]
+  ) =>
+    order.status === 'DELIVERED' &&
+    getItemStatus(item) === 'ACTIVE' &&
+    !isReturnWindowExpiredForOrder(order);
+
+  const openCancelModal = (order: Order) => {
+    setCancelModal({
+      order,
+      mode: 'FULL',
+      reason: '',
+      selectedItemIds: [],
+    });
+  };
+
+  const closeCancelModal = () => {
+    if (cancelSubmitting) return;
+    setCancelModal(null);
+  };
+
+  const toggleCancelItem = (orderItemId: number) => {
+    setCancelModal((prev) => {
+      if (!prev) return prev;
+      const exists = prev.selectedItemIds.includes(orderItemId);
+      return {
+        ...prev,
+        selectedItemIds: exists
+          ? prev.selectedItemIds.filter((id) => id !== orderItemId)
+          : [...prev.selectedItemIds, orderItemId],
+      };
+    });
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancelModal) return;
+    if (!isOrderCancellable(cancelModal.order.status)) {
+      toast.error('Order cannot be cancelled after it has been shipped');
+      return;
+    }
+    const reason = cancelModal.reason.trim();
+    if (!reason) {
+      toast.error('Please enter a cancellation reason');
+      return;
+    }
+
+    if (cancelModal.mode === 'PARTIAL' && cancelModal.selectedItemIds.length === 0) {
+      toast.error('Please select at least one item to cancel');
+      return;
+    }
+
+    setCancelSubmitting(true);
+    try {
+      await orderApi.cancelOrder(cancelModal.order.id, {
+        reason,
+        orderItemIds:
+          cancelModal.mode === 'PARTIAL' ? cancelModal.selectedItemIds : undefined,
+      });
+      toast.success('Order cancellation processed successfully');
+      setCancelModal(null);
+      await fetchUserData();
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to cancel order'));
+    } finally {
+      setCancelSubmitting(false);
+    }
+  };
+
   const isActive = profile?.isActive ?? user?.isActive ?? true;
   const orderedAddresses = [...addresses].sort((a, b) => {
     if (a.isDefault === b.isDefault) return 0;
@@ -991,6 +1112,9 @@ const UserDashboard = () => {
                     <div className="space-y-4">
                       {filteredOrders.map((order) => {
                         const firstItem = order.items[0];
+                        const cancelledItems = (order.items || []).filter(
+                          (item) => getItemStatus(item) === 'CANCELLED'
+                        );
                         const previewImage = getOrderImageUrl(firstItem?.productImage);
                         const orderDate = new Date(order.createdAt);
                         const isValidDate = !Number.isNaN(orderDate.getTime());
@@ -1058,15 +1182,47 @@ const UserDashboard = () => {
                                   </div>
                                 </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => navigate(`/orders/${order.id}`)}
-                                className="h-9 w-9 rounded-full border border-[#E6E2D6] text-dark-500 hover:text-[#6B7D60] hover:border-[#6B7D60] flex items-center justify-center"
-                                aria-label="View order details"
-                              >
-                                <FiChevronRight size={18} />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                {isOrderCancellable(order.status) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openCancelModal(order)}
+                                    className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/orders/${order.id}`)}
+                                  className="h-9 w-9 rounded-full border border-[#E6E2D6] text-dark-500 hover:text-[#6B7D60] hover:border-[#6B7D60] flex items-center justify-center"
+                                  aria-label="View order details"
+                                >
+                                  <FiChevronRight size={18} />
+                                </button>
+                              </div>
                             </div>
+
+                            {cancelledItems.length > 0 && (
+                              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-700">
+                                  Cancelled Item{cancelledItems.length > 1 ? 's' : ''}
+                                </p>
+                                <div className="mt-2 space-y-1">
+                                  {cancelledItems.map((item) => (
+                                    <div
+                                      key={`cancelled-${item.id}`}
+                                      className="flex items-center justify-between gap-3 text-xs"
+                                    >
+                                      <span className="text-red-700 truncate">{item.productName}</span>
+                                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">
+                                        Cancelled
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             {order.status === 'DELIVERED' && order.items.length > 0 && (
                               <div className="mt-4 border-t border-[#E6E2D6] pt-4 space-y-3">
@@ -1075,6 +1231,8 @@ const UserDashboard = () => {
                                   const reviewDraft = getReviewDraft(reviewKey);
                                   const existingReviewId = getReviewId(reviewKey);
                                   const itemImage = getOrderImageUrl(item.productImage);
+                                  const itemStatus = getItemStatus(item);
+                                  const isItemCancelled = itemStatus === 'CANCELLED';
                                   return (
                                     <div
                                       key={item.id}
@@ -1101,39 +1259,63 @@ const UserDashboard = () => {
                                               ? ` · Color: ${item.selectedColor}`
                                               : ''}
                                           </p>
+                                          {itemStatus !== 'ACTIVE' && (
+                                            <span
+                                              className={`inline-flex mt-2 px-2 py-0.5 rounded-full text-[11px] font-semibold ${getItemStatusBadgeColor(itemStatus)}`}
+                                            >
+                                              {itemStatus.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-wrap items-center gap-3">
-                                        <div className="flex items-center gap-1">
-                                          {[1, 2, 3, 4, 5].map((star) => (
+                                        {isItemCancelled ? (
+                                          <span className="text-xs font-semibold text-red-600">
+                                            This item was cancelled
+                                          </span>
+                                        ) : (
+                                          <>
+                                            <div className="flex items-center gap-1">
+                                              {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                  key={star}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    updateReviewDraft(reviewKey, { rating: star });
+                                                    openReviewModal(order.id, item);
+                                                  }}
+                                                  className="p-1"
+                                                  aria-label={`Rate ${star} stars`}
+                                                >
+                                                  <FiStar
+                                                    size={16}
+                                                    className={
+                                                      reviewDraft.rating >= star
+                                                        ? 'text-[#6B7D60] fill-[#6B7D60]'
+                                                        : 'text-dark-300'
+                                                    }
+                                                  />
+                                                </button>
+                                              ))}
+                                            </div>
+                                            {canRequestReturnFromDashboard(order, item) && (
+                                              <button
+                                                type="button"
+                                                onClick={() => navigate(`/orders/${order.id}`)}
+                                                className="text-xs font-semibold text-blue-600 hover:underline"
+                                              >
+                                                Return Item
+                                              </button>
+                                            )}
                                             <button
-                                              key={star}
                                               type="button"
-                                              onClick={() => {
-                                                updateReviewDraft(reviewKey, { rating: star });
-                                                openReviewModal(order.id, item);
-                                              }}
-                                              className="p-1"
-                                              aria-label={`Rate ${star} stars`}
+                                              onClick={() => openReviewModal(order.id, item)}
+                                              className="text-xs font-semibold text-[#6B7D60] hover:underline"
                                             >
-                                              <FiStar
-                                                size={16}
-                                                className={
-                                                  reviewDraft.rating >= star
-                                                    ? 'text-[#6B7D60] fill-[#6B7D60]'
-                                                    : 'text-dark-300'
-                                                }
-                                              />
+                                              {existingReviewId ? 'Edit Review' : 'Write Review'}
                                             </button>
-                                          ))}
-                                        </div>
-                                        <button
-                                          type="button"
-                                          onClick={() => openReviewModal(order.id, item)}
-                                          className="text-xs font-semibold text-[#6B7D60] hover:underline"
-                                        >
-                                          {existingReviewId ? 'Edit Review' : 'Write Review'}
-                                        </button>
+                                          </>
+                                        )}
                                       </div>
                                     </div>
                                   );
@@ -1229,6 +1411,124 @@ const UserDashboard = () => {
                         className="btn-primary flex-1"
                       >
                         Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {cancelModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                  <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-dark-900">Cancel Order</h3>
+                      <button
+                        type="button"
+                        onClick={closeCancelModal}
+                        className="text-dark-500 hover:text-dark-700"
+                        disabled={cancelSubmitting}
+                      >
+                        &times;
+                      </button>
+                    </div>
+
+                    <p className="mt-1 text-sm text-dark-500">
+                      Order #{cancelModal.order.orderNumber || cancelModal.order.id}
+                    </p>
+
+                    <div className="mt-4">
+                      <p className="text-sm font-semibold text-dark-700">Cancellation Type</p>
+                      <div className="mt-2 flex gap-3">
+                        <label className="flex items-center gap-2 text-sm text-dark-600">
+                          <input
+                            type="radio"
+                            checked={cancelModal.mode === 'FULL'}
+                            onChange={() =>
+                              setCancelModal((prev) =>
+                                prev
+                                  ? { ...prev, mode: 'FULL', selectedItemIds: [] }
+                                  : prev
+                              )
+                            }
+                            className="accent-[#6B7D60]"
+                          />
+                          Full Order
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-dark-600">
+                          <input
+                            type="radio"
+                            checked={cancelModal.mode === 'PARTIAL'}
+                            onChange={() =>
+                              setCancelModal((prev) =>
+                                prev ? { ...prev, mode: 'PARTIAL' } : prev
+                              )
+                            }
+                            className="accent-[#6B7D60]"
+                          />
+                          Specific Items
+                        </label>
+                      </div>
+                    </div>
+
+                    {cancelModal.mode === 'PARTIAL' && (
+                      <div className="mt-4 max-h-52 overflow-y-auto rounded-xl border border-[#E6E2D6] p-3 space-y-2">
+                        {getCancellableItems(cancelModal.order).length === 0 ? (
+                          <p className="text-sm text-dark-500">No cancellable items found.</p>
+                        ) : (
+                          getCancellableItems(cancelModal.order).map((item) => (
+                            <label
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E2D6] px-3 py-2"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-dark-900 truncate">
+                                  {item.productName}
+                                </p>
+                                <p className="text-xs text-dark-500">Qty: {item.quantity}</p>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={cancelModal.selectedItemIds.includes(item.id)}
+                                onChange={() => toggleCancelItem(item.id)}
+                                className="accent-[#6B7D60]"
+                              />
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      <label className="text-sm font-semibold text-dark-700">Reason</label>
+                      <textarea
+                        rows={3}
+                        value={cancelModal.reason}
+                        onChange={(e) =>
+                          setCancelModal((prev) =>
+                            prev ? { ...prev, reason: e.target.value } : prev
+                          )
+                        }
+                        placeholder="Please tell us why you want to cancel this order"
+                        className="mt-2 input-field resize-none"
+                      />
+                    </div>
+
+                    <div className="mt-6 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={closeCancelModal}
+                        className="btn-ghost flex-1 border border-[#E6E2D6]"
+                        disabled={cancelSubmitting}
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelOrder}
+                        className="btn-primary flex-1 disabled:opacity-60"
+                        disabled={cancelSubmitting}
+                      >
+                        {cancelSubmitting ? 'Processing...' : 'Confirm Cancellation'}
                       </button>
                     </div>
                   </div>

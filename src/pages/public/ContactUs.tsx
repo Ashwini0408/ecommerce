@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Clock, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -15,12 +15,62 @@ const Contact = () => {
     subject: "",
     message: "",
   });
-const [loading, setLoading] = useState(false);
-const [submitted, setSubmitted] = useState(false);
-const [successMessage, setSuccessMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const subjectInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollToField = (field: HTMLElement | null) => {
+    if (!field) return;
+
+    const targetTop = field.getBoundingClientRect().top + window.scrollY - 110;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+    window.setTimeout(() => {
+      field.focus({ preventScroll: true });
+    }, 250);
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const getFirstInvalidField = (): { message: string; field: HTMLElement | null } | null => {
+    if (!formData.name.trim()) {
+      return { message: "Please enter your name", field: nameInputRef.current };
+    }
+
+    if (!formData.email.trim()) {
+      return { message: "Please enter your email address", field: emailInputRef.current };
+    }
+
+    if (!validateEmail(formData.email)) {
+      return { message: "Please enter a valid email address", field: emailInputRef.current };
+    }
+
+    if (!formData.subject.trim()) {
+      return { message: "Please enter the subject", field: subjectInputRef.current };
+    }
+
+    if (!formData.message.trim()) {
+      return { message: "Please enter your message", field: messageInputRef.current };
+    }
+
+    return null;
+  };
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+
+  const firstInvalidField = getFirstInvalidField();
+  if (firstInvalidField) {
+    toast.error(firstInvalidField.message);
+    scrollToField(firstInvalidField.field);
+    return;
+  }
 
   try {
     setLoading(true);
@@ -56,14 +106,14 @@ const handleSubmit = async (e: React.FormEvent) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-const inputClass =
-  "w-full bg-white border border-[#e5e5e5] text-[#1f1f1f] placeholder:text-[#9ca3af] focus:border-sage focus:ring-1 focus:ring-sage/30 outline-none rounded-md transition-all text-sm";
+  const inputClass =
+    "w-full bg-white border border-[#e5e5e5] text-[#1f1f1f] placeholder:text-[#9ca3af] focus:border-sage focus:ring-1 focus:ring-sage/30 outline-none rounded-md transition-all text-sm";
 
   return (
     <div className="bg-background text-foreground">
 
       {/* ================= HEADER ================= */}
-      <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
+      <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
         <div className="absolute inset-0">
           <img
@@ -73,8 +123,9 @@ const inputClass =
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
         </div>
-        <div className="container mx-auto px-6 relative z-10 text-center">
-          <div className="max-w-3xl mx-auto">
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pt-20 text-center">
+          <div className="container mx-auto">
+            <div className="max-w-3xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -105,6 +156,7 @@ const inputClass =
               We'd love to hear from you. Whether you have a question about our
               services or need styling advice, our team is here to help.
             </motion.p>
+            </div>
           </div>
         </div>
       </section>
@@ -169,7 +221,7 @@ const inputClass =
 )}
 
   <div className={submitted ? "opacity-30 pointer-events-none" : ""}>
-  <form onSubmit={handleSubmit} className="space-y-4">
+  <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -177,6 +229,7 @@ const inputClass =
                       Name
                     </label>
                     <input
+                      ref={nameInputRef}
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
@@ -191,6 +244,7 @@ const inputClass =
                       Email
                     </label>
                     <input
+                      ref={emailInputRef}
                       type="email"
                       name="email"
                       value={formData.email}
@@ -207,6 +261,7 @@ const inputClass =
                     Subject
                   </label>
                   <input
+                    ref={subjectInputRef}
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
@@ -221,6 +276,7 @@ const inputClass =
                     Message
                   </label>
                   <textarea
+                    ref={messageInputRef}
                     name="message"
                     value={formData.message}
                     onChange={handleChange}

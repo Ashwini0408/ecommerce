@@ -604,6 +604,7 @@ import { Footer } from "../../components/layout/Footer";
 
 import desktopVideo from "../../assets/STYLISTE.mp4";
 import mobileVideo from "../../assets/STYLISTE.mp4";
+import heroTestimonials from "../../assets/hero-testimonials.jpg";
 
 /* ================= TESTIMONIAL DATA ================= */
 const testimonials = [
@@ -801,33 +802,35 @@ const Testimonials = () => {
 
       {/* ================= HERO TEXT ================= */}
       <section className="relative py-28 md:py-40 overflow-hidden bg-primary text-primary-foreground">
+        <Navbar />
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1920&q=80"
+            src={heroTestimonials}
             alt="Styliste Couturier testimonials"
-            className="w-full h-full object-cover opacity-10"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
         </div>
 
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-3xl">
+        <div className="container mx-auto px-6 relative z-10 text-center">
+          <div className="max-w-3xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4 mb-6"
+              className="flex items-center justify-center gap-4 mb-6"
             >
               <div className="w-8 h-px bg-primary-foreground/60" />
               <p className="text-primary-foreground/80 tracking-[0.3em] text-xs uppercase">
                 Testimonials
               </p>
+              <div className="w-8 h-px bg-primary-foreground/60" />
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8"
+              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
             >
               What Our
               <br />
@@ -838,7 +841,7 @@ const Testimonials = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-primary-foreground/80 text-lg max-w-2xl"
+              className="text-primary-foreground/80 text-lg max-w-2xl mx-auto"
             >
               Real stories from our valued customers who trusted us with their
               fashion dreams.

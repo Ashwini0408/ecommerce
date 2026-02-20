@@ -249,6 +249,7 @@ import BlogPost from './pages/public/BlogPost';
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
 import OrderDetailsPage from './pages/user/OrderDetailsPage';
+import Measurement from './pages/public/Measurement';
 
 // Admin Components
 import AdminLayout from './components/layout/AdminLayout';
@@ -327,6 +328,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
+        <Route path="/measurements" element={<Measurement />} />
 
         {/* Protected User Routes */}
         <Route

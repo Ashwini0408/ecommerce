@@ -3194,7 +3194,7 @@ import {
   FiImage,
 } from "react-icons/fi";
 import { orderApi } from "../../api/orderApi";
-import type { Order } from "../../types";
+import type { Order, ReturnRequest, ReturnStatus } from "../../types";
 import { format, formatDistanceToNow } from "date-fns";
 import toast from "react-hot-toast";
 import { formatINR } from "../../utils/currency";
@@ -3208,6 +3208,8 @@ interface TimelineEvent {
   message: string;
   timestamp: string;
 }
+
+type ReturnAdminAction = "APPROVE" | "REJECT" | "PICKED_UP";
 
 // Define the complete order flow based on update order status options
 const ORDER_FLOW = [
@@ -3330,6 +3332,22 @@ const AdminOrders = () => {
     paymentStatus: "",
     status: "",
   });
+  const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
+  const [returnRequestsLoading, setReturnRequestsLoading] = useState(false);
+  const [returnFilterStatus, setReturnFilterStatus] = useState<"ALL" | ReturnStatus>(
+    "ALL",
+  );
+  const [returnActionTarget, setReturnActionTarget] = useState<{
+    type: ReturnAdminAction;
+    request: ReturnRequest;
+  } | null>(null);
+  const [returnActionComment, setReturnActionComment] = useState("");
+  const [returnActionSubmitting, setReturnActionSubmitting] = useState(false);
+  const [returnTimelineTarget, setReturnTimelineTarget] = useState<ReturnRequest | null>(
+    null,
+  );
+  const [returnTimelineEvents, setReturnTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [returnTimelineLoading, setReturnTimelineLoading] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -3581,9 +3599,187 @@ const AdminOrders = () => {
     );
   };
 
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === "object") {
+      const candidate = error as { message?: unknown; error?: unknown };
+      if (typeof candidate.message === "string" && candidate.message.trim()) {
+        return candidate.message;
+      }
+      if (typeof candidate.error === "string" && candidate.error.trim()) {
+        return candidate.error;
+      }
+    }
+    return fallback;
+  };
+
+  const getReturnStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      REQUESTED: "text-yellow-700 bg-yellow-100",
+      APPROVED: "text-blue-700 bg-blue-100",
+      PICKED_UP: "text-purple-700 bg-purple-100",
+      REFUND_INITIATED: "text-amber-700 bg-amber-100",
+      REFUNDED: "text-green-700 bg-green-100",
+      REJECTED: "text-red-700 bg-red-100",
+    };
+    return colors[status] || "text-gray-700 bg-gray-100";
+  };
+
+  const getReturnStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      REQUESTED: "Return Requested",
+      APPROVED: "Return Approved",
+      PICKED_UP: "Picked Up",
+      REFUND_INITIATED: "Refund Processing",
+      REFUNDED: "Refund Completed",
+      REJECTED: "Return Rejected",
+    };
+    return labels[status] || status.replace(/_/g, " ");
+  };
+
+  const getReturnActionOptions = (status: string) => {
+    const normalized = String(status || "").toUpperCase();
+    if (normalized === "REQUESTED") {
+      return [
+        {
+          value: "APPROVE" as ReturnAdminAction,
+          label: "Approve Return",
+          helper: "Approve request after reviewing reason/proofs.",
+          requiresComment: true,
+        },
+        {
+          value: "REJECT" as ReturnAdminAction,
+          label: "Reject Return",
+          helper: "Reject request and restore item eligibility.",
+          requiresComment: true,
+        },
+      ];
+    }
+    if (normalized === "APPROVED") {
+      return [
+        {
+          value: "PICKED_UP" as ReturnAdminAction,
+          label: "Mark Picked Up",
+          helper: "Triggers restock + refund lifecycle automatically.",
+          requiresComment: false,
+        },
+      ];
+    }
+    return [];
+  };
+
+  const fetchReturnRequests = async (status: "ALL" | ReturnStatus = returnFilterStatus) => {
+    setReturnRequestsLoading(true);
+    try {
+      const data = await orderApi.getReturnRequests(status === "ALL" ? undefined : status);
+      const sorted = [...data].sort((a, b) => {
+        const aTime = new Date(a.createdAt || 0).getTime();
+        const bTime = new Date(b.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+      setReturnRequests(sorted);
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, "Failed to fetch return requests"));
+      setReturnRequests([]);
+    } finally {
+      setReturnRequestsLoading(false);
+    }
+  };
+
+  const openReturnActionModal = (
+    request: ReturnRequest,
+    preferredType?: ReturnAdminAction,
+  ) => {
+    const actions = getReturnActionOptions(request.status);
+    if (actions.length === 0) {
+      toast.error("No admin action available for this return status");
+      return;
+    }
+    const resolvedType =
+      (preferredType && actions.some((action) => action.value === preferredType)
+        ? preferredType
+        : actions[0].value);
+    setReturnActionTarget({ type: resolvedType, request });
+    setReturnActionComment("");
+  };
+
+  const closeReturnActionModal = () => {
+    if (returnActionSubmitting) return;
+    setReturnActionTarget(null);
+    setReturnActionComment("");
+  };
+
+  const handleSubmitReturnAction = async () => {
+    if (!returnActionTarget) return;
+    const action = returnActionTarget.type;
+    const comment = returnActionComment.trim();
+    const selectedOption = getReturnActionOptions(returnActionTarget.request.status).find(
+      (option) => option.value === action,
+    );
+    if (selectedOption?.requiresComment && !comment) {
+      toast.error("Please add admin comment");
+      return;
+    }
+
+    setReturnActionSubmitting(true);
+    try {
+      if (action === "APPROVE") {
+        const response = await orderApi.approveReturnRequest(
+          returnActionTarget.request.id,
+          comment,
+        );
+        toast.success(response.message || "Return approved");
+      } else if (action === "REJECT") {
+        const response = await orderApi.rejectReturnRequest(
+          returnActionTarget.request.id,
+          comment,
+        );
+        toast.success(response.message || "Return rejected");
+      } else {
+        const response = await orderApi.markReturnPickedUp(
+          returnActionTarget.request.id,
+        );
+        toast.success(response.message || "Return picked up");
+      }
+      closeReturnActionModal();
+      await fetchReturnRequests();
+      if (returnTimelineTarget?.id === returnActionTarget.request.id) {
+        const timelineData = await orderApi.getReturnTimeline(returnTimelineTarget.id);
+        setReturnTimelineEvents(timelineData);
+      }
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, "Failed to process return action"));
+    } finally {
+      setReturnActionSubmitting(false);
+    }
+  };
+
+  const openReturnTimelineModal = async (request: ReturnRequest) => {
+    setReturnTimelineTarget(request);
+    setReturnTimelineEvents([]);
+    setReturnTimelineLoading(true);
+    try {
+      const timelineData = await orderApi.getReturnTimeline(request.id);
+      setReturnTimelineEvents(timelineData);
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, "Failed to load return timeline"));
+      setReturnTimelineEvents([]);
+    } finally {
+      setReturnTimelineLoading(false);
+    }
+  };
+
+  const closeReturnTimelineModal = () => {
+    setReturnTimelineTarget(null);
+    setReturnTimelineEvents([]);
+  };
+
   useEffect(() => {
     fetchOrders();
   }, [page, rowsPerPage]);
+
+  useEffect(() => {
+    fetchReturnRequests(returnFilterStatus);
+  }, [returnFilterStatus]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -3801,12 +3997,23 @@ const AdminOrders = () => {
   const rowsPerPageOptions = [5, 10, 20, 50, 100];
 
   useEffect(() => {
-    const isModalOpen = showDetailsModal || showTimelineModal || updateStatusModal;
+    const isModalOpen =
+      showDetailsModal ||
+      showTimelineModal ||
+      updateStatusModal ||
+      returnActionTarget !== null ||
+      returnTimelineTarget !== null;
     document.body.style.overflow = isModalOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [showDetailsModal, showTimelineModal, updateStatusModal]);
+  }, [
+    showDetailsModal,
+    showTimelineModal,
+    updateStatusModal,
+    returnActionTarget,
+    returnTimelineTarget,
+  ]);
 
   // Get timeline with all statuses
   const timelineData = getTimelineWithAllStatuses(selectedOrder, orderTimeline);
@@ -3820,14 +4027,156 @@ const AdminOrders = () => {
           <p className="text-dark-600 mt-1">{totalOrders} orders total</p>
         </div>
 
-        <div className="flex space-x-3">
-          <button
-            onClick={fetchOrders}
+      <div className="flex space-x-3">
+        <button
+            onClick={() => {
+              fetchOrders();
+              fetchReturnRequests();
+            }}
             className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-2"
           >
             <FiRefreshCw className={loading ? "animate-spin" : ""} />
             Refresh Orders
-          </button>
+        </button>
+      </div>
+    </div>
+
+      {/* --- RETURN MANAGEMENT --- */}
+      <div className="bg-white rounded-lg shadow p-4 md:p-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-dark-900">Return Requests</h3>
+            <p className="text-sm text-dark-500">
+              Review and process customer return requests
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={returnFilterStatus}
+              onChange={(e) =>
+                setReturnFilterStatus(e.target.value as "ALL" | ReturnStatus)
+              }
+              className="px-3 py-2 text-sm border border-dark-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+            >
+              <option value="ALL">All</option>
+              <option value="REQUESTED">Requested</option>
+              <option value="APPROVED">Approved</option>
+              <option value="PICKED_UP">Picked Up</option>
+              <option value="REFUND_INITIATED">Refund Initiated</option>
+              <option value="REFUNDED">Refunded</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+            <button
+              onClick={() => fetchReturnRequests()}
+              className="px-3 py-2 text-sm rounded-lg border border-dark-300 text-dark-700 hover:bg-dark-50"
+              disabled={returnRequestsLoading}
+            >
+              {returnRequestsLoading ? "Loading..." : "Refresh"}
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-dark-200">
+            <thead className="bg-dark-50">
+              <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                  Return ID
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                  Order Item
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                  Reason
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                  Refund
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                  Created
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-dark-200">
+              {returnRequestsLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-6 text-center text-sm text-dark-500">
+                    Loading return requests...
+                  </td>
+                </tr>
+              ) : returnRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-6 text-center text-sm text-dark-500">
+                    No return requests found.
+                  </td>
+                </tr>
+              ) : (
+                returnRequests.map((request) => (
+                  <tr key={request.id} className="hover:bg-dark-50">
+                    <td className="px-4 py-3 text-sm font-medium text-dark-900">
+                      #{request.id}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-dark-700">
+                      Item #{request.orderItemId}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-dark-700 max-w-[260px] truncate">
+                      {request.reason}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getReturnStatusColor(request.status)}`}
+                      >
+                        {getReturnStatusLabel(request.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-dark-700">
+                      {request.refundAmount !== undefined && request.refundAmount !== null
+                        ? formatINR(request.refundAmount)
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-dark-700">
+                      {request.createdAt
+                        ? format(new Date(request.createdAt), "MMM dd, yyyy")
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex flex-wrap gap-2">
+                        {getReturnActionOptions(request.status).length > 0 ? (
+                          <button
+                            onClick={() => openReturnActionModal(request)}
+                            className="px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                          >
+                            {getReturnActionOptions(request.status)[0].value === "PICKED_UP"
+                              ? "Mark Picked Up"
+                              : "Review / Update"}
+                          </button>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-dark-100 text-dark-500">
+                            {request.status === "PICKED_UP" ||
+                            request.status === "REFUND_INITIATED"
+                              ? "Auto Refund Flow"
+                              : "No Action"}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => openReturnTimelineModal(request)}
+                          className="px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100"
+                        >
+                          Timeline
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -4724,6 +5073,241 @@ const AdminOrders = () => {
                     </button>
                   </div>
                 </div>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+
+      {/* --- RETURN ACTION MODAL --- */}
+      {createPortal(
+        <AnimatePresence>
+          {returnActionTarget && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeReturnActionModal}
+                className="backdrop-overlay"
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="glass-card rounded-2xl p-6 max-w-lg w-full"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-dark-900">
+                      Update Return State
+                    </h2>
+                    <button onClick={closeReturnActionModal}>
+                      <FiX
+                        size={24}
+                        className="text-dark-400 hover:text-dark-900"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-sm text-dark-600">
+                      Return ID:{" "}
+                      <span className="font-semibold text-dark-900">
+                        #{returnActionTarget.request.id}
+                      </span>
+                    </p>
+                    <p className="text-sm text-dark-600">
+                      Item ID:{" "}
+                      <span className="font-semibold text-dark-900">
+                        #{returnActionTarget.request.orderItemId}
+                      </span>
+                    </p>
+                    <p className="text-sm text-dark-600">
+                      Reason:{" "}
+                      <span className="font-semibold text-dark-900">
+                        {returnActionTarget.request.reason}
+                      </span>
+                    </p>
+                    <p className="text-sm text-dark-600">
+                      Current State:{" "}
+                      <span className="font-semibold text-dark-900">
+                        {getReturnStatusLabel(returnActionTarget.request.status)}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-sm font-semibold text-dark-300 mb-2 block">
+                      Next State
+                    </label>
+                    <select
+                      value={returnActionTarget.type}
+                      onChange={(e) =>
+                        setReturnActionTarget((prev) =>
+                          prev
+                            ? { ...prev, type: e.target.value as ReturnAdminAction }
+                            : prev
+                        )
+                      }
+                      className="input-field"
+                    >
+                      {getReturnActionOptions(returnActionTarget.request.status).map(
+                        (option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                    {(() => {
+                      const selectedOption = getReturnActionOptions(
+                        returnActionTarget.request.status,
+                      ).find((option) => option.value === returnActionTarget.type);
+                      if (!selectedOption?.helper) return null;
+                      return (
+                        <p className="mt-2 text-xs text-dark-500">
+                          {selectedOption.helper}
+                        </p>
+                      );
+                    })()}
+                  </div>
+
+                  {(() => {
+                    const selectedOption = getReturnActionOptions(
+                      returnActionTarget.request.status,
+                    ).find((option) => option.value === returnActionTarget.type);
+                    if (!selectedOption?.requiresComment) return null;
+                    return (
+                      <div className="mt-4">
+                        <label className="text-sm font-semibold text-dark-300 mb-2 block">
+                          Admin Comment
+                        </label>
+                        <textarea
+                          rows={4}
+                          value={returnActionComment}
+                          onChange={(e) => setReturnActionComment(e.target.value)}
+                          placeholder="Write your decision note"
+                          className="input-field resize-none"
+                        />
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex space-x-3 pt-5">
+                    <button
+                      onClick={handleSubmitReturnAction}
+                      disabled={returnActionSubmitting}
+                      className="flex-1 btn-primary disabled:opacity-60"
+                    >
+                      {returnActionSubmitting
+                        ? "Processing..."
+                        : returnActionTarget.type === "APPROVE"
+                          ? "Approve Return"
+                          : returnActionTarget.type === "REJECT"
+                            ? "Reject Return"
+                            : "Mark Picked Up"}
+                    </button>
+                    <button
+                      onClick={closeReturnActionModal}
+                      disabled={returnActionSubmitting}
+                      className="flex-1 btn-ghost disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+
+      {/* --- RETURN TIMELINE MODAL --- */}
+      {createPortal(
+        <AnimatePresence>
+          {returnTimelineTarget && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeReturnTimelineModal}
+                className="backdrop-overlay"
+              />
+              <div className="fixed inset-0 z-[9991] flex items-center justify-center p-4 overflow-y-auto">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="glass-card rounded-2xl p-6 max-w-xl w-full"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-dark-900">Return Timeline</h2>
+                      <p className="text-xs text-dark-500 mt-1">
+                        Return #{returnTimelineTarget.id} · Item #
+                        {returnTimelineTarget.orderItemId}
+                      </p>
+                    </div>
+                    <button onClick={closeReturnTimelineModal}>
+                      <FiX
+                        size={24}
+                        className="text-dark-400 hover:text-dark-900"
+                      />
+                    </button>
+                  </div>
+
+                  {returnTimelineLoading ? (
+                    <p className="text-sm text-dark-500 py-6">Loading return timeline...</p>
+                  ) : returnTimelineEvents.length === 0 ? (
+                    <p className="text-sm text-dark-500 py-6">No return timeline found.</p>
+                  ) : (
+                    <ol className="space-y-3 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">
+                      {returnTimelineEvents.map((event, index) => (
+                        <li
+                          key={`${event.status}-${event.timestamp}-${index}`}
+                          className="rounded-xl border border-dark-200 bg-white p-3"
+                        >
+                          {(() => {
+                            const parsedDate = new Date(event.timestamp);
+                            const dateLabel =
+                              event.timestamp && !Number.isNaN(parsedDate.getTime())
+                                ? format(parsedDate, "dd MMM yyyy, hh:mm a")
+                                : "—";
+                            return (
+                              <>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span
+                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getReturnStatusColor(
+                                      event.status,
+                                    )}`}
+                                  >
+                                    {getReturnStatusLabel(event.status)}
+                                  </span>
+                                  <span className="text-xs text-dark-500">
+                                  {dateLabel}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-xs text-dark-600">
+                                  {event.message || "Status updated"}
+                                </p>
+                              </>
+                            );
+                          })()}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+
+                  <div className="flex justify-end pt-5">
+                    <button onClick={closeReturnTimelineModal} className="btn-ghost">
+                      Close
+                    </button>
+                  </div>
                 </motion.div>
               </div>
             </>

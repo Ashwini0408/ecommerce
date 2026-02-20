@@ -5,6 +5,9 @@ import type {
   UpdateOrderStatusRequest,
   OrderStatistics,
   PaginatedResponse,
+  ReturnRequest,
+  ReturnTimelineEvent,
+  ReturnStatus,
 } from '../types';
 
 export interface InitiatePaymentResponse {
@@ -35,6 +38,35 @@ export interface CalculateShippingRequest {
 export interface CalculateShippingResponse {
   shippingCharges: number;
 }
+
+export interface CancelOrderRequest {
+  reason: string;
+  orderItemIds?: number[];
+}
+
+export interface CancelOrderResponse {
+  message: string;
+}
+
+export interface CreateReturnRequestPayload {
+  orderItemId: number;
+  quantity: number;
+  reason: string;
+  proofImages?: File[] | FileList;
+  proofImageUrls?: string[];
+}
+
+export interface ReturnActionResponse {
+  message: string;
+}
+
+const appendFiles = (formData: FormData, key: string, files?: File[] | FileList) => {
+  if (!files) return;
+  const list = Array.isArray(files) ? files : Array.from(files);
+  list.forEach((file) => {
+    formData.append(key, file);
+  });
+};
 
 export const orderApi = {
   // Create order
@@ -105,6 +137,104 @@ getOrderTimeline: async (id: number): Promise<
   >(`/orders/${id}/timeline`);
   return response.data;
 },
+
+  cancelOrder: async (
+    orderId: number,
+    payload: CancelOrderRequest
+  ): Promise<CancelOrderResponse> => {
+    const response = await axiosInstance.post<CancelOrderResponse>(
+      `/orders/${orderId}/cancel`,
+      payload
+    );
+    return response.data;
+  },
+
+  createReturnRequest: async (
+    payload: CreateReturnRequestPayload
+  ): Promise<ReturnRequest> => {
+    const formData = new FormData();
+    formData.append('orderItemId', String(payload.orderItemId));
+    formData.append('quantity', String(payload.quantity));
+    formData.append('reason', payload.reason);
+
+    appendFiles(formData, 'proofImages', payload.proofImages);
+    (payload.proofImageUrls || []).forEach((url) => {
+      formData.append('proofImageUrls', url);
+    });
+
+    const response = await axiosInstance.post<ReturnRequest>('/orders/returns', formData);
+    return response.data;
+  },
+
+  getReturnRequests: async (status?: ReturnStatus): Promise<ReturnRequest[]> => {
+    const response = await axiosInstance.get<
+      ReturnRequest[] | { content?: ReturnRequest[]; data?: ReturnRequest[] }
+    >('/orders/returns', {
+      params: status ? { status } : undefined,
+    });
+
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.content)) return data.content;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
+  },
+
+  approveReturnRequest: async (
+    returnRequestId: number,
+    adminComment: string
+  ): Promise<ReturnActionResponse> => {
+    const response = await axiosInstance.patch<ReturnActionResponse | ReturnRequest>(
+      `/orders/returns/${returnRequestId}/approve`,
+      { adminComment }
+    );
+    const data = response.data as unknown;
+    if (
+      data &&
+      typeof data === 'object' &&
+      'message' in data &&
+      typeof (data as { message?: unknown }).message === 'string'
+    ) {
+      return { message: (data as { message: string }).message };
+    }
+    return { message: 'Return approved' };
+  },
+
+  rejectReturnRequest: async (
+    returnRequestId: number,
+    adminComment: string
+  ): Promise<ReturnActionResponse> => {
+    const response = await axiosInstance.patch<ReturnActionResponse | ReturnRequest>(
+      `/orders/returns/${returnRequestId}/reject`,
+      { adminComment }
+    );
+    const data = response.data as unknown;
+    if (
+      data &&
+      typeof data === 'object' &&
+      'message' in data &&
+      typeof (data as { message?: unknown }).message === 'string'
+    ) {
+      return { message: (data as { message: string }).message };
+    }
+    return { message: 'Return rejected' };
+  },
+
+  markReturnPickedUp: async (
+    returnRequestId: number
+  ): Promise<ReturnActionResponse> => {
+    const response = await axiosInstance.patch<ReturnActionResponse>(
+      `/orders/returns/${returnRequestId}/picked-up`
+    );
+    return response.data;
+  },
+
+  getReturnTimeline: async (returnRequestId: number): Promise<ReturnTimelineEvent[]> => {
+    const response = await axiosInstance.get<ReturnTimelineEvent[]>(
+      `/orders/returns/${returnRequestId}/timeline`
+    );
+    return response.data;
+  },
 
   // Initiate Razorpay payment for an order
   initiatePayment: async (orderId: number): Promise<InitiatePaymentResponse> => {

@@ -126,6 +126,42 @@ export interface OrderItem {
   selectedSize?: string;
   selectedColor?: string;
   reviewId?: number;
+  itemStatus?: string;
+  returnStatus?: ReturnStatus;
+  returnWindowEndsAt?: string;
+  returnEligibleUntil?: string;
+}
+
+export type ReturnStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'PICKED_UP'
+  | 'REFUND_INITIATED'
+  | 'REFUNDED'
+  | 'REJECTED';
+
+export interface ReturnTimelineEvent {
+  status: string;
+  message: string;
+  timestamp: string;
+}
+
+export interface ReturnRequest {
+  id: number;
+  orderId?: number;
+  orderItemId: number;
+  productId?: number;
+  quantity: number;
+  remainingQuantity?: number;
+  returnableQuantity?: number;
+  returnedQuantity?: number;
+  reason: string;
+  status: ReturnStatus;
+  refundAmount?: number;
+  proofImageUrls?: string[];
+  adminComment?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Order {
