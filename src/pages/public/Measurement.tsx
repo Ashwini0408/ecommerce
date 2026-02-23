@@ -38,6 +38,7 @@ const Measurement = () => {
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [sidePreview, setSidePreview] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
   const ageInputRef = useRef<HTMLInputElement>(null);
   const heightInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
@@ -159,8 +160,16 @@ const Measurement = () => {
       });
       return;
     }
-    setSubmitted(true);
-    toast.success("Your measurements have been submitted successfully! We'll get back to you shortly.");
+    if (isCalculating) return;
+    setIsCalculating(true);
+
+    window.setTimeout(() => {
+      setIsCalculating(false);
+      setSubmitted(true);
+      toast.success(
+        "Your measurements have been submitted successfully! We'll get back to you shortly."
+      );
+    }, 1800);
   };
 
   if (submitted) {
@@ -233,6 +242,32 @@ const Measurement = () => {
 
   return (
     <>
+      <AnimatePresence>
+        {isCalculating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] bg-black/55 backdrop-blur-sm flex items-center justify-center px-6"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 text-center border border-primary/20"
+            >
+              <div className="w-12 h-12 mx-auto mb-5 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <h3 className="text-xl font-serif text-foreground mb-2">
+                Calculating Measurements
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Please wait while we process your details.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
         <div className="absolute inset-0">
@@ -515,7 +550,11 @@ const Measurement = () => {
             {/* Navigation Buttons */}
             <div className="flex items-center justify-between mt-10 pt-6 border-t border-border">
               {currentStep > 1 ? (
-                <button onClick={handlePrevious} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition">
+                <button
+                  onClick={handlePrevious}
+                  disabled={isCalculating}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
                   <ArrowLeft className="w-4 h-4" /> Previous
                 </button>
               ) : (
@@ -523,12 +562,21 @@ const Measurement = () => {
               )}
 
               {currentStep < TOTAL_STEPS ? (
-                <button onClick={handleNext} className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 transition">
+                <button
+                  onClick={handleNext}
+                  disabled={isCalculating}
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
                   Next <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
-                <button onClick={handleSubmit} className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 transition">
-                  Calculate Measurements <ArrowRight className="w-4 h-4" />
+                <button
+                  onClick={handleSubmit}
+                  disabled={isCalculating}
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isCalculating ? "Calculating..." : "Calculate Measurements"}{" "}
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               )}
             </div>

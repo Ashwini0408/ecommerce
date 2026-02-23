@@ -123,6 +123,7 @@ import {
   FiExternalLink,
   FiMail,
   FiMenu,
+  FiRotateCcw,
   FiX,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
@@ -141,6 +142,7 @@ const AdminLayout = () => {
     { name: "Dashboard", path: "/admin", icon: FiHome },
     { name: "Product Management", path: "/admin/products", icon: FiPackage },
     { name: "Order Management", path: "/admin/orders", icon: FiShoppingBag },
+    { name: "Returns", path: "/admin/returns", icon: FiRotateCcw },
     { name: "Users Management", path: "/admin/users", icon: FiUsers },
     { name: "Appointments", path: "/admin/appointments", icon: FiCalendar },
     { name: "Visit Site", path: "/", icon: FiExternalLink, external: true },
@@ -198,7 +200,7 @@ const AdminLayout = () => {
       )}
 
       {/* Sidebar - Responsive */}
-      <div className={`fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-white to-gray-50 text-gray-800 shadow-lg z-40 border-r border-gray-200 transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed left-0 top-0 h-screen w-72 bg-gradient-to-b from-white to-gray-50 text-gray-800 shadow-lg z-40 border-r border-gray-200 transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Logo/Header */}
         <div className="p-6 bg-[#5E6E54] border-b border-[#4F5D47]">
           <div className="flex justify-center items-center">
@@ -228,7 +230,7 @@ const AdminLayout = () => {
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-700 hover:text-gray-900 hover:bg-gray-100 text-left"
                   >
                     {Icon && <Icon size={20} className="text-gray-500" />}
-                    <span className="font-medium">{item.name}</span>
+                    <span className="font-medium whitespace-nowrap">{item.name}</span>
                   </button>
                 ) : (
                   <Link
@@ -245,7 +247,7 @@ const AdminLayout = () => {
                         className={active ? "text-[#8FAE8B]" : "text-gray-500"}
                       />
                     )}
-                    <span className="font-medium">{item.name}</span>
+                    <span className="font-medium whitespace-nowrap">{item.name}</span>
 
                     {active && (
                       <motion.div
@@ -291,7 +293,7 @@ const AdminLayout = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="md:ml-64 min-h-screen p-4 md:p-6 bg-gray-50 pt-20 md:pt-6">
+      <main className="md:ml-72 min-h-screen p-4 md:p-6 bg-gray-50 pt-20 md:pt-6">
         <div className="w-full min-h-full">
           <Outlet />
         </div>

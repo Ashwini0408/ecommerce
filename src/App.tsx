@@ -256,6 +256,7 @@ import AdminLayout from './components/layout/AdminLayout';
 // import AdminDashboardContent from './pages/admin/AdminDashboardContent'; // We'll create this
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
+import AdminReturns from './pages/admin/AdminReturns';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAppointment from './pages/admin/AdminAppointment';
 import ContactMessages from './pages/admin/ContactMessages';
@@ -328,7 +329,14 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
-        <Route path="/measurements" element={<Measurement />} />
+        <Route
+          path="/measurements"
+          element={
+            <ProtectedRoute>
+              <Measurement />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected User Routes */}
         <Route
@@ -369,6 +377,7 @@ function App() {
   <Route index element={<AdminDashboard />} />
   <Route path="products" element={<AdminProducts />} />
   <Route path="orders" element={<AdminOrders />} />
+  <Route path="returns" element={<AdminReturns />} />
   <Route path="users" element={<AdminUsers />} />
   <Route path="appointments" element={<AdminAppointment />} />
   <Route path="contacts" element={<ContactMessages />} />

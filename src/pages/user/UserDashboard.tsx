@@ -19,6 +19,7 @@ import {formatINR } from "../../utils/currency";
 type AccountTab = 'overview' | 'orders' | 'profile' | 'appointments' | 'addresses';
 type OrderStatusFilter = 'ALL' | 'ON_THE_WAY' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
 type OrderTimeFilter = 'ANYTIME' | 'LAST_30_DAYS' | 'LAST_6_MONTHS' | 'LAST_YEAR';
+const RETURN_WINDOW_DAYS = 15;
 
 const UserDashboard = () => {
     const { user, isAuthenticated, isHydrated } = useSelector(
@@ -302,7 +303,6 @@ const UserDashboard = () => {
         const updated = await reviewApi.updateReview(
           reviewId,
           {
-            userId: user.id,
             rating: draft.rating,
             title: draft.title.trim() || item.productName || 'Review',
             body: draft.body.trim(),
@@ -318,7 +318,6 @@ const UserDashboard = () => {
       } else {
         const created = await reviewApi.createReview(
           {
-            userId: user.id,
             productId: item.productId,
             orderId,
             rating: draft.rating,
@@ -497,7 +496,7 @@ const UserDashboard = () => {
     setLoading(true);
     try {
       const [ordersRes, appointmentsRes] = await Promise.all([
-        orderApi.getUserOrders(user.id, 0, 10),
+        orderApi.getMyOrders(0, 10),
         appointmentApi.getUserAppointments(user.id, 0, 10),
       ]);
       setOrders(ordersRes.content);
@@ -778,6 +777,7 @@ const UserDashboard = () => {
   PENDING: 'bg-yellow-500/20 text-yellow-600',
   PROCESSING: 'bg-blue-500/20 text-blue-600',
   SHIPPED: 'bg-purple-500/20 text-purple-600',
+  OUT_FOR_DELIVERY: 'bg-indigo-500/20 text-indigo-600',
   DELIVERED: 'bg-green-500/20 text-green-600',
   CANCELLED: 'bg-red-500/20 text-red-600',
   RETURNED: 'bg-gray-500/20 text-gray-600',
@@ -807,7 +807,7 @@ const UserDashboard = () => {
     ((item as unknown as { itemStatus?: string }).itemStatus || 'ACTIVE').toUpperCase();
 
   const getCancellableItems = (order: Order) =>
-    (order.items || []).filter((item) => getItemStatus(item) !== 'CANCELLED');
+    (order.items || []).filter((item) => getItemStatus(item) === 'ACTIVE');
 
   const getItemStatusBadgeColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -825,11 +825,42 @@ const UserDashboard = () => {
     return colors[status] || 'bg-gray-100 text-gray-700';
   };
 
-  const isReturnWindowExpiredForOrder = (order: Order) => {
-    const deliveredLikeDate = new Date(order.updatedAt || order.createdAt);
-    if (Number.isNaN(deliveredLikeDate.getTime())) return false;
-    const returnWindowMs = 7 * 24 * 60 * 60 * 1000;
-    return Date.now() > deliveredLikeDate.getTime() + returnWindowMs;
+  const getOrderDeliveredAt = (order: Order): Date | null => {
+    const deliveredTimelineEvent = (order.timeline || []).find(
+      (event) => event.status === 'DELIVERED'
+    );
+    const candidateValues = [
+      deliveredTimelineEvent?.timestamp,
+      (order as unknown as { deliveredAt?: string }).deliveredAt,
+      order.updatedAt,
+      order.createdAt,
+    ];
+
+    for (const value of candidateValues) {
+      if (!value) continue;
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    return null;
+  };
+
+  const getItemReturnWindowEnd = (order: Order, item: Order['items'][number]) => {
+    const explicitWindowEnd = item.returnEligibleUntil || item.returnWindowEndsAt;
+    if (explicitWindowEnd) {
+      const parsed = new Date(explicitWindowEnd);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    const deliveredAt = getOrderDeliveredAt(order);
+    if (!deliveredAt) return null;
+    return new Date(
+      deliveredAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    );
   };
 
   const canRequestReturnFromDashboard = (
@@ -838,7 +869,12 @@ const UserDashboard = () => {
   ) =>
     order.status === 'DELIVERED' &&
     getItemStatus(item) === 'ACTIVE' &&
-    !isReturnWindowExpiredForOrder(order);
+    Number(item.returnedQuantity || 0) < Number(item.quantity || 0) &&
+    (() => {
+      const windowEnd = getItemReturnWindowEnd(order, item);
+      if (!windowEnd) return true;
+      return Date.now() <= windowEnd.getTime();
+    })();
 
   const openCancelModal = (order: Order) => {
     setCancelModal({
@@ -970,7 +1006,7 @@ const UserDashboard = () => {
       orderStatusFilter === 'ALL'
         ? true
         : orderStatusFilter === 'ON_THE_WAY'
-        ? ['PROCESSING', 'SHIPPED', 'PENDING'].includes(order.status)
+        ? ['PENDING', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(order.status)
         : order.status === orderStatusFilter;
 
     const orderDate = new Date(order.createdAt);
@@ -1002,10 +1038,6 @@ const UserDashboard = () => {
       <Navbar />
 
       <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-display font-bold text-dark-900 mb-2">My Account</h1>
-          <p className="text-dark-600">Manage your profile, orders, addresses, and appointments</p>
-        </div>
 
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
@@ -1310,7 +1342,7 @@ const UserDashboard = () => {
                                             <button
                                               type="button"
                                               onClick={() => openReviewModal(order.id, item)}
-                                              className="text-xs font-semibold text-[#6B7D60] hover:underline"
+                                              className="inline-flex items-center rounded-md border border-[#D5DDCF] px-3 py-1.5 text-xs font-semibold text-[#6B7D60] transition-colors hover:bg-[#F3F6F1]"
                                             >
                                               {existingReviewId ? 'Edit Review' : 'Write Review'}
                                             </button>
@@ -1694,7 +1726,7 @@ const UserDashboard = () => {
                               handleSubmitReview(reviewModal.orderId, reviewModal.item)
                             }
                             disabled={isSubmitting}
-                            className="btn-primary disabled:opacity-50"
+                            className="btn-primary px-4 disabled:opacity-50"
                           >
                             {isSubmitting
                               ? 'Submitting...'

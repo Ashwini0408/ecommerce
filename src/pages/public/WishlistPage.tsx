@@ -265,6 +265,7 @@ import { useAppDispatch } from "../../hooks/useAuth";
 import { addToCart as addToCartRedux } from "../../store/slices/cartSlice";
 import useAuth from "../../hooks/useAuth";
 import { useWishlist } from "../../context/WishlistContext";
+import toast from "react-hot-toast";
 // Mock wishlist data - replace with actual API data
 const IMAGE_BASE_URL =
   import.meta.env.VITE_API_IMG_URL || "http://localhost:8090";
@@ -407,7 +408,28 @@ const confirmAddToCart = async () => {
     setSelectedColor("");
     setActiveProductId(null);
 
-  } catch (error) {
+  } catch (error: unknown) {
+    const candidate =
+      error && typeof error === "object"
+        ? (error as { status?: unknown; message?: unknown; error?: unknown })
+        : null;
+    const status = typeof candidate?.status === "number" ? candidate.status : undefined;
+    const message =
+      typeof candidate?.message === "string"
+        ? candidate.message
+        : typeof candidate?.error === "string"
+          ? candidate.error
+          : "";
+    const normalized = message.toLowerCase();
+    if (
+      status === 409 ||
+      normalized.includes("modified by another request") ||
+      normalized.includes("stock")
+    ) {
+      toast.error("Stock changed. Please refresh products and try again.");
+    } else {
+      toast.error(message || "Failed to add to cart");
+    }
     console.error("Failed to add to cart", error);
   }
 };

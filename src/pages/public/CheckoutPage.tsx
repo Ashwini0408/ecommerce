@@ -34,6 +34,10 @@ import {
 import toast from 'react-hot-toast';
 
 const PAYMENT_STATUS_STORAGE_KEY = 'latestPaymentStatus';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const IMAGE_BASE_URL =
+  import.meta.env.VITE_API_IMG_URL ||
+  (API_BASE_URL ? API_BASE_URL.replace(/\/api\/?$/i, '') : 'http://localhost:8090');
 
 type AddressType = 'HOME' | 'WORK' | 'OTHER';
 
@@ -104,6 +108,33 @@ const CheckoutPage = () => {
 
   const normalizePhone = (value: string) => value.replace(/\\D/g, '').slice(0, 10);
   const normalizePincode = (value: string) => value.replace(/\\D/g, '').slice(0, 6);
+
+  const getApiErrorDetails = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const candidate = error as {
+        status?: unknown;
+        message?: unknown;
+        error?: unknown;
+      };
+      const status =
+        typeof candidate.status === 'number' ? candidate.status : undefined;
+      const message =
+        typeof candidate.message === 'string'
+          ? candidate.message
+          : typeof candidate.error === 'string'
+            ? candidate.error
+            : '';
+      return { status, message };
+    }
+    return { status: undefined, message: '' };
+  };
+
+  const getCartItemImageUrl = (path?: string) => {
+    if (!path) return '/placeholder.jpg';
+    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${IMAGE_BASE_URL}${cleanPath}`;
+  };
 
   const getAddressMeta = (address: UserAddress): AddressMeta => {
     if (addressMeta[address.id]) return addressMeta[address.id];
@@ -468,8 +499,20 @@ const CheckoutPage = () => {
       }
 
       await finalizeSuccessfulOrder(order.id);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to place order');
+    } catch (error: unknown) {
+      const { status, message } = getApiErrorDetails(error);
+      const normalizedMessage = message.toLowerCase();
+      const isStockConflict =
+        status === 409 ||
+        normalizedMessage.includes('modified by another request') ||
+        normalizedMessage.includes('stock');
+
+      if (isStockConflict) {
+        toast.error('Stock changed. Please review your cart and try again.');
+        navigate('/cart');
+      } else {
+        toast.error(message || 'Failed to place order');
+      }
     } finally {
       setLoading(false);
     }
@@ -773,9 +816,12 @@ const CheckoutPage = () => {
                         className="flex gap-3 rounded-xl border border-sage/15 bg-white p-3 shadow-sm"
                       >
                         <img
-                          src={item.image}
+                          src={getCartItemImageUrl(item.image)}
                           alt={item.name}
                           className="w-20 h-24 rounded-lg object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.jpg';
+                          }}
                         />
                         <div className="flex-1">
                           <div className="text-sm font-semibold text-dark-900 line-clamp-1">

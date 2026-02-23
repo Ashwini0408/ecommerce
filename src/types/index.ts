@@ -88,16 +88,16 @@ export interface ProductFilterRequest {
 }
 
 export interface PaginatedResponse<T> {
-  data: boolean;
-  total: number;
-  orders(orders: any): unknown;
   content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  first: boolean;
-  last: boolean;
+  totalElements?: number;
+  totalPages?: number;
+  size?: number;
+  number?: number;
+  first?: boolean;
+  last?: boolean;
+  total?: number;
+  data?: T[];
+  orders?: T[];
 }
 
 // ==================== CART ====================
@@ -126,7 +126,8 @@ export interface OrderItem {
   selectedSize?: string;
   selectedColor?: string;
   reviewId?: number;
-  itemStatus?: string;
+  itemStatus?: 'ACTIVE' | 'CANCELLED' | 'RETURN_REQUESTED' | 'RETURNED';
+  returnedQuantity?: number;
   returnStatus?: ReturnStatus;
   returnWindowEndsAt?: string;
   returnEligibleUntil?: string;
@@ -151,10 +152,13 @@ export interface ReturnRequest {
   orderId?: number;
   orderItemId: number;
   productId?: number;
-  quantity: number;
+  quantity?: number;
+  requestedQuantity?: number;
   remainingQuantity?: number;
   returnableQuantity?: number;
   returnedQuantity?: number;
+  productName?: string;
+  productImage?: string;
   reason: string;
   status: ReturnStatus;
   refundAmount?: number;
@@ -229,9 +233,11 @@ export interface OrderStatistics {
   totalOrders: number;
   pendingOrders: number;
   shippedOrders: number;
+  outForDeliveryOrders?: number;
   deliveredOrders: number;
   cancelledOrders: number;
   processingOrders: number;
+  returnedOrders?: number;
 }
 
 // ==================== APPOINTMENT ====================

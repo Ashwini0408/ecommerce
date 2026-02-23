@@ -3873,9 +3873,29 @@ useEffect(() => {
         console.log("Cart added successfully");
       }, 100);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Add to cart failed:", err);
-      toast.error(err.message || "Failed to add to cart");
+      const candidate =
+        err && typeof err === "object"
+          ? (err as { status?: unknown; message?: unknown; error?: unknown })
+          : null;
+      const status = typeof candidate?.status === "number" ? candidate.status : undefined;
+      const message =
+        typeof candidate?.message === "string"
+          ? candidate.message
+          : typeof candidate?.error === "string"
+            ? candidate.error
+            : "";
+      const normalized = message.toLowerCase();
+      if (
+        status === 409 ||
+        normalized.includes("modified by another request") ||
+        normalized.includes("stock")
+      ) {
+        toast.error("Stock changed. Please refresh and try again.");
+      } else {
+        toast.error(message || "Failed to add to cart");
+      }
     }
   };
 
@@ -4834,7 +4854,7 @@ const getCurrentMediaUrl = () => {
                 <button
                   type="button"
                   onClick={handleOpenAllReviews}
-                  className="text-sm font-semibold text-sage hover:underline"
+                  className="inline-flex items-center rounded-md border border-[#D5DDCF] px-3 py-1.5 text-sm font-semibold text-sage transition-colors hover:bg-[#F3F6F1]"
                 >
                   View All Reviews
                 </button>

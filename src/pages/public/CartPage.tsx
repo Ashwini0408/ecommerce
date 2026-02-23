@@ -1389,7 +1389,7 @@ import {
   clearCart,
 } from '../../store/slices/cartSlice';
 import toast from 'react-hot-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // ----------------------------------------------------------------------
 // HELPER: Fix Image URLs
@@ -1423,6 +1423,47 @@ const CartPage = () => {
   const [backendItems, setBackendItems] = useState<BackendCartItem[]>([]);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
+  const getApiErrorDetails = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const candidate = error as {
+        status?: unknown;
+        message?: unknown;
+        error?: unknown;
+      };
+      const status =
+        typeof candidate.status === 'number' ? candidate.status : undefined;
+      const message =
+        typeof candidate.message === 'string'
+          ? candidate.message
+          : typeof candidate.error === 'string'
+            ? candidate.error
+            : '';
+      return { status, message };
+    }
+    return { status: undefined, message: '' };
+  };
+
+  const syncCartFromBackend = useCallback(async () => {
+    const response = await cartApi.getCart();
+    const cartData = response.items || [];
+    setBackendItems(cartData);
+    dispatch(clearCart());
+    cartData.forEach((item: any) => {
+      dispatch(addToCart({
+        itemId: item.id,
+        productId: item.productId,
+        name: item.productName,
+        price: item.unitPrice,
+        salePrice: undefined,
+        quantity: item.quantity,
+        selectedSize: item.selectedSize,
+        selectedColor: item.selectedColor,
+        image: getImageUrl(item.productImage),
+        stock: item.stock || 999,
+      }));
+    });
+  }, [dispatch]);
+
   // Fetch cart from backend for authenticated users
   useEffect(() => {
     if (!isAuthenticated) {
@@ -1432,25 +1473,7 @@ const CartPage = () => {
     const fetchCartFromBackend = async () => {
       try {
         setIsLoading(true);
-        const response = await cartApi.getCart();
-        const cartData = response.items || [];
-        setBackendItems(cartData);
-        dispatch(clearCart());
-
-        cartData.forEach((item: any) => {
-          dispatch(addToCart({
-            itemId: item.id,
-            productId: item.productId,
-            name: item.productName,
-            price: item.unitPrice,
-            salePrice: undefined,
-            quantity: item.quantity,
-            selectedSize: item.selectedSize,
-            selectedColor: item.selectedColor,
-            image: getImageUrl(item.productImage),
-            stock: item.stock || 999,
-          }));
-        });
+        await syncCartFromBackend();
       } catch (error) {
         console.error('Failed to fetch cart from backend:', error);
       } finally {
@@ -1459,7 +1482,7 @@ const CartPage = () => {
     };
 
     fetchCartFromBackend();
-  }, [dispatch, isAuthenticated]);
+  }, [isAuthenticated, syncCartFromBackend]);
 
   const findBackendItemId = (productId: number, selectedSize?: string, selectedColor?: string): number => {
     const backendItem = Array.isArray(backendItems)
@@ -1504,9 +1527,7 @@ const CartPage = () => {
       await cartApi.removeItem(backendItemId);
       dispatch(removeFromCart({ productId, selectedSize, selectedColor }));
       toast.success('Item removed from cart');
-
-      const updatedCart = await cartApi.getCart();
-      setBackendItems(updatedCart.items || []);
+      await syncCartFromBackend();
     } catch (error) {
       console.error('Remove error:', error);
       toast.error('Failed to remove item');
@@ -1533,12 +1554,21 @@ const CartPage = () => {
 
       await cartApi.updateQuantity(backendItemId, quantity + 1);
       dispatch(incrementQuantity({ productId, selectedSize, selectedColor }));
-
-      const updatedCart = await cartApi.getCart();
-      setBackendItems(updatedCart.items || []);
-    } catch (error) {
+      await syncCartFromBackend();
+    } catch (error: unknown) {
       console.error('Increment error:', error);
-      toast.error('Failed to update quantity');
+      const { status, message } = getApiErrorDetails(error);
+      const normalizedMessage = message.toLowerCase();
+      const isStockConflict =
+        status === 409 ||
+        normalizedMessage.includes('modified by another request') ||
+        normalizedMessage.includes('stock');
+      if (isStockConflict) {
+        await syncCartFromBackend();
+        toast.error('Stock changed. Cart updated with latest availability.');
+      } else {
+        toast.error(message || 'Failed to update quantity');
+      }
     }
   };
 
@@ -1565,12 +1595,21 @@ const CartPage = () => {
 
       await cartApi.updateQuantity(backendItemId, quantity - 1);
       dispatch(decrementQuantity({ productId, selectedSize, selectedColor }));
-
-      const updatedCart = await cartApi.getCart();
-      setBackendItems(updatedCart.items || []);
-    } catch (error) {
+      await syncCartFromBackend();
+    } catch (error: unknown) {
       console.error('Decrement error:', error);
-      toast.error('Failed to update quantity');
+      const { status, message } = getApiErrorDetails(error);
+      const normalizedMessage = message.toLowerCase();
+      const isStockConflict =
+        status === 409 ||
+        normalizedMessage.includes('modified by another request') ||
+        normalizedMessage.includes('stock');
+      if (isStockConflict) {
+        await syncCartFromBackend();
+        toast.error('Stock changed. Cart updated with latest availability.');
+      } else {
+        toast.error(message || 'Failed to update quantity');
+      }
     }
   };
 

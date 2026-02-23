@@ -237,15 +237,14 @@ const Blog = () => {
                   <span className="inline-block px-3 py-1 bg-sage/10 text-sage text-xs font-sans tracking-wide uppercase mb-4">
                     {post.category}
                   </span>
-                  <h3 className="font-serif text-xl mb-3 group-hover:text-sage transition-colors duration-300 line-clamp-2">
+                  <h3 className="font-serif text-xl mb-3 group-hover:text-sage transition-colors duration-300">
                     {post.title}
                   </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2">
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-4">
                     {post.excerpt}
                   </p>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center text-xs text-muted-foreground">
                     <span>{post.date}</span>
-                    <span>{post.readTime}</span>
                   </div>
                 </div>
               </motion.article>

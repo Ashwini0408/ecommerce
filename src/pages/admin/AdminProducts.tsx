@@ -17536,7 +17536,6 @@ const AdminProducts = () => {
 
     try {
       const updatePayload: ReviewUpdatePayload = {
-          userId: editForm.userId,
           rating: editForm.rating,
           title: editForm.title,
           body: editForm.body,

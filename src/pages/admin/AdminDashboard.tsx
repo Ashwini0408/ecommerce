@@ -294,7 +294,9 @@ import {
   FiTrendingUp,
   FiShoppingCart,
   FiXCircle,        // ❌ Cancelled
-  FiCornerDownLeft // ↩ Returned
+  FiCornerDownLeft, // ↩ Returned
+  FiTruck,
+  FiRotateCcw,
 } from 'react-icons/fi';
 
 import AdminProducts from './AdminProducts';
@@ -313,6 +315,16 @@ const getStatusClasses = (status: string) => {
   switch (status) {
     case 'PENDING':
       return 'bg-yellow-500/20 text-yellow-600';
+    case 'PROCESSING':
+      return 'bg-blue-500/20 text-blue-600';
+    case 'SHIPPED':
+      return 'bg-purple-500/20 text-purple-600';
+    case 'OUT_FOR_DELIVERY':
+      return 'bg-indigo-500/20 text-indigo-600';
+    case 'DELIVERED':
+      return 'bg-green-500/20 text-green-600';
+    case 'RETURNED':
+      return 'bg-orange-500/20 text-orange-600';
     case 'CONFIRMED':
       return 'bg-blue-500/20 text-blue-600';
     case 'COMPLETED':
@@ -411,14 +423,27 @@ const AdminOverview = () => {
       color: 'text-red-400',
       bgColor: 'bg-red-500/20',
     },
-
-    // ✅ NEW — Returned Orders
     {
-      title: 'Processing(Active) orders',
-      value: orderStats?.processingOrders || 0,
-      icon: FiCornerDownLeft,
+      title: 'Out for Delivery',
+      value: orderStats?.outForDeliveryOrders || 0,
+      icon: FiTruck,
+      color: 'text-indigo-400',
+      bgColor: 'bg-indigo-500/20',
+    },
+    {
+      title: 'Returned Orders',
+      value: orderStats?.returnedOrders || 0,
+      icon: FiRotateCcw,
       color: 'text-orange-400',
       bgColor: 'bg-orange-500/20',
+    },
+
+    {
+      title: 'Processing Orders',
+      value: orderStats?.processingOrders || 0,
+      icon: FiCornerDownLeft,
+      color: 'text-sky-400',
+      bgColor: 'bg-sky-500/20',
     },
     {
       title: 'Total Appointments',

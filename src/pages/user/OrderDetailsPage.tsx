@@ -43,7 +43,7 @@ const RETURN_STATUSES = [
   'REFUNDED',
   'REJECTED',
 ] as const;
-const RETURN_WINDOW_DAYS = 7;
+const RETURN_WINDOW_DAYS = 15;
 const RETURN_STATUS_ALIASES: Record<string, string> = {
   RETURN_REQUESTED: 'REQUESTED',
   RETURN_APPROVED: 'APPROVED',
@@ -240,6 +240,9 @@ const OrderDetailsPage = () => {
         const data = await orderApi.getOrderById(orderId);
         if (active) {
           setOrder(data);
+          if (Array.isArray(data.timeline)) {
+            setTimeline(data.timeline);
+          }
         }
       } catch (err: any) {
         if (active) {
@@ -268,9 +271,7 @@ const OrderDetailsPage = () => {
           setTimeline(data);
         }
       } catch {
-        if (active) {
-          setTimeline([]);
-        }
+        // Keep timeline from order payload if timeline endpoint fails.
       } finally {
         if (active) {
           setTimelineLoading(false);
@@ -375,6 +376,19 @@ const OrderDetailsPage = () => {
   };
 
   const getRemainingReturnQuantity = (item: Order['items'][number]) => {
+    const parseNonNegativeInt = (value: unknown) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed < 0) return null;
+      return Math.floor(parsed);
+    };
+
+    const totalQtyRaw = parseNonNegativeInt(item.quantity);
+    const totalQty = totalQtyRaw ?? 0;
+    const capByTotalQuantity = (value: number) => {
+      if (totalQty <= 0) return value;
+      return Math.min(value, totalQty);
+    };
+
     const serverRequest = serverReturnRequestByItemId[item.id];
     if (serverRequest) {
       const directServerValues = [
@@ -382,13 +396,13 @@ const OrderDetailsPage = () => {
         serverRequest.returnableQuantity,
       ];
       for (const value of directServerValues) {
-        const parsed = Number(value);
-        if (Number.isFinite(parsed) && parsed >= 0) return Math.floor(parsed);
+        const parsed = parseNonNegativeInt(value);
+        if (parsed !== null) return capByTotalQuantity(parsed);
       }
-      const returnedQty = Number(serverRequest.returnedQuantity || 0);
-      const totalQty = Number(item.quantity || 0);
-      if (Number.isFinite(totalQty) && totalQty > 0 && Number.isFinite(returnedQty)) {
-        return Math.max(0, Math.floor(totalQty - Math.max(0, returnedQty)));
+
+      const returnedQty = parseNonNegativeInt(serverRequest.returnedQuantity) ?? 0;
+      if (totalQty > 0) {
+        return Math.max(0, totalQty - Math.min(returnedQty, totalQty));
       }
     }
 
@@ -408,17 +422,16 @@ const OrderDetailsPage = () => {
       source.availableReturnQuantity,
     ];
     for (const value of directValues) {
-      const parsed = Number(value);
-      if (Number.isFinite(parsed) && parsed >= 0) return Math.floor(parsed);
+      const parsed = parseNonNegativeInt(value);
+      if (parsed !== null) return capByTotalQuantity(parsed);
     }
+    if (totalQty <= 0) return 0;
 
-    const totalQty = Number(item.quantity || 0);
-    const returnedQty = Number(
-      source.returnedQuantity || source.alreadyReturnedQuantity || 0
-    );
-    if (!Number.isFinite(totalQty) || totalQty <= 0) return 0;
-    if (!Number.isFinite(returnedQty) || returnedQty <= 0) return Math.floor(totalQty);
-    return Math.max(0, Math.floor(totalQty - returnedQty));
+    const returnedQty =
+      parseNonNegativeInt(
+        source.returnedQuantity || source.alreadyReturnedQuantity
+      ) ?? 0;
+    return Math.max(0, totalQty - Math.min(returnedQty, totalQty));
   };
 
   const orderItemIdsKey = useMemo(() => {
@@ -438,7 +451,7 @@ const OrderDetailsPage = () => {
     let active = true;
     const loadReturnRequestsForOrderItems = async () => {
       try {
-        const requests = await orderApi.getReturnRequests();
+        const requests = await orderApi.getMyReturnRequests();
         if (!active) return;
 
         const orderItemIds = new Set(order.items.map((item) => item.id));
@@ -582,12 +595,29 @@ const OrderDetailsPage = () => {
     const parsed = new Date(deliveredEvent.timestamp);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }, [deliveredEvent]);
+  const orderReturnWindowEndsAt = useMemo(() => {
+    if (!order?.items?.length) return null;
+
+    const itemLevelWindowEnds = order.items
+      .map((item) => item.returnEligibleUntil || item.returnWindowEndsAt)
+      .filter(Boolean)
+      .map((value) => new Date(value as string))
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .sort((a, b) => b.getTime() - a.getTime());
+
+    if (itemLevelWindowEnds.length > 0) {
+      return itemLevelWindowEnds[0];
+    }
+
+    if (!deliveredAt) return null;
+    return new Date(
+      deliveredAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    );
+  }, [order?.items, deliveredAt]);
   const isReturnWindowExpired = useMemo(() => {
-    if (!deliveredAt) return false;
-    const maxWindowTime =
-      deliveredAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-    return Date.now() > maxWindowTime;
-  }, [deliveredAt]);
+    if (!orderReturnWindowEndsAt) return false;
+    return Date.now() > orderReturnWindowEndsAt.getTime();
+  }, [orderReturnWindowEndsAt]);
 
   const canReturnItem = (item: Order['items'][number]) => {
     if (!order || order.status !== 'DELIVERED') return false;
@@ -674,14 +704,24 @@ const OrderDetailsPage = () => {
       toast.error('No returnable quantity remaining for this item');
       return;
     }
-    const normalizedQuantity = Number.isFinite(returnQuantity) ? returnQuantity : 1;
-    const safeQuantity = Math.min(Math.max(1, normalizedQuantity), maxQty);
+
+    const parsedInputQuantity = Number(returnQuantity);
+    if (!Number.isFinite(parsedInputQuantity) || parsedInputQuantity < 1) {
+      toast.error('Please enter a valid return quantity');
+      return;
+    }
+
+    const requestedQuantity = Math.floor(parsedInputQuantity);
+    if (requestedQuantity > maxQty) {
+      toast.error(`You can return at most ${maxQty} item(s) for this product`);
+      return;
+    }
 
     setReturnSubmitting(true);
     try {
       const response = await orderApi.createReturnRequest({
         orderItemId: returnModal.item.id,
-        quantity: safeQuantity,
+        quantity: requestedQuantity,
         reason: normalizedReason,
         proofImages: returnProofFiles,
       });
@@ -923,7 +963,6 @@ const OrderDetailsPage = () => {
         const updated = await reviewApi.updateReview(
           existingId,
           {
-            userId: order.userId,
             rating: draft.rating,
             title: draft.title.trim() || item.productName || 'Review',
             body: draft.body.trim(),
@@ -938,7 +977,6 @@ const OrderDetailsPage = () => {
       } else {
         const created = await reviewApi.createReview(
           {
-            userId: order.userId,
             productId: item.productId,
             orderId: order.id,
             rating: draft.rating,
@@ -1532,7 +1570,7 @@ const OrderDetailsPage = () => {
                               <button
                                 type="button"
                                 onClick={() => openReviewModal(item)}
-                                className="btn-primary"
+                                className="btn-primary px-4"
                               >
                                 {existingReviewId ? 'Edit Review' : 'Write Review'}
                               </button>
@@ -1693,12 +1731,22 @@ const OrderDetailsPage = () => {
                 <label className="text-sm font-semibold text-dark-700">Quantity</label>
                 <input
                   type="number"
+                  step={1}
                   min={1}
                   max={Math.max(1, getRemainingReturnQuantity(returnModal.item))}
                   value={returnQuantity}
                   onChange={(e) => {
                     const parsed = Number(e.target.value);
-                    setReturnQuantity(Number.isFinite(parsed) ? parsed : 1);
+                    const maxQty = Math.max(
+                      1,
+                      getRemainingReturnQuantity(returnModal.item)
+                    );
+                    if (!Number.isFinite(parsed)) {
+                      setReturnQuantity(1);
+                      return;
+                    }
+                    const normalized = Math.max(1, Math.floor(parsed));
+                    setReturnQuantity(Math.min(normalized, maxQty));
                   }}
                   className="mt-2 input-field"
                 />
@@ -1955,7 +2003,7 @@ const OrderDetailsPage = () => {
                     type="button"
                     onClick={() => handleSubmitReview(reviewModal.item)}
                     disabled={isSubmitting}
-                    className="btn-primary disabled:opacity-50"
+                    className="btn-primary px-4 disabled:opacity-50"
                   >
                     {isSubmitting
                       ? 'Submitting...'

@@ -17,7 +17,6 @@ export interface Review {
 }
 
 export interface ReviewCreatePayload {
-  userId: number;
   productId: number;
   orderId: number;
   rating: number;
@@ -28,7 +27,6 @@ export interface ReviewCreatePayload {
 export interface ReviewUpdatePayload {
   videosToDelete: string[];
   imagesToDelete: string[];
-  userId: number;
   rating: number;
   title: string;
   body: string;

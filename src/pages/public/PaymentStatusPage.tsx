@@ -67,6 +67,26 @@ const PaymentStatusPage = () => {
     return parsePaymentStatusState(location.state) || getStoredPaymentState();
   });
 
+  const getApiErrorDetails = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const candidate = error as {
+        status?: unknown;
+        message?: unknown;
+        error?: unknown;
+      };
+      const status =
+        typeof candidate.status === 'number' ? candidate.status : undefined;
+      const message =
+        typeof candidate.message === 'string'
+          ? candidate.message
+          : typeof candidate.error === 'string'
+            ? candidate.error
+            : '';
+      return { status, message };
+    }
+    return { status: undefined, message: '' };
+  };
+
   useEffect(() => {
     const fromRoute = parsePaymentStatusState(location.state);
     if (!fromRoute) return;
@@ -210,14 +230,19 @@ const PaymentStatusPage = () => {
         razorpayInstance.open();
       });
     } catch (error: unknown) {
-      const message =
-        typeof error === 'object' &&
-        error !== null &&
-        'message' in error &&
-        typeof (error as { message?: string }).message === 'string'
-          ? (error as { message: string }).message
-          : 'Failed to retry payment';
-      toast.error(message);
+      const { status, message } = getApiErrorDetails(error);
+      const normalizedMessage = message.toLowerCase();
+      const isStockConflict =
+        status === 409 ||
+        normalizedMessage.includes('modified by another request') ||
+        normalizedMessage.includes('stock');
+
+      if (isStockConflict) {
+        toast.error('Stock changed. Please review your cart and place order again.');
+        navigate('/cart');
+      } else {
+        toast.error(message || 'Failed to retry payment');
+      }
     } finally {
       setRetrying(false);
     }
