@@ -1,12 +1,30 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import  Navbar  from "../../components/layout/Navbar";
+import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import { ArrowLeft, ArrowRight, ClipboardList, User, Dumbbell, Target, Ruler, Camera, Upload, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import heroMeasurement from "../../assets/hero-measurement.png";
+import {
+  measurementApi,
+  type MeasurementActivityLevel,
+  type MeasurementBodyType,
+  type MeasurementFatDistribution,
+  type MeasurementFitPreference,
+  type MeasurementGender,
+  type MeasurementGoal,
+  type MeasurementHeightUnit,
+  type MeasurementMuscleLevel,
+  type MeasurementPoseValidationDetails,
+  type MeasurementShoulderType,
+  type MeasurementWeightUnit,
+  type ProcessMeasurementData,
+} from "../../api/measurementApi";
+import { measurementStoreApi } from "../../api/measurementStoreApi";
 
 const TOTAL_STEPS = 6;
+const MAX_IMAGE_SIZE_BYTES = 16 * 1024 * 1024;
+const ACCEPTED_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/jpg"]);
 
 const stepInfo = [
   { icon: ClipboardList, title: "Basic Information" },
@@ -17,69 +35,241 @@ const stepInfo = [
   { icon: Camera, title: "Upload Images" },
 ];
 
+type OptionalSelect<T extends string> = T | "";
+
+interface MeasurementFormData {
+  gender: MeasurementGender | "";
+  age: string;
+  height: string;
+  heightUnit: MeasurementHeightUnit;
+  weight: string;
+  weightUnit: MeasurementWeightUnit;
+  fatDistribution: OptionalSelect<MeasurementFatDistribution>;
+  bodyType: OptionalSelect<MeasurementBodyType>;
+  activityLevel: OptionalSelect<MeasurementActivityLevel>;
+  muscleLevel: OptionalSelect<MeasurementMuscleLevel>;
+  measurementGoal: OptionalSelect<MeasurementGoal>;
+  fitPreference: OptionalSelect<MeasurementFitPreference>;
+  shoulderType: OptionalSelect<MeasurementShoulderType>;
+  frontImage: File | null;
+  sideImage: File | null;
+}
+
+const INITIAL_FORM_DATA: MeasurementFormData = {
+  gender: "",
+  age: "",
+  height: "",
+  heightUnit: "cm",
+  weight: "",
+  weightUnit: "kg",
+  fatDistribution: "",
+  bodyType: "",
+  activityLevel: "",
+  muscleLevel: "",
+  measurementGoal: "",
+  fitPreference: "",
+  shoulderType: "",
+  frontImage: null,
+  sideImage: null,
+};
+
+const maleBodyTypeOptions: Array<{ label: string; value: MeasurementBodyType }> = [
+  { label: "Slim", value: "slim" },
+  { label: "Average", value: "avg" },
+  { label: "Athletic", value: "athletic" },
+  { label: "Heavy", value: "heavy" },
+];
+
+const femaleBodyTypeOptions: Array<{ label: string; value: MeasurementBodyType }> = [
+  { label: "Slim", value: "slim" },
+  { label: "Average", value: "avg" },
+  { label: "Curvy", value: "curvy" },
+  { label: "Heavy", value: "heavy" },
+];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const parsePoseValidationDetails = (
+  value: unknown
+): MeasurementPoseValidationDetails | null => {
+  if (!isRecord(value)) return null;
+
+  const frontAccepted = value["front_accepted"];
+  const frontAngle = value["front_angle"];
+  const frontMessage = value["front_message"];
+  const sideAccepted = value["side_accepted"];
+  const sideAngle = value["side_angle"];
+  const sideMessage = value["side_message"];
+  const errorsValue = value["errors"];
+
+  const allTypesValid =
+    typeof frontAccepted === "boolean" &&
+    typeof frontAngle === "number" &&
+    Number.isFinite(frontAngle) &&
+    typeof frontMessage === "string" &&
+    typeof sideAccepted === "boolean" &&
+    typeof sideAngle === "number" &&
+    Number.isFinite(sideAngle) &&
+    typeof sideMessage === "string" &&
+    Array.isArray(errorsValue);
+
+  if (!allTypesValid) return null;
+
+  const errors = errorsValue.filter((item): item is string => typeof item === "string");
+  if (errors.length !== errorsValue.length) return null;
+
+  return {
+    front_accepted: frontAccepted,
+    front_angle: frontAngle,
+    front_message: frontMessage,
+    side_accepted: sideAccepted,
+    side_angle: sideAngle,
+    side_message: sideMessage,
+    errors,
+  };
+};
+
+const getMeasurementErrorDetails = (
+  error: unknown
+): { message: string; validationDetails: MeasurementPoseValidationDetails | null } => {
+  const fallbackMessage = "Failed to process measurements. Please try again.";
+
+  if (!isRecord(error)) {
+    return { message: fallbackMessage, validationDetails: null };
+  }
+
+  const validationDetails = parsePoseValidationDetails(error["validation_details"]);
+  const apiErrorMessage = error["error"];
+  if (typeof apiErrorMessage === "string" && apiErrorMessage.trim()) {
+    return { message: apiErrorMessage, validationDetails };
+  }
+
+  const genericMessage = error["message"];
+  if (typeof genericMessage === "string" && genericMessage.trim()) {
+    return { message: genericMessage, validationDetails };
+  }
+
+  return { message: fallbackMessage, validationDetails };
+};
+
+const isSupportedImage = (file: File): boolean => {
+  const mimeType = file.type.toLowerCase();
+  if (ACCEPTED_IMAGE_MIME_TYPES.has(mimeType)) return true;
+  return /\.(png|jpe?g)$/i.test(file.name);
+};
+
+const formatSize = (value?: { cm?: number; inches?: number }) => {
+  if (!value || value.cm === undefined || value.inches === undefined) return null;
+  return `${value.cm.toFixed(1)} cm / ${value.inches.toFixed(2)} in`;
+};
+
+const buildMeasurementRows = (m: ProcessMeasurementData) =>
+  [
+    { label: "Neck circumference", value: formatSize(m.neck?.circumference) },
+    { label: "Chest circumference", value: formatSize(m.chest?.circumference) },
+    { label: "Upper chest circumference", value: formatSize(m.upper_chest?.circumference) },
+    { label: "Lower chest circumference", value: formatSize(m.lower_chest?.circumference) },
+    { label: "Waist circumference", value: formatSize(m.waist?.circumference) },
+    { label: "Hip circumference", value: formatSize(m.hip?.circumference) },
+    { label: "Shoulder width", value: formatSize(m.shoulder?.width) },
+    { label: "Armhole circumference", value: formatSize(m.armhole?.circumference) },
+    { label: "Upper thigh circumference", value: formatSize(m.upper_thigh?.circumference) },
+    { label: "Knee circumference", value: formatSize(m.knee?.circumference) },
+    { label: "Body length", value: formatSize(m.body_length?.length) },
+    { label: "Arm hand to elbow", value: formatSize(m.arm?.hand_to_elbow) },
+    { label: "Arm shoulder to elbow", value: formatSize(m.arm?.shoulder_to_elbow) },
+    { label: "Arm total length", value: formatSize(m.arm?.total_length) },
+  ].filter((row) => !!row.value);
+
 const Measurement = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    age: "",
-    height: "",
-    heightUnit: "cm",
-    weight: "",
-    weightUnit: "kg",
-    fatDistribution: "",
-    bodyType: "",
-    activityLevel: "",
-    muscleLevel: "",
-    measurementGoal: "",
-    fitPreference: "",
-    shoulderType: "",
-    frontImage: null as File | null,
-    sideImage: null as File | null,
-  });
+  const [formData, setFormData] = useState<MeasurementFormData>(INITIAL_FORM_DATA);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [sidePreview, setSidePreview] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<ProcessMeasurementData | null>(
+    null
+  );
+  const [poseValidationDetails, setPoseValidationDetails] =
+    useState<MeasurementPoseValidationDetails | null>(null);
+
+  const genderSelectRef = useRef<HTMLSelectElement>(null);
   const ageInputRef = useRef<HTMLInputElement>(null);
   const heightInputRef = useRef<HTMLInputElement>(null);
   const weightInputRef = useRef<HTMLInputElement>(null);
-  const fatDistributionSelectRef = useRef<HTMLSelectElement>(null);
-  const bodyTypeSelectRef = useRef<HTMLSelectElement>(null);
-  const activityLevelSelectRef = useRef<HTMLSelectElement>(null);
-  const muscleLevelSelectRef = useRef<HTMLSelectElement>(null);
-  const measurementGoalSelectRef = useRef<HTMLSelectElement>(null);
-  const fitPreferenceSelectRef = useRef<HTMLSelectElement>(null);
-  const shoulderTypeSelectRef = useRef<HTMLSelectElement>(null);
   const frontUploadRef = useRef<HTMLLabelElement>(null);
   const sideUploadRef = useRef<HTMLLabelElement>(null);
 
+  useEffect(() => {
+    return () => {
+      if (frontPreview) URL.revokeObjectURL(frontPreview);
+      if (sidePreview) URL.revokeObjectURL(sidePreview);
+    };
+  }, [frontPreview, sidePreview]);
+
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
-  const updateField = (field: string, value: string) => {
+  const bodyTypeOptions =
+    formData.gender === "female" ? femaleBodyTypeOptions : maleBodyTypeOptions;
+
+  const updateField = <K extends keyof MeasurementFormData>(
+    field: K,
+    value: MeasurementFormData[K]
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleImageUpload = (type: "front" | "side", e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (type: "front" | "side", e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!isSupportedImage(file)) {
+      toast.error("Only PNG, JPG, and JPEG images are allowed");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      toast.error("Image size must be 16MB or less");
+      e.target.value = "";
+      return;
+    }
+
     const url = URL.createObjectURL(file);
+    setPoseValidationDetails(null);
+
     if (type === "front") {
       setFormData((prev) => ({ ...prev, frontImage: file }));
-      setFrontPreview(url);
-    } else {
-      setFormData((prev) => ({ ...prev, sideImage: file }));
-      setSidePreview(url);
+      setFrontPreview((previousUrl) => {
+        if (previousUrl) URL.revokeObjectURL(previousUrl);
+        return url;
+      });
+      return;
     }
+
+    setFormData((prev) => ({ ...prev, sideImage: file }));
+    setSidePreview((previousUrl) => {
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      return url;
+    });
   };
 
   const canNext = () => {
     switch (currentStep) {
-      case 1: return formData.age && formData.height && formData.weight;
-      case 2: return formData.fatDistribution && formData.bodyType;
-      case 3: return formData.activityLevel && formData.muscleLevel;
-      case 4: return formData.measurementGoal && formData.fitPreference;
-      case 5: return formData.shoulderType;
-      case 6: return formData.frontImage && formData.sideImage;
-      default: return false;
+      case 1:
+        return Boolean(formData.gender && formData.age && formData.height && formData.weight);
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+        return true;
+      case 6:
+        return Boolean(formData.frontImage && formData.sideImage);
+      default:
+        return false;
     }
   };
 
@@ -109,24 +299,10 @@ const Measurement = () => {
   const getFirstIncompleteField = (): HTMLElement | null => {
     switch (currentStep) {
       case 1:
+        if (!formData.gender) return genderSelectRef.current;
         if (!formData.age) return ageInputRef.current;
         if (!formData.height) return heightInputRef.current;
         if (!formData.weight) return weightInputRef.current;
-        return null;
-      case 2:
-        if (!formData.fatDistribution) return fatDistributionSelectRef.current;
-        if (!formData.bodyType) return bodyTypeSelectRef.current;
-        return null;
-      case 3:
-        if (!formData.activityLevel) return activityLevelSelectRef.current;
-        if (!formData.muscleLevel) return muscleLevelSelectRef.current;
-        return null;
-      case 4:
-        if (!formData.measurementGoal) return measurementGoalSelectRef.current;
-        if (!formData.fitPreference) return fitPreferenceSelectRef.current;
-        return null;
-      case 5:
-        if (!formData.shoulderType) return shoulderTypeSelectRef.current;
         return null;
       case 6:
         if (!formData.frontImage) return frontUploadRef.current;
@@ -137,6 +313,37 @@ const Measurement = () => {
     }
   };
 
+  const failValidation = (message: string, field: HTMLElement | null) => {
+    toast.error(message);
+    window.requestAnimationFrame(() => {
+      scrollToField(field);
+    });
+    return false;
+  };
+
+  const validateStepOneValues = () => {
+    if (!formData.gender) {
+      return failValidation("Please select gender", genderSelectRef.current);
+    }
+
+    const age = Number(formData.age);
+    if (!Number.isFinite(age) || age < 13 || age > 100) {
+      return failValidation("Age must be between 13 and 100", ageInputRef.current);
+    }
+
+    const height = Number(formData.height);
+    if (!Number.isFinite(height) || height <= 0) {
+      return failValidation("Please enter a valid height", heightInputRef.current);
+    }
+
+    const weight = Number(formData.weight);
+    if (!Number.isFinite(weight) || weight <= 0) {
+      return failValidation("Please enter a valid weight", weightInputRef.current);
+    }
+
+    return true;
+  };
+
   const handleNext = () => {
     if (!canNext()) {
       toast.error("Please fill in all required fields");
@@ -145,14 +352,19 @@ const Measurement = () => {
       });
       return;
     }
-    if (currentStep < TOTAL_STEPS) setCurrentStep((s) => s + 1);
+
+    if (currentStep === 1 && !validateStepOneValues()) {
+      return;
+    }
+
+    if (currentStep < TOTAL_STEPS) setCurrentStep((step) => step + 1);
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) setCurrentStep((s) => s - 1);
+    if (currentStep > 1) setCurrentStep((step) => step - 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canNext()) {
       toast.error("Please upload both front and side view images");
       window.requestAnimationFrame(() => {
@@ -160,17 +372,89 @@ const Measurement = () => {
       });
       return;
     }
-    if (isCalculating) return;
-    setIsCalculating(true);
 
-    window.setTimeout(() => {
+    if (!validateStepOneValues()) {
+      setCurrentStep(1);
+      return;
+    }
+
+    if (!formData.gender || !formData.frontImage || !formData.sideImage || isCalculating) {
+      return;
+    }
+
+    setIsCalculating(true);
+    setPoseValidationDetails(null);
+    setIsSaving(false);
+
+    try {
+      const response = await measurementApi.processMeasurements({
+        gender: formData.gender,
+        age: Number(formData.age),
+        height: Number(formData.height),
+        heightUnit: formData.heightUnit,
+        weight: Number(formData.weight),
+        weightUnit: formData.weightUnit,
+        fatDistribution: formData.fatDistribution || undefined,
+        bodyType: formData.bodyType || undefined,
+        activityLevel: formData.activityLevel || undefined,
+        muscleLevel: formData.muscleLevel || undefined,
+        shoulderType: formData.shoulderType || undefined,
+        measurementGoal: formData.measurementGoal || undefined,
+        fitPreference: formData.fitPreference || undefined,
+        frontImage: formData.frontImage,
+        sideImage: formData.sideImage,
+      });
+
+      if (!response.success) {
+        setPoseValidationDetails(response.validation_details ?? null);
+        toast.error(response.error || "Failed to process measurements");
+        return;
+      }
+
+      setSubmissionResult(response.measurements);
+
+      setIsSaving(true);
+      try {
+        await measurementStoreApi.save({
+          gender: formData.gender,
+          age: Number(formData.age),
+          height: Number(formData.height),
+          heightUnit: formData.heightUnit,
+          weight: Number(formData.weight),
+          weightUnit: formData.weightUnit,
+          measurements: response.measurements,
+        });
+        setSubmitted(true);
+        toast.success("Measurements processed and saved");
+      } catch (saveErr) {
+        const { message } = getMeasurementErrorDetails(saveErr);
+        toast.error(message || "Failed to save measurements");
+      } finally {
+        setIsSaving(false);
+      }
+    } catch (error) {
+      const { message, validationDetails } = getMeasurementErrorDetails(error);
+      setPoseValidationDetails(validationDetails);
+      toast.error(message);
+    } finally {
       setIsCalculating(false);
-      setSubmitted(true);
-      toast.success(
-        "Your measurements have been submitted successfully! We'll get back to you shortly."
-      );
-    }, 1800);
+    }
   };
+
+  const resetForm = () => {
+    if (frontPreview) URL.revokeObjectURL(frontPreview);
+    if (sidePreview) URL.revokeObjectURL(sidePreview);
+    setFrontPreview(null);
+    setSidePreview(null);
+    setCurrentStep(1);
+    setSubmitted(false);
+    setIsCalculating(false);
+    setSubmissionResult(null);
+    setPoseValidationDetails(null);
+    setFormData(INITIAL_FORM_DATA);
+  };
+
+  const metadata = submissionResult?.metadata;
 
   if (submitted) {
     return (
@@ -218,19 +502,77 @@ const Measurement = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="max-w-lg mx-auto px-6"
+            className="max-w-2xl mx-auto px-6"
           >
             <CheckCircle2 className="w-20 h-20 text-primary mx-auto mb-6" />
             <div className="flex items-center gap-3 mb-4">
-              <span className="text-primary text-lg font-bold">—</span>
+              <span className="text-primary text-lg font-bold">-</span>
               <h2 className="font-serif text-3xl text-foreground">Thank You!</h2>
             </div>
             <p className="text-muted-foreground mb-8">
               Your body measurement details have been submitted successfully. Our expert tailors will review your information and contact you with your personalized measurements.
             </p>
-            <button onClick={() => { setSubmitted(false); setCurrentStep(1); }} className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
+
+            {metadata && (
+              <div className="mb-8 rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Measurement Summary
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">Recommended Size</p>
+                    <p className="text-foreground font-semibold">{metadata.recommended_size}</p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">BMI</p>
+                    <p className="text-foreground font-semibold">
+                      {metadata.bmi.toFixed(1)} ({metadata.bmi_category})
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">Body Type</p>
+                    <p className="text-foreground font-semibold">{metadata.body_type}</p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">Input Body Type</p>
+                    <p className="text-foreground font-semibold">
+                      {metadata.body_type_input ?? "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {submissionResult && (
+              <div className="mb-8 rounded-xl border border-primary/15 bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground mb-3">All Measurements</h3>
+                {buildMeasurementRows(submissionResult).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No measurements available.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+                    {buildMeasurementRows(submissionResult).map((row) => (
+                      <div
+                        key={row.label}
+                        className="rounded-lg border border-border/70 bg-muted/10 px-3 py-2"
+                      >
+                        <p className="text-foreground font-medium">{row.label}</p>
+                        <p>{row.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={resetForm}
+              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+            >
               Submit Another Measurement
             </button>
+            <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
+              <p>You can view your saved measurements in your account.</p>
+            </div>
           </motion.div>
         </section>
         <Footer />
@@ -238,7 +580,7 @@ const Measurement = () => {
     );
   }
 
-  const { title: stepTitle} = stepInfo[currentStep - 1];
+  const { title: stepTitle } = stepInfo[currentStep - 1];
 
   return (
     <>
@@ -258,10 +600,12 @@ const Measurement = () => {
             >
               <div className="w-12 h-12 mx-auto mb-5 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
               <h3 className="text-xl font-serif text-foreground mb-2">
-                Calculating Measurements
+                {isSaving ? "Saving Measurements" : "Calculating Measurements"}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Please wait while we process your details.
+                {isSaving
+                  ? "Storing your measurements securely."
+                  : "Please wait while we process your details."}
               </p>
             </motion.div>
           </motion.div>
@@ -336,11 +680,16 @@ const Measurement = () => {
             {/* Step Header */}
             <div className="mb-8 border-b border-border pb-4">
               <div className="flex items-center gap-3">
-                <span className="text-primary text-lg font-bold">—</span>
+                <span className="text-primary text-lg font-bold">-</span>
                 <h2 className="text-2xl md:text-3xl font-serif flex items-center gap-3 text-foreground">
-                  <span className="text-2xl"> {stepTitle}</span>
+                  <span className="text-2xl">{stepTitle}</span>
                 </h2>
               </div>
+              {currentStep > 1 && currentStep < 6 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  These fields are optional and help improve estimate accuracy.
+                </p>
+              )}
             </div>
 
             {/* Step Content */}
@@ -356,6 +705,23 @@ const Measurement = () => {
                 {currentStep === 1 && (
                   <>
                     <div>
+                      <label className="text-foreground font-medium">Gender *</label>
+                      <select
+                        ref={genderSelectRef}
+                        value={formData.gender}
+                        onChange={(e) => {
+                          const gender = e.target.value as MeasurementFormData["gender"];
+                          setFormData((prev) => ({ ...prev, gender, bodyType: "" }));
+                        }}
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                    </div>
+
+                    <div>
                       <label className="text-foreground font-medium">Age *</label>
                       <input
                         ref={ageInputRef}
@@ -364,7 +730,7 @@ const Measurement = () => {
                         value={formData.age}
                         onChange={(e) => updateField("age", e.target.value)}
                         className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                        min={10}
+                        min={13}
                         max={100}
                       />
                     </div>
@@ -374,14 +740,22 @@ const Measurement = () => {
                         <input
                           ref={heightInputRef}
                           type="number"
+                          step="any"
+                          min="0"
                           placeholder="Height"
                           value={formData.height}
                           onChange={(e) => updateField("height", e.target.value)}
                           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         />
-                        <select value={formData.heightUnit} onChange={(e) => updateField("heightUnit", e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        <select
+                          value={formData.heightUnit}
+                          onChange={(e) =>
+                            updateField("heightUnit", e.target.value as MeasurementHeightUnit)
+                          }
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
                           <option value="cm">Centimeters (cm)</option>
-                          <option value="ft">Feet (ft)</option>
+                          <option value="m">Meters (m)</option>
                         </select>
                       </div>
                     </div>
@@ -391,12 +765,20 @@ const Measurement = () => {
                         <input
                           ref={weightInputRef}
                           type="number"
+                          step="any"
+                          min="0"
                           placeholder="Weight"
                           value={formData.weight}
                           onChange={(e) => updateField("weight", e.target.value)}
                           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         />
-                        <select value={formData.weightUnit} onChange={(e) => updateField("weightUnit", e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        <select
+                          value={formData.weightUnit}
+                          onChange={(e) =>
+                            updateField("weightUnit", e.target.value as MeasurementWeightUnit)
+                          }
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
                           <option value="kg">Kilograms (kg)</option>
                           <option value="lbs">Pounds (lbs)</option>
                         </select>
@@ -408,24 +790,44 @@ const Measurement = () => {
                 {currentStep === 2 && (
                   <>
                     <div>
-                      <label className="text-foreground font-medium">Fat Distribution *</label>
-                      <select ref={fatDistributionSelectRef} value={formData.fatDistribution} onChange={(e) => updateField("fatDistribution", e.target.value)} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option value="">Select fat distribution</option>
-                        <option value="upper">Upper Body (Arms, Chest, Shoulders)</option>
-                        <option value="midsection">Midsection (Belly, Waist)</option>
-                        <option value="lower">Lower Body (Hips, Thighs, Legs)</option>
-                        <option value="even">Evenly Distributed</option>
+                      <label className="text-foreground font-medium">Fat Distribution</label>
+                      <select
+                        value={formData.fatDistribution}
+                        onChange={(e) =>
+                          updateField(
+                            "fatDistribution",
+                            e.target.value as MeasurementFormData["fatDistribution"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="upper">Upper</option>
+                        <option value="middle">Middle</option>
+                        <option value="lower">Lower</option>
+                        <option value="even">Even</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-foreground font-medium">Body Type *</label>
-                      <select ref={bodyTypeSelectRef} value={formData.bodyType} onChange={(e) => updateField("bodyType", e.target.value)} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option value="">Select body type</option>
-                        <option value="slim">Slim</option>
-                        <option value="average">Average</option>
-                        <option value="athletic">Athletic</option>
-                        <option value="curvy">Curvy</option>
-                        <option value="plus">Plus Size</option>
+                      <label className="text-foreground font-medium">Body Type</label>
+                      <select
+                        value={formData.bodyType}
+                        onChange={(e) =>
+                          updateField("bodyType", e.target.value as MeasurementFormData["bodyType"])
+                        }
+                        disabled={!formData.gender}
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-400"
+                      >
+                        <option value="">
+                          {formData.gender
+                            ? "Prefer not to say"
+                            : "Select gender first to choose body type"}
+                        </option>
+                        {bodyTypeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </>
@@ -434,24 +836,42 @@ const Measurement = () => {
                 {currentStep === 3 && (
                   <>
                     <div>
-                      <label className="text-foreground font-medium">Activity Level *</label>
-                      <select ref={activityLevelSelectRef} value={formData.activityLevel} onChange={(e) => updateField("activityLevel", e.target.value)} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option value="">Select activity level</option>
-                        <option value="sedentary">Sedentary (Little or no exercise)</option>
-                        <option value="light">Light (1-2 days/week)</option>
-                        <option value="moderate">Moderate (3-5 days/week)</option>
-                        <option value="active">Active (6-7 days/week)</option>
-                        <option value="very-active">Very Active (Athlete level)</option>
+                      <label className="text-foreground font-medium">Activity Level</label>
+                      <select
+                        value={formData.activityLevel}
+                        onChange={(e) =>
+                          updateField(
+                            "activityLevel",
+                            e.target.value as MeasurementFormData["activityLevel"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="sedentary">Sedentary</option>
+                        <option value="light">Light</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="active">Active</option>
+                        <option value="very_active">Very Active</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-foreground font-medium">Muscle Level *</label>
-                      <select ref={muscleLevelSelectRef} value={formData.muscleLevel} onChange={(e) => updateField("muscleLevel", e.target.value)} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option value="">Select muscle level</option>
-                        <option value="low">Low (Minimal muscle)</option>
-                        <option value="moderate">Moderate (Some visible muscle)</option>
-                        <option value="high">High (Well-defined muscle)</option>
-                        <option value="very-high">Very High (Bodybuilder level)</option>
+                      <label className="text-foreground font-medium">Muscle Level</label>
+                      <select
+                        value={formData.muscleLevel}
+                        onChange={(e) =>
+                          updateField(
+                            "muscleLevel",
+                            e.target.value as MeasurementFormData["muscleLevel"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="low">Low</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="high">High</option>
+                        <option value="very_high">Very High</option>
                       </select>
                     </div>
                   </>
@@ -460,23 +880,41 @@ const Measurement = () => {
                 {currentStep === 4 && (
                   <>
                     <div>
-                      <label className="text-foreground font-medium">Measurement Goal *</label>
-                      <select ref={measurementGoalSelectRef} value={formData.measurementGoal} onChange={(e) => updateField("measurementGoal", e.target.value)} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option value="">Select measurement goal</option>
-                        <option value="tailoring">Clothing / Tailoring</option>
-                        <option value="fitness">Fitness Tracking</option>
-                        <option value="health">Health Monitoring</option>
-                        <option value="custom">Custom / Other</option>
+                      <label className="text-foreground font-medium">Measurement Goal</label>
+                      <select
+                        value={formData.measurementGoal}
+                        onChange={(e) =>
+                          updateField(
+                            "measurementGoal",
+                            e.target.value as MeasurementFormData["measurementGoal"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="fitness">Fitness</option>
+                        <option value="health">Health</option>
+                        <option value="general">General</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-foreground font-medium">Fit Preference *</label>
-                      <select ref={fitPreferenceSelectRef} value={formData.fitPreference} onChange={(e) => updateField("fitPreference", e.target.value)} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option value="">Select fit preference</option>
-                        <option value="slim">Slim Fit</option>
-                        <option value="regular">Regular / Standard</option>
-                        <option value="comfort">Comfort Fit</option>
-                        <option value="loose">Loose Fit</option>
+                      <label className="text-foreground font-medium">Fit Preference</label>
+                      <select
+                        value={formData.fitPreference}
+                        onChange={(e) =>
+                          updateField(
+                            "fitPreference",
+                            e.target.value as MeasurementFormData["fitPreference"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="tight">Tight</option>
+                        <option value="regular">Regular</option>
+                        <option value="loose">Loose</option>
+                        <option value="oversized">Oversized</option>
                       </select>
                     </div>
                   </>
@@ -485,64 +923,106 @@ const Measurement = () => {
                 {currentStep === 5 && (
                   <>
                     <div>
-                      <label className="text-foreground font-medium">Shoulder Type *</label>
-                      <select ref={shoulderTypeSelectRef} value={formData.shoulderType} onChange={(e) => updateField("shoulderType", e.target.value)} className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option value="">Select shoulder type</option>
+                      <label className="text-foreground font-medium">Shoulder Type</label>
+                      <select
+                        value={formData.shoulderType}
+                        onChange={(e) =>
+                          updateField(
+                            "shoulderType",
+                            e.target.value as MeasurementFormData["shoulderType"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
                         <option value="narrow">Narrow</option>
                         <option value="average">Average</option>
                         <option value="broad">Broad</option>
-                        <option value="sloped">Sloped</option>
+                        <option value="very_broad">Very Broad</option>
                       </select>
                     </div>
                   </>
                 )}
 
                 {currentStep === 6 && (
-                  <div className="grid grid-cols-2 gap-6">
-                    {/* Front View */}
-                    <label ref={frontUploadRef} tabIndex={-1} className="cursor-pointer group">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload("front", e)}
-                      />
-                      <div className="border-2 border-dashed border-primary/40 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition-all min-h-[200px] flex flex-col items-center justify-center gap-3">
-                        {frontPreview ? (
-                          <img src={frontPreview} alt="Front view" className="max-h-40 rounded-lg object-cover mx-auto" />
-                        ) : (
-                          <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
-                        )}
-                        <p className="font-medium text-foreground text-sm">Front View</p>
-                        <p className="text-xs text-muted-foreground">Click to upload</p>
-                        {formData.frontImage && (
-                          <p className="text-xs text-primary truncate max-w-full">{formData.frontImage.name}</p>
-                        )}
-                      </div>
-                    </label>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <label ref={frontUploadRef} tabIndex={-1} className="cursor-pointer group">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,.jpg,.jpeg"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload("front", e)}
+                        />
+                        <div className="border-2 border-dashed border-primary/40 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition-all min-h-[200px] flex flex-col items-center justify-center gap-3">
+                          {frontPreview ? (
+                            <img
+                              src={frontPreview}
+                              alt="Front view"
+                              className="max-h-40 rounded-lg object-cover mx-auto"
+                            />
+                          ) : (
+                            <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
+                          )}
+                          <p className="font-medium text-foreground text-sm">Front View *</p>
+                          <p className="text-xs text-muted-foreground">PNG/JPG/JPEG, max 16MB</p>
+                          {formData.frontImage && (
+                            <p className="text-xs text-primary truncate max-w-full">
+                              {formData.frontImage.name}
+                            </p>
+                          )}
+                        </div>
+                      </label>
 
-                    {/* Side View */}
-                    <label ref={sideUploadRef} tabIndex={-1} className="cursor-pointer group">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload("side", e)}
-                      />
-                      <div className="border-2 border-dashed border-primary/40 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition-all min-h-[200px] flex flex-col items-center justify-center gap-3">
-                        {sidePreview ? (
-                          <img src={sidePreview} alt="Side view" className="max-h-40 rounded-lg object-cover mx-auto" />
-                        ) : (
-                          <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
-                        )}
-                        <p className="font-medium text-foreground text-sm">Side View</p>
-                        <p className="text-xs text-muted-foreground">Click to upload</p>
-                        {formData.sideImage && (
-                          <p className="text-xs text-primary truncate max-w-full">{formData.sideImage.name}</p>
+                      <label ref={sideUploadRef} tabIndex={-1} className="cursor-pointer group">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,.jpg,.jpeg"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload("side", e)}
+                        />
+                        <div className="border-2 border-dashed border-primary/40 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition-all min-h-[200px] flex flex-col items-center justify-center gap-3">
+                          {sidePreview ? (
+                            <img
+                              src={sidePreview}
+                              alt="Side view"
+                              className="max-h-40 rounded-lg object-cover mx-auto"
+                            />
+                          ) : (
+                            <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
+                          )}
+                          <p className="font-medium text-foreground text-sm">Side View *</p>
+                          <p className="text-xs text-muted-foreground">PNG/JPG/JPEG, max 16MB</p>
+                          {formData.sideImage && (
+                            <p className="text-xs text-primary truncate max-w-full">
+                              {formData.sideImage.name}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+
+                    {poseValidationDetails && (
+                      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                        <p className="font-semibold mb-2">
+                          Pose validation failed. Please retake your photos.
+                        </p>
+                        <p>
+                          Front: {poseValidationDetails.front_message} (
+                          {poseValidationDetails.front_angle.toFixed(1)}
+                          deg)
+                        </p>
+                        <p>
+                          Side: {poseValidationDetails.side_message} (
+                          {poseValidationDetails.side_angle.toFixed(1)}
+                          deg)
+                        </p>
+                        {poseValidationDetails.errors.length > 0 && (
+                          <p className="mt-1">{poseValidationDetails.errors.join(" ")}</p>
                         )}
                       </div>
-                    </label>
-                  </div>
+                    )}
+                  </>
                 )}
               </motion.div>
             </AnimatePresence>
@@ -589,3 +1069,4 @@ const Measurement = () => {
 };
 
 export default Measurement;
+

@@ -250,6 +250,8 @@ import BlogPost from './pages/public/BlogPost';
 import UserDashboard from './pages/user/UserDashboard';
 import OrderDetailsPage from './pages/user/OrderDetailsPage';
 import Measurement from './pages/public/Measurement';
+import MeasurementsHistory from './pages/user/MeasurementsHistory';
+import MeasurementDetailPage from './pages/user/MeasurementDetailPage';
 
 // Admin Components
 import AdminLayout from './components/layout/AdminLayout';
@@ -267,6 +269,7 @@ import SustainabilityComingSoon from './pages/public/SustainabilityComingSoon';
 import ShippingCommingSoon from './pages/public/ShippingCommingSoon';
 import ReturnCommingSoon from './pages/public/ReturnCommingSoon';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminMeasurements from './pages/admin/AdminMeasurements';
 
 const NotFound = () => (
   <div className="p-8 text-center text-red-500">
@@ -363,6 +366,22 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/measurements/history"
+          element={
+            <ProtectedRoute>
+              <MeasurementsHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/measurements/:id"
+          element={
+            <ProtectedRoute>
+              <MeasurementDetailPage />
+            </ProtectedRoute>
+          }
+        />
 
 {/* Admin Routes */}
 <Route
@@ -381,6 +400,7 @@ function App() {
   <Route path="users" element={<AdminUsers />} />
   <Route path="appointments" element={<AdminAppointment />} />
   <Route path="contacts" element={<ContactMessages />} />
+  <Route path="measurements" element={<AdminMeasurements />} />
   <Route path="reports" element={<div className="p-6">Reports Page</div>} />
   <Route path="settings" element={<div className="p-6">Settings Page</div>} />
 </Route>
