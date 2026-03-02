@@ -2123,7 +2123,7 @@ const AdminMeasurements = () => {
                   <input
                     type="text"
                     placeholder="Search ID"
-                    className="mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 bg-white"
+                    className="mt-1 px-2 py-1 text-xs border border-[#9caf88] rounded focus:outline-none focus:ring-1 focus:ring-[#6f8f63] focus:border-[#6f8f63] bg-white"
                     value={columnFilters.id}
                     onChange={(e) => handleColumnFilterChange("id", e.target.value)}
                   />
