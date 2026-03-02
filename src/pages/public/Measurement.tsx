@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
-import { ArrowLeft, ArrowRight, ClipboardList, User, Dumbbell, Target, Ruler, Camera, Upload, CheckCircle2, ShoppingBag, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClipboardList, User, Dumbbell, Target, Ruler, Camera, Upload, CheckCircle2, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import heroMeasurement from "../../assets/hero-measurement.png";
 import {
@@ -35,6 +35,63 @@ const stepInfo = [
   { icon: Ruler, title: "Body Structure" },
   { icon: Camera, title: "Upload Images" },
 ];
+
+const processingPhases = [
+  { icon: Ruler, label: "Calculating proportions...", tip: "Analyzing body ratios." },
+  { icon: Camera, label: "Analyzing posture...", tip: "Validating pose alignment." },
+  { icon: Target, label: "Mapping body structure...", tip: "Matching body models." },
+  { icon: ClipboardList, label: "Generating measurements...", tip: "Computing dimensions." },
+  { icon: CheckCircle2, label: "Finalizing results...", tip: "Preparing your profile." },
+];
+
+const funFacts = [
+  "Perfect fit improves comfort & confidence ✨",
+  "Tailored clothing enhances posture 👗",
+  "Accurate measurements reduce alterations 📏",
+  "Every body shape deserves perfect fit 💫",
+];
+
+const MEASUREMENT_PROGRESS_KEY = "measurementProcessingProgress";
+
+interface StoredProcessingProgress {
+  jobId: number;
+  progress: number;
+  phase: number;
+  fact: number;
+}
+
+function readStoredProgress(): StoredProcessingProgress | null {
+  try {
+    const raw = localStorage.getItem(MEASUREMENT_PROGRESS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredProcessingProgress;
+    if (typeof parsed?.jobId !== "number" || typeof parsed?.progress !== "number") return null;
+    return {
+      jobId: parsed.jobId,
+      progress: Math.min(95, Math.max(0, parsed.progress)),
+      phase: typeof parsed.phase === "number" ? Math.max(0, parsed.phase) % processingPhases.length : 0,
+      fact: typeof parsed.fact === "number" ? Math.max(0, parsed.fact) % funFacts.length : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredProgress(data: StoredProcessingProgress): void {
+  try {
+    localStorage.setItem(MEASUREMENT_PROGRESS_KEY, JSON.stringify(data));
+  } catch {
+    // ignore
+  }
+}
+
+function clearStoredProgress(): void {
+  try {
+    localStorage.removeItem(MEASUREMENT_PROGRESS_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 type OptionalSelect<T extends string> = T | "";
 
@@ -191,6 +248,9 @@ const Measurement = () => {
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [sidePreview, setSidePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingPhase, setProcessingPhase] = useState(0);
+  const [currentFact, setCurrentFact] = useState(0);
   const [poseValidationDetails, setPoseValidationDetails] =
     useState<MeasurementPoseValidationDetails | null>(null);
 
@@ -207,6 +267,49 @@ const Measurement = () => {
       if (sidePreview) URL.revokeObjectURL(sidePreview);
     };
   }, [frontPreview, sidePreview]);
+
+  // Animate processing phases and fun facts when a job is in progress; restore from localStorage on reload
+  useEffect(() => {
+    if (job.jobId == null) {
+      clearStoredProgress();
+      return;
+    }
+    const stored = readStoredProgress();
+    if (stored && stored.jobId === job.jobId) {
+      setProcessingProgress(stored.progress);
+      setProcessingPhase(stored.phase);
+      setCurrentFact(stored.fact);
+    } else {
+      setProcessingProgress(0);
+      setProcessingPhase(0);
+      setCurrentFact(0);
+    }
+    const progressInterval = setInterval(() => {
+      setProcessingProgress((prev) => (prev >= 95 ? prev : prev + 1));
+    }, 500);
+    const phaseInterval = setInterval(() => {
+      setProcessingPhase((prev) => (prev + 1) % processingPhases.length);
+    }, 4000);
+    const factInterval = setInterval(() => {
+      setCurrentFact((prev) => (prev + 1) % funFacts.length);
+    }, 6000);
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(phaseInterval);
+      clearInterval(factInterval);
+    };
+  }, [job.jobId]);
+
+  // Persist progress to localStorage so it survives reload
+  useEffect(() => {
+    if (job.jobId == null) return;
+    writeStoredProgress({
+      jobId: job.jobId,
+      progress: processingProgress,
+      phase: processingPhase,
+      fact: currentFact,
+    });
+  }, [job.jobId, processingProgress, processingPhase, currentFact]);
 
   const progress = (currentStep / TOTAL_STEPS) * 100;
 
@@ -427,8 +530,80 @@ const Measurement = () => {
 
   // Show processing page when a job is in progress (or when user returns while still processing)
   if (job.jobId != null) {
+    const PhaseIcon = processingPhases[processingPhase].icon;
     return (
       <>
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ backgroundColor: "rgba(40, 55, 45, 0.9)" }}
+            className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-[4px]"
+          >
+            <div className="flex flex-col items-center text-center px-6 max-w-md">
+              <div className="relative w-32 h-32 mb-8">
+                <motion.div
+                  className="absolute inset-0 rounded-full border-4 border-sage-300/30"
+                  style={{ borderColor: "rgba(156, 186, 145, 0.3)" }}
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <motion.div
+                  className="absolute inset-4 rounded-full flex items-center justify-center shadow-lg"
+                  style={{
+                    background: "linear-gradient(to bottom right, #9abf8c, #5f7d5c)",
+                  }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                >
+                  <PhaseIcon className="w-14 h-14 text-white" />
+                </motion.div>
+              </div>
+
+              <h3 className="text-3xl font-serif mb-2 text-white drop-shadow-lg">
+                {processingPhases[processingPhase].label}
+              </h3>
+
+              <p className="mb-6 text-lg" style={{ color: "#e2f0da" }}>
+                {processingPhases[processingPhase].tip}
+              </p>
+
+              <div className="w-72 bg-white/20 rounded-full h-3 mb-3 backdrop-blur-sm">
+                <div
+                  className="h-3 rounded-full transition-all shadow-lg"
+                  style={{
+                    width: `${processingProgress}%`,
+                    background: "linear-gradient(to right, #b8d9ad, #6b8f67)",
+                  }}
+                />
+              </div>
+
+              <p className="text-sm mb-8 font-medium" style={{ color: "#d0e8c5" }}>
+                {processingProgress}% complete
+              </p>
+
+              <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-xl border border-white/20 shadow-xl mb-6">
+                <p className="text-base italic text-white">
+                  🌿 {funFacts[currentFact]}
+                </p>
+              </div>
+
+              <p className="text-xs text-amber-300 mb-6 font-semibold tracking-wide">
+                ⚡ Please don&apos;t refresh or go back ⚡
+              </p>
+
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition text-white border-2 border-white/40 hover:bg-white/10"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                Browse products while you wait
+              </Link>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
         <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
           <Navbar />
           <div className="absolute inset-0">
@@ -463,29 +638,12 @@ const Measurement = () => {
             </div>
           </div>
         </section>
-        <section className="py-20 bg-muted/30">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-xl mx-auto px-6 text-center"
-          >
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full border-4 border-primary/20 border-t-primary animate-spin flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-primary" />
-            </div>
-            <h2 className="text-2xl font-serif text-foreground mb-4">
-              Please wait while we process your details
-            </h2>
-            <p className="text-muted-foreground mb-8">
-              You can browse our products in the meantime. We will inform you when your measurement is ready.
+        <section className="py-20 bg-muted/30" aria-hidden="true">
+          <div className="max-w-xl mx-auto px-6 text-center">
+            <p className="text-muted-foreground">
+              You can browse our products in the meantime. We will notify you when your measurement is ready.
             </p>
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition font-medium"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              Browse products
-            </Link>
-          </motion.div>
+          </div>
         </section>
         <Footer />
       </>

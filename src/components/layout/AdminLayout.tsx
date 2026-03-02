@@ -230,15 +230,15 @@ const AdminLayout = () => {
                 {isLogout ? (
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-700 hover:text-gray-900 hover:bg-gray-100 text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-gray-700 hover:text-gray-900 hover:bg-gray-100 text-left"
                   >
-                    {Icon && <Icon size={20} className="text-gray-500" />}
-                    <span className="font-medium whitespace-nowrap">{item.name}</span>
+                    {Icon && <Icon size={18} className="text-gray-500" />}
+                    <span className="text-[15px] font-normal tracking-wide whitespace-nowrap">{item.name}</span>
                   </button>
                 ) : (
                   <Link
                     to={item.path!}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${
                       active
                         ? "bg-[#8FAE8B]/10 text-[#8FAE8B] border-l-4 border-[#8FAE8B]"
                         : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
@@ -246,11 +246,11 @@ const AdminLayout = () => {
                   >
                     {Icon && (
                       <Icon
-                        size={20}
-                        className={active ? "text-[#8FAE8B]" : "text-gray-500"}
+                        size={18}
+                        className={active ? "text-[#8FAE8B] font-medium" : "text-gray-500"}
                       />
                     )}
-                    <span className="font-medium whitespace-nowrap">{item.name}</span>
+                    <span className="text-[15px] font-normal tracking-wide whitespace-nowrap">{item.name}</span>
 
                     {active && (
                       <motion.div
@@ -280,11 +280,11 @@ const AdminLayout = () => {
   leading-none
   shrink-0
 "
-            >
+>
               {getInitials(user?.name)}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-semibold tracking-wide text-gray-900 truncate">
                 {user?.name || "Admin User"}
               </p>
               <p className="text-xs text-gray-500 truncate">
