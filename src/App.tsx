@@ -231,6 +231,7 @@ import ProductsPage from './pages/public/ProductsPage';
 import ProductDetailPage from './pages/public/ProductDetailPage';
 import CartPage from './pages/public/CartPage';
 import CheckoutPage from './pages/public/CheckoutPage';
+import PaymentStatusPage from './pages/public/PaymentStatusPage';
 import About from './pages/public/About';
 import Contact from './pages/public/ContactUs';
 import Appointment from './pages/public/AppointmentBooking';
@@ -248,22 +249,28 @@ import BlogPost from './pages/public/BlogPost';
 // User & Admin Pages
 import UserDashboard from './pages/user/UserDashboard';
 import OrderDetailsPage from './pages/user/OrderDetailsPage';
+import Measurement from './pages/public/Measurement';
+import MeasurementsHistory from './pages/user/MeasurementsHistory';
+import MeasurementDetailPage from './pages/user/MeasurementDetailPage';
 
 // Admin Components
 import AdminLayout from './components/layout/AdminLayout';
 // import AdminDashboardContent from './pages/admin/AdminDashboardContent'; // We'll create this
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
+import AdminReturns from './pages/admin/AdminReturns';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAppointment from './pages/admin/AdminAppointment';
 import ContactMessages from './pages/admin/ContactMessages';
 
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { MeasurementJobProvider } from './context/MeasurementJobContext';
 import { WhatsAppButton } from './pages/public/WhatsAppButton';
 import SustainabilityComingSoon from './pages/public/SustainabilityComingSoon';
 import ShippingCommingSoon from './pages/public/ShippingCommingSoon';
 import ReturnCommingSoon from './pages/public/ReturnCommingSoon';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminMeasurements from './pages/admin/AdminMeasurements';
 
 const NotFound = () => (
   <div className="p-8 text-center text-red-500">
@@ -282,9 +289,14 @@ function ScrollToTop() {
 }
 
 function App() {
+  const { pathname } = useLocation();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === "ADMIN";
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password";
 
   useEffect(() => {
     dispatch(loadUserFromStorage());
@@ -293,6 +305,7 @@ function App() {
 
   return (
     <WishlistProvider>
+      <MeasurementJobProvider>
     <div className="min-h-screen bg-dark-950 text-dark-50">
       <ScrollToTop />
       <Routes>
@@ -321,6 +334,14 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
+        <Route
+          path="/measurements"
+          element={
+            <ProtectedRoute>
+              <Measurement />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected User Routes */}
         <Route
@@ -339,6 +360,30 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/payment-status"
+          element={
+            <ProtectedRoute>
+              <PaymentStatusPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/measurements/history"
+          element={
+            <ProtectedRoute>
+              <MeasurementsHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/measurements/:id"
+          element={
+            <ProtectedRoute>
+              <MeasurementDetailPage />
+            </ProtectedRoute>
+          }
+        />
 
 {/* Admin Routes */}
 <Route
@@ -353,9 +398,11 @@ function App() {
   <Route index element={<AdminDashboard />} />
   <Route path="products" element={<AdminProducts />} />
   <Route path="orders" element={<AdminOrders />} />
+  <Route path="returns" element={<AdminReturns />} />
   <Route path="users" element={<AdminUsers />} />
   <Route path="appointments" element={<AdminAppointment />} />
   <Route path="contacts" element={<ContactMessages />} />
+  <Route path="measurements" element={<AdminMeasurements />} />
   <Route path="reports" element={<div className="p-6">Reports Page</div>} />
   <Route path="settings" element={<div className="p-6">Settings Page</div>} />
 </Route>
@@ -366,13 +413,14 @@ function App() {
       </Routes>
 
       {/* Floating buttons only for non-admin */}
-      {(!isAuthenticated || !isAdmin) && (
+      {(!isAuthenticated || !isAdmin) && !isAuthRoute && (
         <>
           <FloatingAppointmentButton />
           <WhatsAppButton />
         </>
       )}
     </div>
+      </MeasurementJobProvider>
     </WishlistProvider>
   );
 }

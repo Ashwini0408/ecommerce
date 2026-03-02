@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
   FiArrowLeft,
   FiCheckCircle,
   FiClock,
+  FiList,
   FiMapPin,
   FiPackage,
   FiRotateCcw,
@@ -13,14 +14,44 @@ import {
   FiStar,
   FiImage,
   FiX,
+  FiDownload,
 } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import Navbar from '../../components/layout/Navbar';
 import { orderApi } from '../../api/orderApi';
 import reviewApi from '../../api/reviewApi';
-import type { Order } from '../../types';
+import type { Order, ReturnRequest, ReturnTimelineEvent } from '../../types';
 import { formatINR } from '../../utils/currency';
 
 type TimelineStep = { key: string; label: string };
+type CancelMode = 'FULL' | 'PARTIAL';
+
+const RETURN_REASON_OPTIONS = [
+  'Damaged product',
+  'Wrong size',
+  'Wrong product delivered',
+  'Quality issue',
+  'Not as described',
+  'Other',
+];
+
+const RETURN_STATUSES = [
+  'REQUESTED',
+  'APPROVED',
+  'PICKED_UP',
+  'REFUND_INITIATED',
+  'REFUNDED',
+  'REJECTED',
+] as const;
+const RETURN_WINDOW_DAYS = 15;
+const RETURN_STATUS_ALIASES: Record<string, string> = {
+  RETURN_REQUESTED: 'REQUESTED',
+  RETURN_APPROVED: 'APPROVED',
+  RETURN_PICKED_UP: 'PICKED_UP',
+  RETURN_REFUND_INITIATED: 'REFUND_INITIATED',
+  RETURN_REFUNDED: 'REFUNDED',
+  RETURN_REJECTED: 'REJECTED',
+};
 
 const timelineBaseSteps: TimelineStep[] = [
   { key: 'PENDING', label: 'Order Placed' },
@@ -45,7 +76,8 @@ const timelineAltSteps: Record<string, TimelineStep[]> = {
   ],
 };
 
-const timelineIcons: Record<string, (props: { size?: number }) => JSX.Element> = {
+const timelineIcons: Record<string, (props: { size?: number }) => React.ReactNode> = {
+  
   PENDING: FiClock,
   PROCESSING: FiPackage,
   SHIPPED: FiTruck,
@@ -73,6 +105,60 @@ const getStatusColor = (status: string) => {
   return colors[status] || 'bg-dark-700 text-dark-300';
 };
 
+const getReturnStatusBadgeColor = (status: string) => {
+  const colors: Record<string, string> = {
+    REQUESTED: 'bg-yellow-100 text-yellow-700',
+    APPROVED: 'bg-blue-100 text-blue-700',
+    PICKED_UP: 'bg-purple-100 text-purple-700',
+    REFUND_INITIATED: 'bg-amber-100 text-amber-700',
+    REFUNDED: 'bg-green-100 text-green-700',
+    REJECTED: 'bg-red-100 text-red-700',
+  };
+  return colors[status] || 'bg-gray-100 text-gray-700';
+};
+
+const getReturnStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    REQUESTED: 'Return Requested',
+    APPROVED: 'Return Approved',
+    PICKED_UP: 'Picked Up',
+    REFUND_INITIATED: 'Refund Processing',
+    REFUNDED: 'Refund Completed',
+    REJECTED: 'Return Rejected',
+  };
+  return labels[status] || status.replace(/_/g, ' ');
+};
+
+const getItemStatusBadgeColor = (status: string) => {
+  const colors: Record<string, string> = {
+    ACTIVE: 'bg-gray-100 text-gray-700',
+    CANCELLED: 'bg-red-100 text-red-700',
+    RETURNED: 'bg-orange-100 text-orange-700',
+    RETURN_REQUESTED: 'bg-yellow-100 text-yellow-700',
+    REQUESTED: 'bg-yellow-100 text-yellow-700',
+    APPROVED: 'bg-blue-100 text-blue-700',
+    PICKED_UP: 'bg-purple-100 text-purple-700',
+    REFUND_INITIATED: 'bg-amber-100 text-amber-700',
+    REFUNDED: 'bg-green-100 text-green-700',
+    REJECTED: 'bg-red-100 text-red-700',
+  };
+  return colors[status] || 'bg-gray-100 text-gray-700';
+};
+
+const normalizeStatusValue = (value?: string | null) =>
+  (value || '').trim().toUpperCase();
+
+const isCancelledStatus = (value?: string | null) => {
+  const normalized = normalizeStatusValue(value);
+  return normalized === 'CANCELLED' || normalized === 'CANCELED';
+};
+
+const normalizeItemName = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
 const OrderDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -88,10 +174,8 @@ const OrderDetailsPage = () => {
     Record<string, { images: File[]; videos: File[] }>
   >({});
   const [reviewIds, setReviewIds] = useState<Record<string, number>>({});
-  const [reviewExistingImages, setReviewExistingImages] = useState<
-    Record<string, { url: string; mediaId?: number }[]>
-  >({});
-  const [reviewMediaIdsToDelete, setReviewMediaIdsToDelete] = useState<Record<string, number[]>>(
+  const [reviewExistingImages, setReviewExistingImages] = useState<Record<string, string[]>>({});
+  const [reviewImagesToDelete, setReviewImagesToDelete] = useState<Record<string, string[]>>(
     {}
   );
   const [reviewModal, setReviewModal] = useState<{
@@ -100,6 +184,37 @@ const OrderDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelMode, setCancelMode] = useState<CancelMode>('FULL');
+  const [cancelReason, setCancelReason] = useState('');
+  const [selectedCancelItemIds, setSelectedCancelItemIds] = useState<number[]>([]);
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [returnModal, setReturnModal] = useState<{
+    item: Order['items'][number];
+  } | null>(null);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnQuantity, setReturnQuantity] = useState(1);
+  const [returnProofFiles, setReturnProofFiles] = useState<File[]>([]);
+  const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [localReturnStatusByItemId, setLocalReturnStatusByItemId] = useState<
+    Record<number, string>
+  >({});
+  const [serverReturnRequestByItemId, setServerReturnRequestByItemId] = useState<
+    Record<number, ReturnRequest>
+  >({});
+  const [localReturnRequestIdByItemId, setLocalReturnRequestIdByItemId] = useState<
+    Record<number, number>
+  >({});
+  const [returnTimelineModal, setReturnTimelineModal] = useState<{
+    returnRequestId: number;
+    itemName: string;
+  } | null>(null);
+  const [returnTimelineLoading, setReturnTimelineLoading] = useState(false);
+  const [returnTimelineByRequestId, setReturnTimelineByRequestId] = useState<
+    Record<number, ReturnTimelineEvent[]>
+  >({});
   const IMAGE_BASE_URL = import.meta.env.VITE_API_IMG_URL || 'http://localhost:8090';
 
   const orderId = useMemo(() => (id ? Number(id) : NaN), [id]);
@@ -125,6 +240,9 @@ const OrderDetailsPage = () => {
         const data = await orderApi.getOrderById(orderId);
         if (active) {
           setOrder(data);
+          if (Array.isArray(data.timeline)) {
+            setTimeline(data.timeline);
+          }
         }
       } catch (err: any) {
         if (active) {
@@ -140,7 +258,7 @@ const OrderDetailsPage = () => {
     return () => {
       active = false;
     };
-  }, [orderId]);
+  }, [orderId, reloadKey]);
 
   useEffect(() => {
     if (!Number.isFinite(orderId)) return;
@@ -153,9 +271,7 @@ const OrderDetailsPage = () => {
           setTimeline(data);
         }
       } catch {
-        if (active) {
-          setTimeline([]);
-        }
+        // Keep timeline from order payload if timeline endpoint fails.
       } finally {
         if (active) {
           setTimelineLoading(false);
@@ -166,7 +282,469 @@ const OrderDetailsPage = () => {
     return () => {
       active = false;
     };
-  }, [orderId]);
+  }, [orderId, reloadKey]);
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    setDownloadingInvoice(true);
+    try {
+      const blob = await orderApi.downloadInvoice(order.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-${order.orderNumber || order.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Invoice downloaded successfully');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
+  const isOrderCancellable = (status: string) =>
+    status === 'PENDING' || status === 'PROCESSING';
+
+  const getItemStatus = (item: Order['items'][number]) => {
+    const statusSource = item as unknown as {
+      itemStatus?: string;
+      status?: string;
+      orderItemStatus?: string;
+    };
+    return (
+      normalizeStatusValue(
+        statusSource.itemStatus || statusSource.status || statusSource.orderItemStatus
+      ) || 'ACTIVE'
+    );
+  };
+
+  const getItemReturnStatus = (item: Order['items'][number]) => {
+    const localStatus = localReturnStatusByItemId[item.id];
+    if (localStatus) return localStatus;
+    const serverStatus = serverReturnRequestByItemId[item.id]?.status;
+    if (serverStatus) {
+      return RETURN_STATUS_ALIASES[serverStatus] || serverStatus;
+    }
+
+    const normalizeReturnStatus = (value?: string | null) => {
+      const normalized = normalizeStatusValue(value);
+      if (!normalized) return null;
+      return RETURN_STATUS_ALIASES[normalized] || normalized;
+    };
+
+    const statusSource = item as unknown as {
+      returnStatus?: string;
+      return_request_status?: string;
+    };
+    const rawReturnStatus = normalizeReturnStatus(
+      statusSource.returnStatus || statusSource.return_request_status
+    );
+    if (rawReturnStatus && RETURN_STATUSES.includes(rawReturnStatus as (typeof RETURN_STATUSES)[number])) {
+      return rawReturnStatus;
+    }
+
+    const statusFromItem = normalizeReturnStatus(getItemStatus(item));
+    if (RETURN_STATUSES.includes(statusFromItem as (typeof RETURN_STATUSES)[number])) {
+      return statusFromItem;
+    }
+
+    return null;
+  };
+
+  const getItemReturnRequestId = (item: Order['items'][number]) => {
+    const localId = localReturnRequestIdByItemId[item.id];
+    if (Number.isFinite(localId) && localId > 0) return localId;
+    const serverRequestId = Number(serverReturnRequestByItemId[item.id]?.id);
+    if (Number.isFinite(serverRequestId) && serverRequestId > 0) return serverRequestId;
+
+    const source = item as unknown as {
+      returnRequestId?: number | string;
+      returnId?: number | string;
+      latestReturnRequestId?: number | string;
+      returnRequest?: { id?: number | string };
+    };
+    const rawId =
+      source.returnRequestId ||
+      source.returnId ||
+      source.latestReturnRequestId ||
+      source.returnRequest?.id;
+    const parsed = Number(rawId);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  };
+
+  const getRemainingReturnQuantity = (item: Order['items'][number]) => {
+    const parseNonNegativeInt = (value: unknown) => {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed < 0) return null;
+      return Math.floor(parsed);
+    };
+
+    const totalQtyRaw = parseNonNegativeInt(item.quantity);
+    const totalQty = totalQtyRaw ?? 0;
+    const capByTotalQuantity = (value: number) => {
+      if (totalQty <= 0) return value;
+      return Math.min(value, totalQty);
+    };
+
+    const serverRequest = serverReturnRequestByItemId[item.id];
+    if (serverRequest) {
+      const directServerValues = [
+        serverRequest.remainingQuantity,
+        serverRequest.returnableQuantity,
+      ];
+      for (const value of directServerValues) {
+        const parsed = parseNonNegativeInt(value);
+        if (parsed !== null) return capByTotalQuantity(parsed);
+      }
+
+      const returnedQty = parseNonNegativeInt(serverRequest.returnedQuantity) ?? 0;
+      if (totalQty > 0) {
+        return Math.max(0, totalQty - Math.min(returnedQty, totalQty));
+      }
+    }
+
+    const source = item as unknown as {
+      remainingQuantity?: number | string;
+      remainingReturnQuantity?: number | string;
+      returnableQuantity?: number | string;
+      availableReturnQuantity?: number | string;
+      returnedQuantity?: number | string;
+      alreadyReturnedQuantity?: number | string;
+    };
+
+    const directValues = [
+      source.remainingQuantity,
+      source.remainingReturnQuantity,
+      source.returnableQuantity,
+      source.availableReturnQuantity,
+    ];
+    for (const value of directValues) {
+      const parsed = parseNonNegativeInt(value);
+      if (parsed !== null) return capByTotalQuantity(parsed);
+    }
+    if (totalQty <= 0) return 0;
+
+    const returnedQty =
+      parseNonNegativeInt(
+        source.returnedQuantity || source.alreadyReturnedQuantity
+      ) ?? 0;
+    return Math.max(0, totalQty - Math.min(returnedQty, totalQty));
+  };
+
+  const orderItemIdsKey = useMemo(() => {
+    if (!order?.items?.length) return '';
+    return [...order.items]
+      .map((item) => item.id)
+      .sort((a, b) => a - b)
+      .join(',');
+  }, [order]);
+
+  useEffect(() => {
+    if (!order || !order.items?.length) {
+      setServerReturnRequestByItemId({});
+      return;
+    }
+
+    let active = true;
+    const loadReturnRequestsForOrderItems = async () => {
+      try {
+        const requests = await orderApi.getMyReturnRequests();
+        if (!active) return;
+
+        const orderItemIds = new Set(order.items.map((item) => item.id));
+        const relevant = requests
+          .filter((req) => orderItemIds.has(req.orderItemId))
+          .sort((a, b) => {
+            const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+            const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+            if (Number.isNaN(aTime) || Number.isNaN(bTime)) return b.id - a.id;
+            return bTime - aTime;
+          });
+
+        const mapped: Record<number, ReturnRequest> = {};
+        relevant.forEach((request) => {
+          if (!mapped[request.orderItemId]) {
+            mapped[request.orderItemId] = request;
+          }
+        });
+
+        setServerReturnRequestByItemId(mapped);
+      } catch {
+        if (!active) return;
+        setServerReturnRequestByItemId({});
+      }
+    };
+
+    loadReturnRequestsForOrderItems();
+    return () => {
+      active = false;
+    };
+  }, [order?.id, orderItemIdsKey, reloadKey]);
+
+  const cancelledItemNamesFromTimeline = useMemo(() => {
+    const cancelledNames: string[] = [];
+    timeline.forEach((event) => {
+      const message = (event.message || '').trim();
+      if (!message || !/cancel/i.test(message)) return;
+
+      const match = message.match(/items?\s+cancel(?:led|ed)\s*:\s*(.+)$/i);
+      if (!match?.[1]) return;
+
+      match[1]
+        .split(/[|,]/)
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .forEach((name) => cancelledNames.push(name));
+    });
+    return cancelledNames.map(normalizeItemName).filter(Boolean);
+  }, [timeline]);
+
+  const isItemCancelled = (item: Order['items'][number]) => {
+    if (isCancelledStatus(getItemStatus(item))) return true;
+
+    const normalizedProductName = normalizeItemName(item.productName || '');
+    if (!normalizedProductName) return false;
+
+    return cancelledItemNamesFromTimeline.some(
+      (cancelledName) =>
+        cancelledName === normalizedProductName ||
+        cancelledName.includes(normalizedProductName) ||
+        normalizedProductName.includes(cancelledName)
+    );
+  };
+
+  const getApiErrorMessage = (err: unknown, fallback: string) => {
+    if (err && typeof err === 'object') {
+      const possible = err as { message?: unknown; error?: unknown };
+      if (typeof possible.message === 'string' && possible.message.trim()) {
+        return possible.message;
+      }
+      if (typeof possible.error === 'string' && possible.error.trim()) {
+        return possible.error;
+      }
+    }
+    return fallback;
+  };
+
+  const toggleCancelItem = (orderItemId: number) => {
+    setSelectedCancelItemIds((prev) =>
+      prev.includes(orderItemId)
+        ? prev.filter((idValue) => idValue !== orderItemId)
+        : [...prev, orderItemId]
+    );
+  };
+
+  const openCancelModal = () => {
+    setCancelModalOpen(true);
+    setCancelMode('FULL');
+    setCancelReason('');
+    setSelectedCancelItemIds([]);
+  };
+
+  const closeCancelModal = () => {
+    if (cancelSubmitting) return;
+    setCancelModalOpen(false);
+    setCancelMode('FULL');
+    setCancelReason('');
+    setSelectedCancelItemIds([]);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    if (!isOrderCancellable(order.status)) {
+      toast.error("Order cannot be cancelled after it has been shipped");
+      return;
+    }
+
+    const reason = cancelReason.trim();
+    if (!reason) {
+      toast.error('Please enter a cancellation reason');
+      return;
+    }
+
+    if (cancelMode === 'PARTIAL' && selectedCancelItemIds.length === 0) {
+      toast.error('Please select at least one item to cancel');
+      return;
+    }
+
+    setCancelSubmitting(true);
+    try {
+      const response = await orderApi.cancelOrder(order.id, {
+        reason,
+        orderItemIds: cancelMode === 'PARTIAL' ? selectedCancelItemIds : undefined,
+      });
+      toast.success(response.message || 'Cancellation processed');
+      closeCancelModal();
+      setReloadKey((prev) => prev + 1);
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Failed to cancel order'));
+    } finally {
+      setCancelSubmitting(false);
+    }
+  };
+
+  const deliveredEvent = useMemo(
+    () => timeline.find((event) => event.status === 'DELIVERED'),
+    [timeline]
+  );
+  const deliveredAt = useMemo(() => {
+    if (!deliveredEvent?.timestamp) return null;
+    const parsed = new Date(deliveredEvent.timestamp);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [deliveredEvent]);
+  const orderReturnWindowEndsAt = useMemo(() => {
+    if (!order?.items?.length) return null;
+
+    const itemLevelWindowEnds = order.items
+      .map((item) => item.returnEligibleUntil || item.returnWindowEndsAt)
+      .filter(Boolean)
+      .map((value) => new Date(value as string))
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .sort((a, b) => b.getTime() - a.getTime());
+
+    if (itemLevelWindowEnds.length > 0) {
+      return itemLevelWindowEnds[0];
+    }
+
+    if (!deliveredAt) return null;
+    return new Date(
+      deliveredAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    );
+  }, [order?.items, deliveredAt]);
+  const isReturnWindowExpired = useMemo(() => {
+    if (!orderReturnWindowEndsAt) return false;
+    return Date.now() > orderReturnWindowEndsAt.getTime();
+  }, [orderReturnWindowEndsAt]);
+
+  const canReturnItem = (item: Order['items'][number]) => {
+    if (!order || order.status !== 'DELIVERED') return false;
+    if (isReturnWindowExpired) return false;
+    if (isItemCancelled(item)) return false;
+    if (getRemainingReturnQuantity(item) <= 0) return false;
+
+    const status = getItemStatus(item);
+    if (status !== 'ACTIVE') return false;
+
+    return !getItemReturnStatus(item);
+  };
+
+  const openReturnModal = (item: Order['items'][number]) => {
+    const remainingQty = getRemainingReturnQuantity(item);
+    setReturnModal({ item });
+    setReturnReason('');
+    setReturnQuantity(remainingQty > 0 ? 1 : 0);
+    setReturnProofFiles([]);
+  };
+
+  const closeReturnModal = () => {
+    if (returnSubmitting) return;
+    setReturnModal(null);
+    setReturnReason('');
+    setReturnQuantity(1);
+    setReturnProofFiles([]);
+  };
+
+  const openReturnTimelineModal = (returnRequestId: number, itemName: string) => {
+    setReturnTimelineModal({ returnRequestId, itemName });
+  };
+
+  const closeReturnTimelineModal = () => {
+    setReturnTimelineModal(null);
+    setReturnTimelineLoading(false);
+  };
+
+  useEffect(() => {
+    const requestId = returnTimelineModal?.returnRequestId;
+    if (!requestId) return;
+    if (returnTimelineByRequestId[requestId]) return;
+
+    let active = true;
+    const loadReturnTimeline = async () => {
+      setReturnTimelineLoading(true);
+      try {
+        const data = await orderApi.getReturnTimeline(requestId);
+        if (active) {
+          setReturnTimelineByRequestId((prev) => ({ ...prev, [requestId]: data }));
+        }
+      } catch (error: unknown) {
+        if (active) {
+          toast.error(getApiErrorMessage(error, 'Failed to load return timeline'));
+          setReturnTimelineByRequestId((prev) => ({ ...prev, [requestId]: [] }));
+        }
+      } finally {
+        if (active) {
+          setReturnTimelineLoading(false);
+        }
+      }
+    };
+
+    loadReturnTimeline();
+    return () => {
+      active = false;
+    };
+  }, [returnTimelineModal, returnTimelineByRequestId]);
+
+  const handleSubmitReturnRequest = async () => {
+    if (!returnModal) return;
+    if (!canReturnItem(returnModal.item)) {
+      toast.error("This item is not eligible for return");
+      return;
+    }
+    const normalizedReason = returnReason.trim();
+    if (!normalizedReason) {
+      toast.error('Please select a return reason');
+      return;
+    }
+
+    const maxQty = getRemainingReturnQuantity(returnModal.item);
+    if (maxQty <= 0) {
+      toast.error('No returnable quantity remaining for this item');
+      return;
+    }
+
+    const parsedInputQuantity = Number(returnQuantity);
+    if (!Number.isFinite(parsedInputQuantity) || parsedInputQuantity < 1) {
+      toast.error('Please enter a valid return quantity');
+      return;
+    }
+
+    const requestedQuantity = Math.floor(parsedInputQuantity);
+    if (requestedQuantity > maxQty) {
+      toast.error(`You can return at most ${maxQty} item(s) for this product`);
+      return;
+    }
+
+    setReturnSubmitting(true);
+    try {
+      const response = await orderApi.createReturnRequest({
+        orderItemId: returnModal.item.id,
+        quantity: requestedQuantity,
+        reason: normalizedReason,
+        proofImages: returnProofFiles,
+      });
+
+      setLocalReturnStatusByItemId((prev) => ({
+        ...prev,
+        [returnModal.item.id]: response.status || 'REQUESTED',
+      }));
+      if (response.id) {
+        setLocalReturnRequestIdByItemId((prev) => ({
+          ...prev,
+          [returnModal.item.id]: response.id,
+        }));
+      }
+      toast.success('Return request submitted successfully');
+      closeReturnModal();
+      setReloadKey((prev) => prev + 1);
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Failed to submit return request'));
+    } finally {
+      setReturnSubmitting(false);
+    }
+  };
 
   const firstItem = order?.items?.[0];
   const orderDate = order?.createdAt ? new Date(order.createdAt) : null;
@@ -182,6 +760,16 @@ const OrderDetailsPage = () => {
     ? Math.max(0, timelineSteps.findIndex((step) => step.key === order.status))
     : 0;
   const eventMap = new Map(timeline.map((event) => [event.status, event]));
+  const activeReturnTimelineEvents = useMemo(() => {
+    if (!returnTimelineModal) return [];
+    const data = returnTimelineByRequestId[returnTimelineModal.returnRequestId] || [];
+    return [...data].sort((a, b) => {
+      const aTime = new Date(a.timestamp).getTime();
+      const bTime = new Date(b.timestamp).getTime();
+      if (Number.isNaN(aTime) || Number.isNaN(bTime)) return 0;
+      return aTime - bTime;
+    });
+  }, [returnTimelineModal, returnTimelineByRequestId]);
 
   const getReviewKey = (orderIdValue: number, productId: number) =>
     `${orderIdValue}-${productId}`;
@@ -191,22 +779,12 @@ const OrderDetailsPage = () => {
     reviewAttachments[key] || { images: [], videos: [] };
   const getReviewId = (key: string) => reviewIds[key];
   const getReviewExistingImages = (key: string) => reviewExistingImages[key] || [];
-  const getReviewMediaIdsToDelete = (key: string) => reviewMediaIdsToDelete[key] || [];
-
-  const normalizeMediaPath = (value: string) =>
-    value.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
+  const getReviewImagesToDelete = (key: string) => reviewImagesToDelete[key] || [];
 
   const mapExistingReviewImages = (review: {
     imageUrls?: string[];
     media?: { id: number; url: string; mediaType: 'IMAGE' | 'VIDEO' }[];
   }) => {
-    const mediaByPath = new Map<string, number>();
-    (review.media || [])
-      .filter((m) => m.mediaType === 'IMAGE')
-      .forEach((m) => {
-        mediaByPath.set(normalizeMediaPath(m.url), m.id);
-      });
-
     const imageUrls =
       review.imageUrls && review.imageUrls.length > 0
         ? review.imageUrls
@@ -214,10 +792,7 @@ const OrderDetailsPage = () => {
             .filter((m) => m.mediaType === 'IMAGE')
             .map((m) => m.url);
 
-    return imageUrls.map((url) => ({
-      url,
-      mediaId: mediaByPath.get(normalizeMediaPath(url)),
-    }));
+    return imageUrls;
   };
 
   const updateReviewDraft = (
@@ -264,17 +839,17 @@ const OrderDetailsPage = () => {
 
   const removeExistingReviewImage = (key: string, index: number) => {
     const current = getReviewExistingImages(key);
-    const target = current[index];
+    const targetUrl = current[index];
 
     setReviewExistingImages((prev) => ({
       ...prev,
       [key]: (prev[key] || []).filter((_, idx) => idx !== index),
     }));
 
-    if (target?.mediaId) {
-      setReviewMediaIdsToDelete((prev) => ({
+    if (targetUrl) {
+      setReviewImagesToDelete((prev) => ({
         ...prev,
-        [key]: Array.from(new Set([...(prev[key] || []), target.mediaId as number])),
+        [key]: Array.from(new Set([...(prev[key] || []), targetUrl])),
       }));
     }
   };
@@ -334,7 +909,7 @@ const OrderDetailsPage = () => {
         ...prev,
         [key]: mapExistingReviewImages(existing),
       }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
         [key]: {
@@ -345,7 +920,7 @@ const OrderDetailsPage = () => {
       }));
     } else {
       setReviewExistingImages((prev) => ({ ...prev, [key]: [] }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
     }
   };
 
@@ -367,7 +942,7 @@ const OrderDetailsPage = () => {
     setReviewSubmitting((prev) => ({ ...prev, [key]: true }));
     try {
       const attachments = getReviewAttachments(key);
-      const mediaIdsToDelete = getReviewMediaIdsToDelete(key);
+      const imagesToDelete = getReviewImagesToDelete(key);
       let existingId = getReviewId(key);
       if (!existingId) {
         const existing = await fetchExistingReview(
@@ -383,16 +958,16 @@ const OrderDetailsPage = () => {
       }
 
       let persistedReviewId: number | null = null;
-      let persistedImages: { url: string; mediaId?: number }[] = [];
+      let persistedImages: string[] = [];
       if (existingId) {
         const updated = await reviewApi.updateReview(
           existingId,
           {
-            userId: order.userId,
             rating: draft.rating,
             title: draft.title.trim() || item.productName || 'Review',
             body: draft.body.trim(),
-            ...(mediaIdsToDelete.length > 0 ? { mediaIdsToDelete } : {}),
+            imagesToDelete,
+            videosToDelete: [],
           },
           attachments.images,
           attachments.videos
@@ -402,7 +977,6 @@ const OrderDetailsPage = () => {
       } else {
         const created = await reviewApi.createReview(
           {
-            userId: order.userId,
             productId: item.productId,
             orderId: order.id,
             rating: draft.rating,
@@ -432,7 +1006,7 @@ const OrderDetailsPage = () => {
         ...prev,
         [key]: persistedImages,
       }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
         [key]: {
@@ -452,12 +1026,16 @@ const OrderDetailsPage = () => {
   };
 
   useEffect(() => {
-    const isModalOpen = reviewModal !== null;
+    const isModalOpen =
+      reviewModal !== null ||
+      cancelModalOpen ||
+      returnModal !== null ||
+      returnTimelineModal !== null;
     document.body.style.overflow = isModalOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [reviewModal]);
+  }, [reviewModal, cancelModalOpen, returnModal, returnTimelineModal]);
 
   useEffect(() => {
     if (!order || order.status !== 'DELIVERED') return;
@@ -465,7 +1043,7 @@ const OrderDetailsPage = () => {
     const loadExistingReviews = async () => {
       const updates: Record<string, number> = {};
       const drafts: Record<string, { rating: number; title: string; body: string }> = {};
-      const existingImages: Record<string, { url: string; mediaId?: number }[]> = {};
+      const existingImages: Record<string, string[]> = {};
 
       await Promise.all(
         order.items.map(async (item) => {
@@ -564,6 +1142,28 @@ const OrderDetailsPage = () => {
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  {isOrderCancellable(order.status) && (
+                    <button
+                      type="button"
+                      onClick={openCancelModal}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+                    >
+                      <FiXCircle size={16} />
+                      Cancel Order
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleDownloadInvoice}
+                    disabled={downloadingInvoice}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#E6E2D6] bg-white px-4 py-2 text-sm font-semibold text-[#6B7D60] hover:bg-[#F6F4EC] disabled:opacity-60"
+                    title="Download Invoice (PDF)"
+                  >
+                    <FiDownload size={16} />
+                    {downloadingInvoice ? 'Downloading...' : 'Download Invoice'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -611,10 +1211,10 @@ const OrderDetailsPage = () => {
                       ORDER SUMMARY
                     </p>
                     {(() => {
-                      const orderTax = Number(order.tax || 0);
+                      // const orderTax = Number(order.tax || 0);
                       const orderDiscount = Number(order.discount || 0);
                       const orderTotal = Number(order.totalAmount || 0);
-                      const rawSubtotal = orderTotal - orderTax + orderDiscount;
+                      const rawSubtotal = orderTotal + orderDiscount;
                       const subtotal = Number.isFinite(rawSubtotal) ? rawSubtotal : orderTotal;
                       const rawPaymentMode =
                         (order as any).paymentMethod ||
@@ -631,11 +1231,11 @@ const OrderDetailsPage = () => {
                           </div>
                           <div className="flex justify-between">
                             <span>Shipping</span>
-                            <span className="text-[#6B7D60]">Free</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Tax</span>
-                            <span>{formatINR(orderTax)}</span>
+                            <span className="text-[#6B7D60]">
+                              {order.shippingCharges !== undefined && order.shippingCharges !== null
+                                ? formatINR(order.shippingCharges)
+                                : 'Free'}
+                            </span>
                           </div>
                           <div className="border-t border-[#E6E2D6] pt-2 flex justify-between font-semibold text-dark-900">
                             <span>Total</span>
@@ -647,9 +1247,208 @@ const OrderDetailsPage = () => {
                           <div className="text-xs text-dark-500">
                             Payment Status: {order.paymentStatus.replace(/_/g, ' ')}
                           </div>
+                          {order.transactionId && (
+                            <div className="mt-2 pt-2 border-t border-[#E6E2D6] text-xs text-dark-500">
+                              <p className="font-semibold text-dark-700">
+                                Ref ID: {order.transactionId === 'COD_PENDING' ? 'Pay on Delivery' : order.transactionId}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
+                  </div>
+                </div>
+
+                {order.items.some((item) => !!getItemReturnStatus(item)) && (
+                  <div className="rounded-2xl border border-[#E6E2D6] bg-white p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-xs font-semibold tracking-widest text-dark-500">
+                        RETURN REQUESTS
+                      </h3>
+                      <span className="text-xs text-dark-500">
+                        Separate from order delivery timeline
+                      </span>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {order.items
+                        .filter((item) => !!getItemReturnStatus(item))
+                        .map((item) => {
+                          const returnStatus = getItemReturnStatus(item) as string;
+                          const returnRequestId = getItemReturnRequestId(item);
+                          const remainingReturnQty = getRemainingReturnQuantity(item);
+                          return (
+                            <div
+                              key={`return-summary-${item.id}`}
+                              className="rounded-xl border border-[#E6E2D6] bg-white p-4"
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-dark-900">
+                                    {item.productName}
+                                  </p>
+                                  <p className="text-xs text-dark-500 mt-1">
+                                    Qty: {item.quantity} · Returnable Qty: {remainingReturnQty}
+                                  </p>
+                                  {returnRequestId && (
+                                    <p className="text-xs text-dark-500 mt-1">
+                                      Return ID: #{returnRequestId}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${getReturnStatusBadgeColor(
+                                      returnStatus
+                                    )}`}
+                                  >
+                                    {getReturnStatusLabel(returnStatus)}
+                                  </span>
+                                  {returnRequestId && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        openReturnTimelineModal(returnRequestId, item.productName)
+                                      }
+                                      className="px-3 py-1.5 rounded-lg border border-[#DCD7C6] bg-white text-dark-700 text-xs font-semibold hover:bg-[#F9F8F4] transition-colors inline-flex items-center gap-1"
+                                    >
+                                      <FiList size={13} />
+                                      View Timeline
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-[#E6E2D6] bg-white p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-xs font-semibold tracking-widest text-dark-500">
+                      ORDER ITEMS
+                    </h3>
+                    {order.status === 'DELIVERED' && (
+                      <span className="text-xs text-dark-500">
+                        Return window: {isReturnWindowExpired ? 'Expired' : 'Open'}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {order.items.map((item) => {
+                      const returnStatus = getItemReturnStatus(item);
+                      const itemStatus = getItemStatus(item);
+                      const itemCancelled = isItemCancelled(item);
+                      const displayItemStatus = itemCancelled ? 'CANCELLED' : itemStatus;
+                      const returnRequestId = getItemReturnRequestId(item);
+                      const remainingReturnQty = getRemainingReturnQuantity(item);
+                      const isItemReturnable = canReturnItem(item);
+                      const showReturnWindowExpiredMessage =
+                        order.status === 'DELIVERED' &&
+                        !returnStatus &&
+                        displayItemStatus === 'ACTIVE' &&
+                        isReturnWindowExpired;
+                      const showNoRemainingQtyMessage =
+                        order.status === 'DELIVERED' &&
+                        !returnStatus &&
+                        displayItemStatus === 'ACTIVE' &&
+                        remainingReturnQty <= 0;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#E6E2D6] bg-white p-4"
+                        >
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="h-14 w-14 rounded-xl bg-[#F2F0E8] overflow-hidden flex items-center justify-center">
+                              <img
+                                src={getOrderImageUrl(item.productImage)}
+                                alt={item.productName}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-dark-900 truncate">
+                                {item.productName}
+                              </p>
+                              <p className="text-xs text-dark-500 mt-1">
+                                Qty: {item.quantity}
+                                {item.selectedSize ? ` · Size: ${item.selectedSize}` : ''}
+                                {item.selectedColor ? ` · Color: ${item.selectedColor}` : ''}
+                              </p>
+                              {order.status === 'DELIVERED' && !itemCancelled && (
+                                <p className="text-[11px] text-dark-500 mt-1">
+                                  Returnable Qty: {remainingReturnQty}
+                                </p>
+                              )}
+                              {displayItemStatus !== 'ACTIVE' && !returnStatus && (
+                                <span
+                                  className={`inline-flex mt-2 px-2 py-0.5 rounded-full text-[11px] font-semibold ${getItemStatusBadgeColor(displayItemStatus)}`}
+                                >
+                                  {displayItemStatus.replace(/_/g, ' ')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {!returnStatus && isCancelledStatus(displayItemStatus) && (
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${getItemStatusBadgeColor(displayItemStatus)}`}
+                              >
+                                Cancelled
+                              </span>
+                            )}
+                            {returnStatus && (
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${getReturnStatusBadgeColor(returnStatus)}`}
+                              >
+                                {getReturnStatusLabel(returnStatus)}
+                              </span>
+                            )}
+                            {returnStatus && returnRequestId && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openReturnTimelineModal(returnRequestId, item.productName)
+                                }
+                                className="px-3 py-1.5 rounded-lg border border-[#DCD7C6] bg-white text-dark-700 text-xs font-semibold hover:bg-[#F9F8F4] transition-colors inline-flex items-center gap-1"
+                              >
+                                <FiList size={13} />
+                                Return Timeline
+                              </button>
+                            )}
+                            {returnStatus && !returnRequestId && (
+                              <span className="text-[11px] text-dark-500">
+                                Return timeline not available yet
+                              </span>
+                            )}
+                            {isItemReturnable && (
+                              <button
+                                type="button"
+                                onClick={() => openReturnModal(item)}
+                                className="px-3 py-1.5 rounded-lg border border-[#C9D8C1] bg-[#EAF4E5] text-[#4F6A45] text-xs font-semibold hover:bg-[#DDECD5] transition-colors"
+                              >
+                                Return Item
+                              </button>
+                            )}
+                            {showReturnWindowExpiredMessage && (
+                              <span className="text-xs text-red-500 font-medium">
+                                Return window expired
+                              </span>
+                            )}
+                            {showNoRemainingQtyMessage && (
+                              <span className="text-xs text-dark-500 font-medium">
+                                No returnable quantity left
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -738,6 +1537,7 @@ const OrderDetailsPage = () => {
                       {order.items.map((item) => {
                         const key = getReviewKey(order.id, item.productId);
                         const existingReviewId = getReviewId(key);
+                        const cancelledItem = isItemCancelled(item);
                         return (
                           <div
                             key={item.id}
@@ -762,13 +1562,19 @@ const OrderDetailsPage = () => {
                                 </p>
                               </div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => openReviewModal(item)}
-                              className="btn-primary"
-                            >
-                              {existingReviewId ? 'Edit Review' : 'Write Review'}
-                            </button>
+                            {cancelledItem ? (
+                              <span className="text-xs font-semibold text-red-600">
+                                This item was cancelled
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => openReviewModal(item)}
+                                className="btn-primary px-4"
+                              >
+                                {existingReviewId ? 'Edit Review' : 'Write Review'}
+                              </button>
+                            )}
                           </div>
                         );
                       })}
@@ -779,6 +1585,290 @@ const OrderDetailsPage = () => {
           </>
         )}
       </div>
+
+      {cancelModalOpen && order && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl border border-[#E6E2D6] p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-dark-900">Cancel Order</h3>
+              <button
+                type="button"
+                onClick={closeCancelModal}
+                className="text-dark-500 hover:text-dark-700"
+                disabled={cancelSubmitting}
+              >
+                &times;
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-dark-500">
+              Order #{order.orderNumber || order.id}
+            </p>
+
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-dark-700">Cancellation Type</p>
+              <div className="mt-2 flex flex-wrap gap-3">
+                <label className="flex items-center gap-2 text-sm text-dark-600">
+                  <input
+                    type="radio"
+                    checked={cancelMode === 'FULL'}
+                    onChange={() => {
+                      setCancelMode('FULL');
+                      setSelectedCancelItemIds([]);
+                    }}
+                    className="accent-[#6B7D60]"
+                  />
+                  Full Order
+                </label>
+                <label className="flex items-center gap-2 text-sm text-dark-600">
+                  <input
+                    type="radio"
+                    checked={cancelMode === 'PARTIAL'}
+                    onChange={() => setCancelMode('PARTIAL')}
+                    className="accent-[#6B7D60]"
+                  />
+                  Specific Items
+                </label>
+              </div>
+            </div>
+
+            {cancelMode === 'PARTIAL' && (
+              <div className="mt-4 max-h-56 overflow-y-auto rounded-xl border border-[#E6E2D6] p-3 space-y-2">
+                {(order.items || [])
+                  .filter((item) => !isItemCancelled(item))
+                  .map((item) => (
+                    <label
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E2D6] px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-dark-900 truncate">
+                          {item.productName}
+                        </p>
+                        <p className="text-xs text-dark-500">
+                          Qty: {item.quantity}
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={selectedCancelItemIds.includes(item.id)}
+                        onChange={() => toggleCancelItem(item.id)}
+                        className="accent-[#6B7D60]"
+                      />
+                    </label>
+                  ))}
+              </div>
+            )}
+
+            <div className="mt-4">
+              <label className="text-sm font-semibold text-dark-700">Reason</label>
+              <textarea
+                rows={3}
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Please provide a reason for cancellation"
+                className="mt-2 input-field resize-none"
+              />
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={closeCancelModal}
+                className="btn-ghost"
+                disabled={cancelSubmitting}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelOrder}
+                className="btn-primary disabled:opacity-60"
+                disabled={cancelSubmitting}
+              >
+                {cancelSubmitting ? 'Processing...' : 'Confirm Cancellation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {returnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl border border-[#E6E2D6] p-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-dark-900">Return Item</h3>
+              <button
+                type="button"
+                onClick={closeReturnModal}
+                className="text-dark-500 hover:text-dark-700"
+                disabled={returnSubmitting}
+              >
+                &times;
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-dark-500">{returnModal.item.productName}</p>
+            <p className="mt-1 text-xs text-dark-500">
+              Remaining returnable quantity: {getRemainingReturnQuantity(returnModal.item)}
+            </p>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-semibold text-dark-700">Reason</label>
+                <select
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  className="mt-2 input-field"
+                >
+                  <option value="">Select reason</option>
+                  {RETURN_REASON_OPTIONS.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-dark-700">Quantity</label>
+                <input
+                  type="number"
+                  step={1}
+                  min={1}
+                  max={Math.max(1, getRemainingReturnQuantity(returnModal.item))}
+                  value={returnQuantity}
+                  onChange={(e) => {
+                    const parsed = Number(e.target.value);
+                    const maxQty = Math.max(
+                      1,
+                      getRemainingReturnQuantity(returnModal.item)
+                    );
+                    if (!Number.isFinite(parsed)) {
+                      setReturnQuantity(1);
+                      return;
+                    }
+                    const normalized = Math.max(1, Math.floor(parsed));
+                    setReturnQuantity(Math.min(normalized, maxQty));
+                  }}
+                  className="mt-2 input-field"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="text-sm font-semibold text-dark-700">Proof Images</label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) =>
+                  setReturnProofFiles(Array.from(e.target.files || []))
+                }
+                className="mt-2 block w-full text-sm text-dark-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#EAF4E5] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[#4F6A45] hover:file:bg-[#DDECD5]"
+              />
+
+              {returnProofFiles.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {returnProofFiles.map((file, index) => (
+                    <span
+                      key={`${file.name}-${index}`}
+                      className="px-2.5 py-1 rounded-full bg-[#F2F0E8] text-xs text-dark-600"
+                    >
+                      {file.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={closeReturnModal}
+                className="btn-ghost"
+                disabled={returnSubmitting}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitReturnRequest}
+                className="btn-primary disabled:opacity-60"
+                disabled={returnSubmitting}
+              >
+                {returnSubmitting ? 'Submitting...' : 'Submit Return Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {returnTimelineModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl border border-[#E6E2D6] p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-dark-900">Return Timeline</h3>
+                <p className="text-xs text-dark-500 mt-1">
+                  Return #{returnTimelineModal.returnRequestId} · {returnTimelineModal.itemName}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeReturnTimelineModal}
+                className="text-dark-500 hover:text-dark-700"
+              >
+                &times;
+              </button>
+            </div>
+
+            {returnTimelineLoading ? (
+              <p className="mt-4 text-sm text-dark-500">Loading return timeline...</p>
+            ) : activeReturnTimelineEvents.length === 0 ? (
+              <p className="mt-4 text-sm text-dark-500">No return timeline available.</p>
+            ) : (
+              <ol className="mt-4 space-y-4">
+                {activeReturnTimelineEvents.map((event, index) => {
+                  const parsedDate = new Date(event.timestamp);
+                  const hasValidDate = !Number.isNaN(parsedDate.getTime());
+                  return (
+                    <li
+                      key={`${event.status}-${event.timestamp}-${index}`}
+                      className="rounded-xl border border-[#E6E2D6] bg-white p-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${getReturnStatusBadgeColor(
+                            event.status
+                          )}`}
+                        >
+                          {getReturnStatusLabel(event.status)}
+                        </span>
+                        <span className="text-xs text-dark-500">
+                          {hasValidDate
+                            ? format(parsedDate, 'dd MMM yyyy, hh:mm a')
+                            : event.timestamp}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs text-dark-600">
+                        {event.message || 'Status updated'}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={closeReturnTimelineModal}
+                className="btn-ghost"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {reviewModal && order &&
         (() => {
@@ -861,15 +1951,15 @@ const OrderDetailsPage = () => {
                       />
                       <FiImage size={18} className="text-dark-400" />
                     </label>
-                    {existingImages.map((image, index) => (
+                    {existingImages.map((imageUrl, index) => (
                       <div
-                        key={`existing-${image.url}-${index}`}
+                        key={`existing-${imageUrl}-${index}`}
                         className="relative h-14 w-14 overflow-visible"
                         title="Already uploaded"
                       >
                         <div className="h-full w-full rounded-lg overflow-hidden border border-[#E6E2D6] bg-white">
                           <img
-                            src={getOrderImageUrl(image.url)}
+                            src={getOrderImageUrl(imageUrl)}
                             alt="Existing review"
                             className="h-full w-full object-cover"
                           />
@@ -913,7 +2003,7 @@ const OrderDetailsPage = () => {
                     type="button"
                     onClick={() => handleSubmitReview(reviewModal.item)}
                     disabled={isSubmitting}
-                    className="btn-primary disabled:opacity-50"
+                    className="btn-primary px-4 disabled:opacity-50"
                   >
                     {isSubmitting
                       ? 'Submitting...'

@@ -642,7 +642,7 @@ import { Helmet } from "react-helmet-async";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 // import { FloatingAppointmentButton } from "@/components/FloatingAppointmentButton";
-
+import heroAbout from "../../assets/hero-about.jpg";
 const teamMembers = [
   {
     name: "Babita Dahal",
@@ -693,11 +693,11 @@ const About = () => {
         <Navbar />
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80"
+            src={heroAbout}
             alt="Styliste Couturier boutique"
-            className="w-full h-full object-cover opacity-10"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
         </div>
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-3xl">
@@ -727,11 +727,24 @@ const About = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-primary-foreground/80 text-lg leading-relaxed"
+              className="text-primary-foreground/80 text-lg leading-relaxed mb-8"
             >
               An innovative ladies' garments brand that aims to revolutionise
               the way women shop for clothing in India.
             </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              {/* <Link
+                to="/appointment"
+                className="inline-flex items-center gap-2 px-8 py-3 bg-accent hover:bg-accent/90 text-accent-foreground font-medium tracking-wide transition-all duration-300"
+              >
+                Book Appointment
+                <ArrowRight className="w-5 h-5" />
+              </Link> */}
+            </motion.div>
           </div>
         </div>
       </section>

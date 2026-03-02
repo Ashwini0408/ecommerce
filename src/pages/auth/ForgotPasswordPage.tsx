@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiMail, FiLock, FiArrowLeft, FiCheck, FiX, FiEye, FiEyeOff, FiClock } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import authApi from '../../api/authApi';
 import logo from '../../assets/logo.png';
+import forgotBackground from '../../assets/fg1.png';
 
 /* ================== TYPES ================== */
 type ForgotPasswordStage = 'email' | 'otp' | 'reset';
@@ -18,7 +19,7 @@ const fadeIn = {
 
 /* ================== OTP INPUT COMPONENT ================== */
 const OtpInput = ({ digits, onChange }: { digits: string[], onChange: (digits: string[]) => void }) => {
-  const inputRefs = Array(6).fill(null).map(() => useState<HTMLInputElement | null>(null));
+  const inputRefs = useRef<Array<HTMLInputElement | null>>(Array(6).fill(null));
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -29,7 +30,7 @@ const OtpInput = ({ digits, onChange }: { digits: string[], onChange: (digits: s
 
     // Auto-focus next input
     if (value && index < 5) {
-      inputRefs[index + 1][0]?.focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
@@ -38,7 +39,7 @@ const OtpInput = ({ digits, onChange }: { digits: string[], onChange: (digits: s
       const newDigits = [...digits];
       newDigits[index - 1] = '';
       onChange(newDigits);
-      inputRefs[index - 1][0]?.focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -57,7 +58,9 @@ const OtpInput = ({ digits, onChange }: { digits: string[], onChange: (digits: s
       {digits.map((digit, index) => (
         <input
           key={index}
-          ref={el => inputRefs[index][1](el)}
+          ref={(el) => {
+            inputRefs.current[index] = el;
+          }}
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
@@ -104,6 +107,23 @@ const ForgotPasswordPage = () => {
   
   // Timer for OTP resend
   const [otpTimer, setOtpTimer] = useState(0);
+
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (typeof error === 'string' && error.trim()) {
+      return error;
+    }
+    if (error && typeof error === 'object' && 'message' in error) {
+      const directMessage = (error as { message?: unknown }).message;
+      if (typeof directMessage === 'string' && directMessage.trim()) {
+        return directMessage;
+      }
+    }
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    return fallback;
+  };
   
   // Email validation
   const validateEmail = (email: string) => {
@@ -157,8 +177,10 @@ const ForgotPasswordPage = () => {
       toast.success('OTP sent to your email');
       setStage('otp');
       setOtpTimer(300); // 5 minutes timer
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to send OTP');
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'Failed to send OTP');
+      setErrors((prev) => ({ ...prev, email: message }));
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -181,8 +203,8 @@ const ForgotPasswordPage = () => {
       await authApi.verifyOtp(email, otpString);
       toast.success('OTP verified successfully');
       setStage('reset');
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'OTP verification failed';
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'OTP verification failed');
       setErrors({ ...errors, otp: message });
       toast.error(message);
     } finally {
@@ -217,8 +239,8 @@ const ForgotPasswordPage = () => {
       navigate('/login', { 
         state: { prefillEmail: email } 
       });
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Password reset failed');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Password reset failed'));
     } finally {
       setIsLoading(false);
     }
@@ -237,8 +259,8 @@ const ForgotPasswordPage = () => {
       await authApi.forgotPassword(email);
       toast.success('OTP resent to your email');
       setOtpTimer(300); // Reset to 5 minutes
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to resend OTP');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Failed to resend OTP'));
     } finally {
       setIsLoading(false);
     }
@@ -252,36 +274,44 @@ const ForgotPasswordPage = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+    <div className="h-[100dvh] overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 w-full max-w-md"
+        className="relative h-full w-full overflow-hidden bg-black"
       >
-        <div className="glass-card rounded-xl p-8">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-4 mb-6">
-              <img
-                src={logo}
-                alt="Styliste Couturier Logo"
-                className="w-22 h-14 object-contain"
-              />
-            </div>
-            <h2 className="text-2xl font-semibold mb-2">
-              {stage === 'email' && 'Reset Your Password'}
-              {stage === 'otp' && 'Verify OTP'}
-              {stage === 'reset' && 'Create New Password'}
-            </h2>
-            <p className="text-muted-foreground">
-              {stage === 'email' && 'Enter your email to receive a verification code'}
-              {stage === 'otp' && `Enter the 6-digit code sent to ${email}`}
-              {stage === 'reset' && 'Enter your new password'}
-            </p>
-          </div>
-          
-          {/* Progress Indicator */}
+        <img
+          src={forgotBackground}
+          alt="Forgot password background"
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ objectPosition: 'center' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/88 via-white/72 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/10" />
+
+        <div className="relative z-10 flex h-full items-center justify-center px-4 py-4 sm:px-5 sm:py-5">
+            <div className="w-full max-w-[430px] rounded-[18px] border border-white/30 bg-sage/80 p-3 shadow-[0_18px_30px_rgba(40,58,34,0.45)] backdrop-blur-md">
+              <div className="mb-3 flex items-center justify-center">
+                <img src={logo} alt="Styliste" className="h-11 w-80 object-contain" />
+              </div>
+
+              <div className="w-full rounded-[16px] border border-black/5 bg-white/95 p-4 shadow-[0_12px_22px_rgba(17,14,11,0.18)]">
+                {/* Header */}
+                <div className="mb-5 text-center">
+                  <h2 className="mb-1 text-2xl font-semibold text-neutral-900">
+                    {stage === 'email' && 'Reset Your Password'}
+                    {stage === 'otp' && 'Verify OTP'}
+                    {stage === 'reset' && 'Create New Password'}
+                  </h2>
+                  <p className="text-sm text-neutral-600">
+                    {stage === 'email' && 'Enter your email to receive a verification code'}
+                    {stage === 'otp' && `Enter the 6-digit code sent to ${email}`}
+                    {stage === 'reset' && 'Enter your new password'}
+                  </p>
+                </div>
+
+                {/* Progress Indicator */}
           <div className="flex items-center justify-between mb-8">
             {(['email', 'otp', 'reset'] as ForgotPasswordStage[]).map((s, index) => (
               <div key={s} className="flex items-center">
@@ -542,10 +572,12 @@ const ForgotPasswordPage = () => {
                 onClick={() => navigate('/')}
                 className="text-sm text-muted-foreground hover:text-foreground hover:underline"
               >
-                ← Back to Home
+                Back to home
               </button>
             </div>
           </div>
+              </div>
+            </div>
         </div>
       </motion.div>
     </div>
@@ -559,3 +591,4 @@ const stageIndex = (stage: ForgotPasswordStage): number => {
 };
 
 export default ForgotPasswordPage;
+

@@ -162,7 +162,8 @@ const footerLinks = {
   company: [
     { name: "About Us", href: "/about" },
     { name: "Our Process", href: "/services" },
-    { name: "Sustainability", href: "/sustainability" },
+    { name: "Testimonials", href: "/testimonials" },
+    {name: "Blog", href: "/blog"},
   ],
   support: [
     { name: "Contact Us", href: "/contact" },

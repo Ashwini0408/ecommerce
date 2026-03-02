@@ -7261,10 +7261,10 @@ const AdminUsers = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const offset = (page - 1) * rowsPerPage;
-        const res = await userApi.getCustomers(offset, rowsPerPage);
+        const currentPage = Math.max(0, page - 1);
+        const res = await userApi.getCustomers(currentPage, rowsPerPage);
         setUsers(res.content);
-        setTotalUsers(res.totalElements);
+        setTotalUsers(res.totalElements || res.total || res.content.length);
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || 
                             error.response?.data?.error || 
@@ -7341,10 +7341,14 @@ const AdminUsers = () => {
         return "bg-blue-100 text-blue-800";
       case "SHIPPED":
         return "bg-purple-100 text-purple-800";
+      case "OUT_FOR_DELIVERY":
+        return "bg-indigo-100 text-indigo-800";
       case "DELIVERED":
         return "bg-green-100 text-green-800";
       case "CANCELLED":
         return "bg-red-100 text-red-800";
+      case "RETURNED":
+        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -7353,12 +7357,15 @@ const AdminUsers = () => {
   // Get payment status color
   const getPaymentStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
+      case "COMPLETED":
       case "PAID":
         return "text-green-700";
       case "PENDING":
         return "text-yellow-700";
       case "FAILED":
         return "text-red-700";
+      case "REFUNDED":
+        return "text-blue-700";
       default:
         return "text-gray-700";
     }

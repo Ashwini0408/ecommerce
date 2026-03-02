@@ -13,12 +13,13 @@ import toast from 'react-hot-toast';
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import {formatINR } from "../../utils/currency";
-import type { Footer } from '../../components/layout/Footer';
+
 
 
 type AccountTab = 'overview' | 'orders' | 'profile' | 'appointments' | 'addresses';
 type OrderStatusFilter = 'ALL' | 'ON_THE_WAY' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
 type OrderTimeFilter = 'ANYTIME' | 'LAST_30_DAYS' | 'LAST_6_MONTHS' | 'LAST_YEAR';
+const RETURN_WINDOW_DAYS = 15;
 
 const UserDashboard = () => {
     const { user, isAuthenticated, isHydrated } = useSelector(
@@ -81,12 +82,17 @@ const UserDashboard = () => {
     Record<string, { images: File[]; videos: File[] }>
   >({});
   const [reviewIds, setReviewIds] = useState<Record<string, number>>({});
-  const [reviewExistingImages, setReviewExistingImages] = useState<
-    Record<string, { url: string; mediaId?: number }[]>
-  >({});
-  const [reviewMediaIdsToDelete, setReviewMediaIdsToDelete] = useState<Record<string, number[]>>(
+  const [reviewExistingImages, setReviewExistingImages] = useState<Record<string, string[]>>({});
+  const [reviewImagesToDelete, setReviewImagesToDelete] = useState<Record<string, string[]>>(
     {}
   );
+  const [cancelModal, setCancelModal] = useState<{
+    order: Order;
+    mode: 'FULL' | 'PARTIAL';
+    reason: string;
+    selectedItemIds: number[];
+  } | null>(null);
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
   const fallbackImageBaseUrl = apiBaseUrl
     ? apiBaseUrl.replace(/\/api\/?$/i, '')
@@ -109,22 +115,12 @@ const UserDashboard = () => {
     reviewAttachments[key] || { images: [], videos: [] };
   const getReviewId = (key: string) => reviewIds[key];
   const getReviewExistingImages = (key: string) => reviewExistingImages[key] || [];
-  const getReviewMediaIdsToDelete = (key: string) => reviewMediaIdsToDelete[key] || [];
-
-  const normalizeMediaPath = (value: string) =>
-    value.replace(/^https?:\/\/[^/]+/i, '').replace(/^\//, '');
+  const getReviewImagesToDelete = (key: string) => reviewImagesToDelete[key] || [];
 
   const mapExistingReviewImages = (review: {
     imageUrls?: string[];
     media?: { id: number; url: string; mediaType: 'IMAGE' | 'VIDEO' }[];
   }) => {
-    const mediaByPath = new Map<string, number>();
-    (review.media || [])
-      .filter((m) => m.mediaType === 'IMAGE')
-      .forEach((m) => {
-        mediaByPath.set(normalizeMediaPath(m.url), m.id);
-      });
-
     const imageUrls =
       review.imageUrls && review.imageUrls.length > 0
         ? review.imageUrls
@@ -132,10 +128,7 @@ const UserDashboard = () => {
             .filter((m) => m.mediaType === 'IMAGE')
             .map((m) => m.url);
 
-    return imageUrls.map((url) => ({
-      url,
-      mediaId: mediaByPath.get(normalizeMediaPath(url)),
-    }));
+    return imageUrls;
   };
 
   const updateReviewDraft = (
@@ -188,17 +181,17 @@ const UserDashboard = () => {
 
   const removeExistingReviewImage = (key: string, index: number) => {
     const current = getReviewExistingImages(key);
-    const target = current[index];
+    const targetUrl = current[index];
 
     setReviewExistingImages((prev) => ({
       ...prev,
       [key]: (prev[key] || []).filter((_, idx) => idx !== index),
     }));
 
-    if (target?.mediaId) {
-      setReviewMediaIdsToDelete((prev) => ({
+    if (targetUrl) {
+      setReviewImagesToDelete((prev) => ({
         ...prev,
-        [key]: Array.from(new Set([...(prev[key] || []), target.mediaId as number])),
+        [key]: Array.from(new Set([...(prev[key] || []), targetUrl])),
       }));
     }
   };
@@ -258,7 +251,7 @@ const UserDashboard = () => {
         ...prev,
         [key]: mapExistingReviewImages(existing),
       }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
         [key]: {
@@ -269,7 +262,7 @@ const UserDashboard = () => {
       }));
     } else {
       setReviewExistingImages((prev) => ({ ...prev, [key]: [] }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [key]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [key]: [] }));
     }
   };
 
@@ -296,7 +289,7 @@ const UserDashboard = () => {
     setReviewSubmitting((prev) => ({ ...prev, [reviewKey]: true }));
     try {
       const attachments = getReviewAttachments(reviewKey);
-      const mediaIdsToDelete = getReviewMediaIdsToDelete(reviewKey);
+      const imagesToDelete = getReviewImagesToDelete(reviewKey);
       const knownReviewId = item.reviewId || getReviewId(reviewKey);
       const existing = await fetchExistingReview(orderId, item.productId, knownReviewId);
       const reviewId = existing?.id || getReviewId(reviewKey);
@@ -305,16 +298,16 @@ const UserDashboard = () => {
       }
 
       let persistedReviewId: number | null = null;
-      let persistedImages: { url: string; mediaId?: number }[] = [];
+      let persistedImages: string[] = [];
       if (reviewId) {
         const updated = await reviewApi.updateReview(
           reviewId,
           {
-            userId: user.id,
             rating: draft.rating,
             title: draft.title.trim() || item.productName || 'Review',
             body: draft.body.trim(),
-            ...(mediaIdsToDelete.length > 0 ? { mediaIdsToDelete } : {}),
+            imagesToDelete,
+            videosToDelete: [],
           },
           attachments.images,
           attachments.videos
@@ -325,7 +318,6 @@ const UserDashboard = () => {
       } else {
         const created = await reviewApi.createReview(
           {
-            userId: user.id,
             productId: item.productId,
             orderId,
             rating: draft.rating,
@@ -357,7 +349,7 @@ const UserDashboard = () => {
         ...prev,
         [reviewKey]: persistedImages,
       }));
-      setReviewMediaIdsToDelete((prev) => ({ ...prev, [reviewKey]: [] }));
+      setReviewImagesToDelete((prev) => ({ ...prev, [reviewKey]: [] }));
       setReviewDrafts((prev) => ({
         ...prev,
         [reviewKey]: {
@@ -401,12 +393,12 @@ const UserDashboard = () => {
     }, [location.state, activeTab]);
 
     useEffect(() => {
-      const isModalOpen = isOrderFilterOpen || reviewModal !== null;
+      const isModalOpen = isOrderFilterOpen || reviewModal !== null || cancelModal !== null;
       document.body.style.overflow = isModalOpen ? 'hidden' : '';
       return () => {
         document.body.style.overflow = '';
       };
-    }, [isOrderFilterOpen, reviewModal]);
+    }, [isOrderFilterOpen, reviewModal, cancelModal]);
 
     useEffect(() => {
       if (!user?.id || orders.length === 0) return;
@@ -423,9 +415,9 @@ const UserDashboard = () => {
 
       let active = true;
       const preloadReviews = async () => {
-        const nextReviewIds: Record<string, number> = {};
-        const nextDrafts: Record<string, { rating: number; title: string; body: string }> = {};
-        const nextExistingImages: Record<string, { url: string; mediaId?: number }[]> = {};
+      const nextReviewIds: Record<string, number> = {};
+      const nextDrafts: Record<string, { rating: number; title: string; body: string }> = {};
+      const nextExistingImages: Record<string, string[]> = {};
 
       await Promise.all(
         deliveredItems.map(async ({ orderId, item, key }) => {
@@ -480,7 +472,7 @@ const UserDashboard = () => {
         city: '',
         state: '',
         postalCode: '',
-        country: 'USA',
+        country: '',
         contactPhone: profile?.phone || user?.phone || '',
         isDefault: false,
         ...overrides,
@@ -504,7 +496,7 @@ const UserDashboard = () => {
     setLoading(true);
     try {
       const [ordersRes, appointmentsRes] = await Promise.all([
-        orderApi.getUserOrders(user.id, 0, 10),
+        orderApi.getMyOrders(0, 10),
         appointmentApi.getUserAppointments(user.id, 0, 10),
       ]);
       setOrders(ordersRes.content);
@@ -709,7 +701,7 @@ const UserDashboard = () => {
       city: address.city,
       state: address.state,
       postalCode: address.postalCode,
-      country: address.country || 'USA',
+      country: address.country || '',
       contactPhone: address.contactPhone || profile?.phone || user?.phone || '',
       isDefault: address.isDefault,
     });
@@ -785,6 +777,7 @@ const UserDashboard = () => {
   PENDING: 'bg-yellow-500/20 text-yellow-600',
   PROCESSING: 'bg-blue-500/20 text-blue-600',
   SHIPPED: 'bg-purple-500/20 text-purple-600',
+  OUT_FOR_DELIVERY: 'bg-indigo-500/20 text-indigo-600',
   DELIVERED: 'bg-green-500/20 text-green-600',
   CANCELLED: 'bg-red-500/20 text-red-600',
   RETURNED: 'bg-gray-500/20 text-gray-600',
@@ -792,6 +785,156 @@ const UserDashboard = () => {
   COMPLETED: 'bg-green-500/20 text-green-600',
 };
     return colors[status] || 'bg-dark-700 text-dark-300';
+  };
+
+  const getApiErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object') {
+      const maybe = error as { message?: unknown; error?: unknown };
+      if (typeof maybe.message === 'string' && maybe.message.trim()) {
+        return maybe.message;
+      }
+      if (typeof maybe.error === 'string' && maybe.error.trim()) {
+        return maybe.error;
+      }
+    }
+    return fallback;
+  };
+
+  const isOrderCancellable = (status: string) =>
+    status === 'PENDING' || status === 'PROCESSING';
+
+  const getItemStatus = (item: Order['items'][number]) =>
+    ((item as unknown as { itemStatus?: string }).itemStatus || 'ACTIVE').toUpperCase();
+
+  const getCancellableItems = (order: Order) =>
+    (order.items || []).filter((item) => getItemStatus(item) === 'ACTIVE');
+
+  const getItemStatusBadgeColor = (status: string) => {
+    const colors: Record<string, string> = {
+      ACTIVE: 'bg-gray-100 text-gray-700',
+      CANCELLED: 'bg-red-100 text-red-700',
+      RETURNED: 'bg-orange-100 text-orange-700',
+      RETURN_REQUESTED: 'bg-yellow-100 text-yellow-700',
+      REQUESTED: 'bg-yellow-100 text-yellow-700',
+      APPROVED: 'bg-blue-100 text-blue-700',
+      PICKED_UP: 'bg-purple-100 text-purple-700',
+      REFUND_INITIATED: 'bg-amber-100 text-amber-700',
+      REFUNDED: 'bg-green-100 text-green-700',
+      REJECTED: 'bg-red-100 text-red-700',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
+  };
+
+  const getOrderDeliveredAt = (order: Order): Date | null => {
+    const deliveredTimelineEvent = (order.timeline || []).find(
+      (event) => event.status === 'DELIVERED'
+    );
+    const candidateValues = [
+      deliveredTimelineEvent?.timestamp,
+      (order as unknown as { deliveredAt?: string }).deliveredAt,
+      order.updatedAt,
+      order.createdAt,
+    ];
+
+    for (const value of candidateValues) {
+      if (!value) continue;
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    return null;
+  };
+
+  const getItemReturnWindowEnd = (order: Order, item: Order['items'][number]) => {
+    const explicitWindowEnd = item.returnEligibleUntil || item.returnWindowEndsAt;
+    if (explicitWindowEnd) {
+      const parsed = new Date(explicitWindowEnd);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    const deliveredAt = getOrderDeliveredAt(order);
+    if (!deliveredAt) return null;
+    return new Date(
+      deliveredAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    );
+  };
+
+  const canRequestReturnFromDashboard = (
+    order: Order,
+    item: Order['items'][number]
+  ) =>
+    order.status === 'DELIVERED' &&
+    getItemStatus(item) === 'ACTIVE' &&
+    Number(item.returnedQuantity || 0) < Number(item.quantity || 0) &&
+    (() => {
+      const windowEnd = getItemReturnWindowEnd(order, item);
+      if (!windowEnd) return true;
+      return Date.now() <= windowEnd.getTime();
+    })();
+
+  const openCancelModal = (order: Order) => {
+    setCancelModal({
+      order,
+      mode: 'FULL',
+      reason: '',
+      selectedItemIds: [],
+    });
+  };
+
+  const closeCancelModal = () => {
+    if (cancelSubmitting) return;
+    setCancelModal(null);
+  };
+
+  const toggleCancelItem = (orderItemId: number) => {
+    setCancelModal((prev) => {
+      if (!prev) return prev;
+      const exists = prev.selectedItemIds.includes(orderItemId);
+      return {
+        ...prev,
+        selectedItemIds: exists
+          ? prev.selectedItemIds.filter((id) => id !== orderItemId)
+          : [...prev.selectedItemIds, orderItemId],
+      };
+    });
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancelModal) return;
+    if (!isOrderCancellable(cancelModal.order.status)) {
+      toast.error('Order cannot be cancelled after it has been shipped');
+      return;
+    }
+    const reason = cancelModal.reason.trim();
+    if (!reason) {
+      toast.error('Please enter a cancellation reason');
+      return;
+    }
+
+    if (cancelModal.mode === 'PARTIAL' && cancelModal.selectedItemIds.length === 0) {
+      toast.error('Please select at least one item to cancel');
+      return;
+    }
+
+    setCancelSubmitting(true);
+    try {
+      await orderApi.cancelOrder(cancelModal.order.id, {
+        reason,
+        orderItemIds:
+          cancelModal.mode === 'PARTIAL' ? cancelModal.selectedItemIds : undefined,
+      });
+      toast.success('Order cancellation processed successfully');
+      setCancelModal(null);
+      await fetchUserData();
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to cancel order'));
+    } finally {
+      setCancelSubmitting(false);
+    }
   };
 
   const isActive = profile?.isActive ?? user?.isActive ?? true;
@@ -840,7 +983,7 @@ const UserDashboard = () => {
       icon: FiCalendar,
       meta: `${profile?.appointmentCount ?? appointments.length} booked`,
     },
-  ] as const;
+  ] ;
 
   const orderStatusLabels: Record<OrderStatusFilter, string> = {
     ALL: 'All',
@@ -863,7 +1006,7 @@ const UserDashboard = () => {
       orderStatusFilter === 'ALL'
         ? true
         : orderStatusFilter === 'ON_THE_WAY'
-        ? ['PROCESSING', 'SHIPPED', 'PENDING'].includes(order.status)
+        ? ['PENDING', 'PROCESSING', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(order.status)
         : order.status === orderStatusFilter;
 
     const orderDate = new Date(order.createdAt);
@@ -895,10 +1038,6 @@ const UserDashboard = () => {
       <Navbar />
 
       <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-display font-bold text-dark-900 mb-2">My Account</h1>
-          <p className="text-dark-600">Manage your profile, orders, addresses, and appointments</p>
-        </div>
 
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
@@ -909,7 +1048,7 @@ const UserDashboard = () => {
                   key={card.title}
                   whileHover={{ y: -3 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveTab(card.id)}
+                 onClick={() => setActiveTab(card.id as AccountTab)}
                   className="group text-left rounded-2xl border border-[#E6E2D6] bg-white p-6 shadow-sm transition-all hover:shadow-md"
                 >
                   <div className="flex items-start gap-4">
@@ -1005,6 +1144,9 @@ const UserDashboard = () => {
                     <div className="space-y-4">
                       {filteredOrders.map((order) => {
                         const firstItem = order.items[0];
+                        const cancelledItems = (order.items || []).filter(
+                          (item) => getItemStatus(item) === 'CANCELLED'
+                        );
                         const previewImage = getOrderImageUrl(firstItem?.productImage);
                         const orderDate = new Date(order.createdAt);
                         const isValidDate = !Number.isNaN(orderDate.getTime());
@@ -1042,6 +1184,17 @@ const UserDashboard = () => {
                                     >
                                       {order.status.replace(/_/g, ' ')}
                                     </span>
+                                    {order.paymentMethod && (
+                                      <span
+                                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                                          order.paymentMethod === 'RAZORPAY'
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-amber-100 text-amber-700'
+                                        }`}
+                                      >
+                                        {order.paymentMethod === 'RAZORPAY' ? 'Paid via Razorpay' : 'Pay on Delivery'}
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-sm font-semibold text-dark-900">
                                     {firstItem?.productName || 'Order items'}
@@ -1051,18 +1204,57 @@ const UserDashboard = () => {
                                     <span className="font-semibold text-dark-700">
                                       {formatINR(order.totalAmount)}
                                     </span>
+                                    {order.transactionId && (
+                                      <span className="px-2 py-1 rounded-full bg-[#F2F0E8] text-dark-600 font-semibold">
+                                        {order.transactionId === 'COD_PENDING'
+                                          ? 'Pay on Delivery'
+                                          : `Ref: ${order.transactionId.substring(0, 12)}...`}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => navigate(`/orders/${order.id}`)}
-                                className="h-9 w-9 rounded-full border border-[#E6E2D6] text-dark-500 hover:text-[#6B7D60] hover:border-[#6B7D60] flex items-center justify-center"
-                                aria-label="View order details"
-                              >
-                                <FiChevronRight size={18} />
-                              </button>
+                              <div className="flex items-center gap-2">
+                                {isOrderCancellable(order.status) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openCancelModal(order)}
+                                    className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/orders/${order.id}`)}
+                                  className="h-9 w-9 rounded-full border border-[#E6E2D6] text-dark-500 hover:text-[#6B7D60] hover:border-[#6B7D60] flex items-center justify-center"
+                                  aria-label="View order details"
+                                >
+                                  <FiChevronRight size={18} />
+                                </button>
+                              </div>
                             </div>
+
+                            {cancelledItems.length > 0 && (
+                              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-700">
+                                  Cancelled Item{cancelledItems.length > 1 ? 's' : ''}
+                                </p>
+                                <div className="mt-2 space-y-1">
+                                  {cancelledItems.map((item) => (
+                                    <div
+                                      key={`cancelled-${item.id}`}
+                                      className="flex items-center justify-between gap-3 text-xs"
+                                    >
+                                      <span className="text-red-700 truncate">{item.productName}</span>
+                                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">
+                                        Cancelled
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
                             {order.status === 'DELIVERED' && order.items.length > 0 && (
                               <div className="mt-4 border-t border-[#E6E2D6] pt-4 space-y-3">
@@ -1071,6 +1263,8 @@ const UserDashboard = () => {
                                   const reviewDraft = getReviewDraft(reviewKey);
                                   const existingReviewId = getReviewId(reviewKey);
                                   const itemImage = getOrderImageUrl(item.productImage);
+                                  const itemStatus = getItemStatus(item);
+                                  const isItemCancelled = itemStatus === 'CANCELLED';
                                   return (
                                     <div
                                       key={item.id}
@@ -1097,39 +1291,63 @@ const UserDashboard = () => {
                                               ? ` · Color: ${item.selectedColor}`
                                               : ''}
                                           </p>
+                                          {itemStatus !== 'ACTIVE' && (
+                                            <span
+                                              className={`inline-flex mt-2 px-2 py-0.5 rounded-full text-[11px] font-semibold ${getItemStatusBadgeColor(itemStatus)}`}
+                                            >
+                                              {itemStatus.replace(/_/g, ' ')}
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
                                       <div className="flex flex-wrap items-center gap-3">
-                                        <div className="flex items-center gap-1">
-                                          {[1, 2, 3, 4, 5].map((star) => (
+                                        {isItemCancelled ? (
+                                          <span className="text-xs font-semibold text-red-600">
+                                            This item was cancelled
+                                          </span>
+                                        ) : (
+                                          <>
+                                            <div className="flex items-center gap-1">
+                                              {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                  key={star}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    updateReviewDraft(reviewKey, { rating: star });
+                                                    openReviewModal(order.id, item);
+                                                  }}
+                                                  className="p-1"
+                                                  aria-label={`Rate ${star} stars`}
+                                                >
+                                                  <FiStar
+                                                    size={16}
+                                                    className={
+                                                      reviewDraft.rating >= star
+                                                        ? 'text-[#6B7D60] fill-[#6B7D60]'
+                                                        : 'text-dark-300'
+                                                    }
+                                                  />
+                                                </button>
+                                              ))}
+                                            </div>
+                                            {canRequestReturnFromDashboard(order, item) && (
+                                              <button
+                                                type="button"
+                                                onClick={() => navigate(`/orders/${order.id}`)}
+                                                className="text-xs font-semibold text-blue-600 hover:underline"
+                                              >
+                                                Return Item
+                                              </button>
+                                            )}
                                             <button
-                                              key={star}
                                               type="button"
-                                              onClick={() => {
-                                                updateReviewDraft(reviewKey, { rating: star });
-                                                openReviewModal(order.id, item);
-                                              }}
-                                              className="p-1"
-                                              aria-label={`Rate ${star} stars`}
+                                              onClick={() => openReviewModal(order.id, item)}
+                                              className="inline-flex items-center rounded-md border border-[#D5DDCF] px-3 py-1.5 text-xs font-semibold text-[#6B7D60] transition-colors hover:bg-[#F3F6F1]"
                                             >
-                                              <FiStar
-                                                size={16}
-                                                className={
-                                                  reviewDraft.rating >= star
-                                                    ? 'text-[#6B7D60] fill-[#6B7D60]'
-                                                    : 'text-dark-300'
-                                                }
-                                              />
+                                              {existingReviewId ? 'Edit Review' : 'Write Review'}
                                             </button>
-                                          ))}
-                                        </div>
-                                        <button
-                                          type="button"
-                                          onClick={() => openReviewModal(order.id, item)}
-                                          className="text-xs font-semibold text-[#6B7D60] hover:underline"
-                                        >
-                                          {existingReviewId ? 'Edit Review' : 'Write Review'}
-                                        </button>
+                                          </>
+                                        )}
                                       </div>
                                     </div>
                                   );
@@ -1231,6 +1449,124 @@ const UserDashboard = () => {
                 </div>
               )}
 
+              {cancelModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                  <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-dark-900">Cancel Order</h3>
+                      <button
+                        type="button"
+                        onClick={closeCancelModal}
+                        className="text-dark-500 hover:text-dark-700"
+                        disabled={cancelSubmitting}
+                      >
+                        &times;
+                      </button>
+                    </div>
+
+                    <p className="mt-1 text-sm text-dark-500">
+                      Order #{cancelModal.order.orderNumber || cancelModal.order.id}
+                    </p>
+
+                    <div className="mt-4">
+                      <p className="text-sm font-semibold text-dark-700">Cancellation Type</p>
+                      <div className="mt-2 flex gap-3">
+                        <label className="flex items-center gap-2 text-sm text-dark-600">
+                          <input
+                            type="radio"
+                            checked={cancelModal.mode === 'FULL'}
+                            onChange={() =>
+                              setCancelModal((prev) =>
+                                prev
+                                  ? { ...prev, mode: 'FULL', selectedItemIds: [] }
+                                  : prev
+                              )
+                            }
+                            className="accent-[#6B7D60]"
+                          />
+                          Full Order
+                        </label>
+                        <label className="flex items-center gap-2 text-sm text-dark-600">
+                          <input
+                            type="radio"
+                            checked={cancelModal.mode === 'PARTIAL'}
+                            onChange={() =>
+                              setCancelModal((prev) =>
+                                prev ? { ...prev, mode: 'PARTIAL' } : prev
+                              )
+                            }
+                            className="accent-[#6B7D60]"
+                          />
+                          Specific Items
+                        </label>
+                      </div>
+                    </div>
+
+                    {cancelModal.mode === 'PARTIAL' && (
+                      <div className="mt-4 max-h-52 overflow-y-auto rounded-xl border border-[#E6E2D6] p-3 space-y-2">
+                        {getCancellableItems(cancelModal.order).length === 0 ? (
+                          <p className="text-sm text-dark-500">No cancellable items found.</p>
+                        ) : (
+                          getCancellableItems(cancelModal.order).map((item) => (
+                            <label
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 rounded-lg border border-[#E6E2D6] px-3 py-2"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-dark-900 truncate">
+                                  {item.productName}
+                                </p>
+                                <p className="text-xs text-dark-500">Qty: {item.quantity}</p>
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={cancelModal.selectedItemIds.includes(item.id)}
+                                onChange={() => toggleCancelItem(item.id)}
+                                className="accent-[#6B7D60]"
+                              />
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      <label className="text-sm font-semibold text-dark-700">Reason</label>
+                      <textarea
+                        rows={3}
+                        value={cancelModal.reason}
+                        onChange={(e) =>
+                          setCancelModal((prev) =>
+                            prev ? { ...prev, reason: e.target.value } : prev
+                          )
+                        }
+                        placeholder="Please tell us why you want to cancel this order"
+                        className="mt-2 input-field resize-none"
+                      />
+                    </div>
+
+                    <div className="mt-6 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={closeCancelModal}
+                        className="btn-ghost flex-1 border border-[#E6E2D6]"
+                        disabled={cancelSubmitting}
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelOrder}
+                        className="btn-primary flex-1 disabled:opacity-60"
+                        disabled={cancelSubmitting}
+                      >
+                        {cancelSubmitting ? 'Processing...' : 'Confirm Cancellation'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {reviewModal &&
                 (() => {
                   const reviewKey = getReviewKey(
@@ -1322,15 +1658,15 @@ const UserDashboard = () => {
                               />
                               <FiImage size={18} className="text-dark-400" />
                             </label>
-                            {existingImages.map((image, index) => (
+                            {existingImages.map((imageUrl, index) => (
                               <div
-                                key={`existing-${image.url}-${index}`}
+                                key={`existing-${imageUrl}-${index}`}
                                 className="relative h-14 w-14 overflow-visible"
                                 title="Already uploaded"
                               >
                                 <div className="h-full w-full rounded-lg overflow-hidden border border-[#E6E2D6] bg-white">
                                   <img
-                                    src={getOrderImageUrl(image.url)}
+                                    src={getOrderImageUrl(imageUrl)}
                                     alt="Existing review"
                                     className="h-full w-full object-cover"
                                   />
@@ -1390,7 +1726,7 @@ const UserDashboard = () => {
                               handleSubmitReview(reviewModal.orderId, reviewModal.item)
                             }
                             disabled={isSubmitting}
-                            className="btn-primary disabled:opacity-50"
+                            className="btn-primary px-4 disabled:opacity-50"
                           >
                             {isSubmitting
                               ? 'Submitting...'

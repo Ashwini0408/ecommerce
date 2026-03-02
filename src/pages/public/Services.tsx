@@ -404,6 +404,7 @@ import bridalWearImg from "../../assets/Bridal Wear.jpg";
 import alterationsImg from "../../assets/Alterations & Repairs.jpg";
 import themeOutfitsImg from "../../assets/Theme-Based Outfits.jpg";
 import sareeTransformImg from "../../assets/Upscaling Old Sarees.jpg";
+import heroServices from "../../assets/hero-services.jpg";
 
 const services = [
   {
@@ -485,11 +486,11 @@ const Services = () => {
         <Navbar />
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80"
+            src={heroServices}
             alt="Styliste Couturier services"
-            className="w-full h-full object-cover opacity-10"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
         </div>
         <div className="container mx-auto px-6 relative z-10">
           <div className="max-w-3xl">

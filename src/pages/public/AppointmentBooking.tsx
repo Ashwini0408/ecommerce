@@ -762,16 +762,22 @@
 
 
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Clock, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import bookingApi from "../../api/BookingApi";
-import { useEffect } from "react";
+import heroAppointment from "../../assets/hero-appointment.jpg";
 
 export default function AppointmentBooking() {
+  type LoggedInUser = {
+    name?: string;
+    email?: string;
+    phone?: string;
+  };
+
   const [selectedService, setSelectedService] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -796,6 +802,42 @@ export default function AppointmentBooking() {
     email: "",
     phone: ""
   });
+  const serviceSectionRef = useRef<HTMLDivElement>(null);
+  const dateSectionRef = useRef<HTMLDivElement>(null);
+  const timeSectionRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+
+  const scrollToInvalidField = (field: keyof typeof formErrors) => {
+    const targetMap: Record<keyof typeof formErrors, HTMLElement | null> = {
+      service: serviceSectionRef.current,
+      date: dateSectionRef.current,
+      time: timeSectionRef.current,
+      name: nameInputRef.current,
+      email: emailInputRef.current,
+      phone: phoneInputRef.current,
+    };
+
+    const target = targetMap[field];
+    if (!target) return;
+
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - 110;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+
+    window.setTimeout(() => {
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLButtonElement
+      ) {
+        target.focus({ preventScroll: true });
+        return;
+      }
+      const firstButton = target.querySelector("button");
+      firstButton?.focus({ preventScroll: true });
+    }, 250);
+  };
 
   const convertTo24Hour = (timeStr: string) => {
     const time = new Date(`1970-01-01 ${timeStr}`);
@@ -803,7 +845,14 @@ export default function AppointmentBooking() {
   };
 
   const storedUser = localStorage.getItem("user");
-  const loggedInUser = storedUser ? JSON.parse(storedUser) : null;
+  const loggedInUser = useMemo<LoggedInUser | null>(() => {
+    if (!storedUser) return null;
+    try {
+      return JSON.parse(storedUser) as LoggedInUser;
+    } catch {
+      return null;
+    }
+  }, [storedUser]);
 
   const convertTo12Hour = (time24: string) => {
     const [h, m] = time24.split(":").map(Number);
@@ -840,8 +889,9 @@ export default function AppointmentBooking() {
       day: "numeric",
     });
 
-const handleChange = (e: any) => {
+const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
   const { name, value } = e.target;
+  const fieldName = name as keyof typeof formData;
 
   if (name === "phone") {
     const numericValue = value.replace(/\D/g, ""); // Allow only digits
@@ -849,7 +899,7 @@ const handleChange = (e: any) => {
       setFormData((prev) => ({ ...prev, phone: numericValue }));
     }
   } else {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [fieldName]: value }));
   }
 
   // Clear error when user starts typing
@@ -881,55 +931,57 @@ const validatePhone = (phone: string) => {
     };
 
     let isValid = true;
+    let firstInvalidField: keyof typeof errors | null = null;
+
+    const markInvalid = (field: keyof typeof errors, message: string) => {
+      errors[field] = message;
+      if (!firstInvalidField) firstInvalidField = field;
+      isValid = false;
+    };
 
     // Validate service
     if (!selectedService.trim()) {
-      errors.service = "Please select a service";
-      isValid = false;
+      markInvalid("service", "Please select a service");
     }
 
     // Validate date
     if (!selectedDate.trim()) {
-      errors.date = "Please select a date";
-      isValid = false;
+      markInvalid("date", "Please select a date");
     }
 
     // Validate time
     if (!selectedTime.trim()) {
-      errors.time = "Please select a time";
-      isValid = false;
+      markInvalid("time", "Please select a time");
     }
 
     // Validate name
     if (!formData.name.trim()) {
-      errors.name = "Name is required";
-      isValid = false;
+      markInvalid("name", "Name is required");
     }
 
     // Validate email
     if (!formData.email.trim()) {
-      errors.email = "Email is required";
-      isValid = false;
+      markInvalid("email", "Email is required");
     } else if (!validateEmail(formData.email)) {
-      errors.email = "Please enter a valid email address";
-      isValid = false;
+      markInvalid("email", "Please enter a valid email address");
     }
 
     // Validate phone
     if (!formData.phone.trim()) {
-      errors.phone = "Phone number is required";
-      isValid = false;
+      markInvalid("phone", "Phone number is required");
     } else if (!validatePhone(formData.phone)) {
-      errors.phone = "Phone number must be exactly 10 digits";
-      isValid = false;
+      markInvalid("phone", "Phone number must be exactly 10 digits");
     }
 
     setFormErrors(errors);
+    if (firstInvalidField) {
+      window.requestAnimationFrame(() => scrollToInvalidField(firstInvalidField!));
+    }
     return isValid;
   };
 
   // ---------------- SUBMIT → API CALL ----------------
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate all fields before submission
@@ -974,10 +1026,14 @@ const validatePhone = (phone: string) => {
       setFormData({ name: "", email: "", phone: "", notes: "" });
       setFormErrors({ service: "", date: "", time: "", name: "", email: "", phone: "" });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
+      const message =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
       toast.error(
-        error?.response?.data?.message || "Failed to book appointment"
+        message || "Failed to book appointment"
       );
     } finally {
       setLoading(false);
@@ -1005,15 +1061,18 @@ const validatePhone = (phone: string) => {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (loggedInUser) {
-      setFormData({
+    if (!loggedInUser) return;
+    setFormData((prev) => {
+      const isAlreadyEdited = Boolean(prev.name || prev.email || prev.phone || prev.notes);
+      if (isAlreadyEdited) return prev;
+      return {
+        ...prev,
         name: loggedInUser.name || "",
         email: loggedInUser.email || "",
         phone: loggedInUser.phone || "",
-        notes: "",
-      });
-    }
-  }, []);
+      };
+    });
+  }, [loggedInUser]);
 
   useEffect(() => {
     const loadServices = async () => {
@@ -1021,7 +1080,7 @@ const validatePhone = (phone: string) => {
         setServicesLoading(true);
         const data = await bookingApi.getAppointmentTypes();
         setServices(data);
-      } catch (err) {
+      } catch {
         toast.error("Failed to load services");
       } finally {
         setServicesLoading(false);
@@ -1059,30 +1118,59 @@ const validatePhone = (phone: string) => {
 
   return (
     <div>
-      {/* HEADER */}
-      <section className="py-20 md:py-32 border-b">
+      {/* Hero Section */}
+      <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
         <Navbar />
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <p className="text-[#6E9F7D] tracking-[0.3em] uppercase text-xs mb-4">
-            Personal Service
-          </p>
+        <div className="absolute inset-0">
+          <img
+            src={heroAppointment}
+            alt="Book Appointment"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
+        </div>
+        <div className="absolute inset-0 z-10 flex items-center px-6 pt-20">
+          <div className="container mx-auto">
+            <div className="max-w-3xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-4 mb-6"
+            >
+              <div className="w-8 h-px bg-primary-foreground/60" />
+              <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                Personal Service
+              </p>
+            </motion.div>
 
-          <h1 className="font-serif text-5xl md:text-7xl mb-6">
-            Book an Appointment
-          </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+            >
+              Book an Appointment
+            </motion.h1>
 
-          <p className="text-gray-500 max-w-xl mx-auto">
-            Experience personalized styling services at our flagship boutique.
-          </p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-primary-foreground/80 text-lg leading-relaxed max-w-2xl"
+            >
+              Experience personalized styling services at our flagship boutique.
+            </motion.p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* FORM */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6">
-          <form onSubmit={handleSubmit} className="space-y-16">
+          <form onSubmit={handleSubmit} noValidate className="space-y-16">
             {/* SERVICE SELECT */}
-            <div>
+            <div ref={serviceSectionRef}>
               <h2 className="font-serif text-2xl mb-8">Select Service *</h2>
               {formErrors.service && (
                 <p className="text-red-500 text-sm mb-2">{formErrors.service}</p>
@@ -1121,7 +1209,7 @@ const validatePhone = (phone: string) => {
             </div>
 
             {/* DATE */}
-            <div>
+            <div ref={dateSectionRef}>
               <h2 className="font-serif text-2xl mb-8">Select Date *</h2>
               {formErrors.date && (
                 <p className="text-red-500 text-sm mb-2">{formErrors.date}</p>
@@ -1150,7 +1238,7 @@ const validatePhone = (phone: string) => {
             </div>
 
             {/* TIME */}
-            <div>
+            <div ref={timeSectionRef}>
               <h2 className="font-serif text-2xl mb-8">Select Time *</h2>
               {formErrors.time && (
                 <p className="text-red-500 text-sm mb-2">{formErrors.time}</p>
@@ -1192,6 +1280,7 @@ const validatePhone = (phone: string) => {
                     Full Name *
                   </label>
                   <input
+                    ref={nameInputRef}
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
@@ -1217,6 +1306,7 @@ const validatePhone = (phone: string) => {
                     Email *
                   </label>
                   <input
+                    ref={emailInputRef}
                     name="email"
                     type="email"
                     value={formData.email}
@@ -1243,6 +1333,7 @@ const validatePhone = (phone: string) => {
                     Phone *
                   </label>
                   <input
+                    ref={phoneInputRef}
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}

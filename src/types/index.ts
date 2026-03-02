@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { Key, ReactNode } from "react";
 
 // ==================== USER & AUTH ====================
 export interface User {
@@ -76,6 +76,8 @@ export interface UpdateProductRequest extends Partial<CreateProductRequest> {
 export interface ProductFilterRequest {
   category?: string;
   subcategory?: string;
+  sizes?: string[];
+  colors?: string[];
   minPrice?: number;
   maxPrice?: number;
   searchQuery?: string;
@@ -86,16 +88,16 @@ export interface ProductFilterRequest {
 }
 
 export interface PaginatedResponse<T> {
-  data: boolean;
-  total: number;
-  orders(orders: any): unknown;
   content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  first: boolean;
-  last: boolean;
+  totalElements?: number;
+  totalPages?: number;
+  size?: number;
+  number?: number;
+  first?: boolean;
+  last?: boolean;
+  total?: number;
+  data?: T[];
+  orders?: T[];
 }
 
 // ==================== CART ====================
@@ -124,6 +126,46 @@ export interface OrderItem {
   selectedSize?: string;
   selectedColor?: string;
   reviewId?: number;
+  itemStatus?: 'ACTIVE' | 'CANCELLED' | 'RETURN_REQUESTED' | 'RETURNED';
+  returnedQuantity?: number;
+  returnStatus?: ReturnStatus;
+  returnWindowEndsAt?: string;
+  returnEligibleUntil?: string;
+}
+
+export type ReturnStatus =
+  | 'REQUESTED'
+  | 'APPROVED'
+  | 'PICKED_UP'
+  | 'REFUND_INITIATED'
+  | 'REFUNDED'
+  | 'REJECTED';
+
+export interface ReturnTimelineEvent {
+  status: string;
+  message: string;
+  timestamp: string;
+}
+
+export interface ReturnRequest {
+  id: number;
+  orderId?: number;
+  orderItemId: number;
+  productId?: number;
+  quantity?: number;
+  requestedQuantity?: number;
+  remainingQuantity?: number;
+  returnableQuantity?: number;
+  returnedQuantity?: number;
+  productName?: string;
+  productImage?: string;
+  reason: string;
+  status: ReturnStatus;
+  refundAmount?: number;
+  proofImageUrls?: string[];
+  adminComment?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Order {
@@ -133,15 +175,31 @@ export interface Order {
   orderNumber: number;
   id: number;
   userId: number;
-  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
+  status:
+    | 'PENDING'
+    | 'PROCESSING'
+    | 'SHIPPED'
+    | 'OUT_FOR_DELIVERY'
+    | 'DELIVERED'
+    | 'CANCELLED'
+    | 'RETURNED';
+  paymentMethod?: 'RAZORPAY' | 'COD';
   paymentStatus: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  itemsSubtotal?: number;
+  shippingCharges?: number;
   totalAmount: number;
+  transactionId?: string;
   discount?: number;
   tax?: number;
   trackingNumber?: string;
   shippingAddress: string;
   createdAt: string;
   updatedAt: string;
+  timeline?: {
+    status: string;
+    message: string;
+    timestamp: string;
+  }[];
   items: OrderItem[];
 }
 
@@ -163,6 +221,7 @@ export interface CreateOrderRequest {
     selectedColor?: string;
   }[];
   shippingAddress: ShippingAddress;
+  paymentMethod: 'RAZORPAY' | 'COD';
 }
 
 export interface UpdateOrderStatusRequest {
@@ -174,9 +233,11 @@ export interface OrderStatistics {
   totalOrders: number;
   pendingOrders: number;
   shippedOrders: number;
+  outForDeliveryOrders?: number;
   deliveredOrders: number;
   cancelledOrders: number;
   processingOrders: number;
+  returnedOrders?: number;
 }
 
 // ==================== APPOINTMENT ====================

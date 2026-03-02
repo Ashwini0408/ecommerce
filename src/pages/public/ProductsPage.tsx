@@ -1011,7 +1011,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiSearch, FiX, FiChevronDown, FiChevronUp, FiChevronsLeft, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { TbAdjustmentsHorizontal } from 'react-icons/tb';
 import Navbar from '../../components/layout/Navbar';
 import ProductCard from '../../components/product/ProductCard';
@@ -1021,15 +1021,22 @@ import type { Product, ProductFilterRequest } from '../../types';
 import toast from 'react-hot-toast';
 import { Footer } from '../../components/layout/Footer';
 import { formatINR } from '../../utils/currency';
-import { wishlistApi } from "../../api/wishlistApi";
+// import { wishlistApi } from "../../api/wishlistApi";
 import productFilterApi from '../../api/productFilterApi';
 import { resolveColor } from "../../utils/colorResolver";
+
+const PAGE_SIZE_OPTIONS = [12, 16, 24, 32] as const;
+const SEARCH_DEBOUNCE_MS = 400;
+const SERVER_FETCH_PAGE_SIZE = 120;
+const SERVER_FETCH_BATCH_SIZE = 4;
+const PRICE_MAX_LIMIT = 10000;
+const PRICE_STEP = 100;
+type ProductSortBy = 'createdAt' | 'price' | 'name';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [wishlistIds, setWishlistIds] = useState<number[]>([]);
   const [expandedSections, setExpandedSections] = useState({
     category: true,
     subcategory: true,
@@ -1048,20 +1055,18 @@ const ProductsPage = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [priceRange, setPriceRange] = useState({ min: 0, max: PRICE_MAX_LIMIT });
+  const [sortBy, setSortBy] = useState<ProductSortBy>('createdAt');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(16);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   // Available filters from API
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
   const [availableColors, setAvailableColors] = useState<
     { name: string; value: string }[]
   >([]);
-
-  // Debounce timer for search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -1093,25 +1098,11 @@ const ProductsPage = () => {
       try {
         const data = await categoryApi.getAllCategories();
         setCategories(data);
-      } catch (error) {
+      } catch {
         console.error("Failed to load categories");
       }
     };
     loadCategories();
-  }, []);
-
-  useEffect(() => {
-    const fetchWishlist = async () => {
-      try {
-        const data = await wishlistApi.getWishlist();
-        const ids = data.products.map(p => p.id);
-        setWishlistIds(ids);
-      } catch (error) {
-        console.error("Failed to fetch wishlist");
-      }
-    };
-
-    fetchWishlist();
   }, []);
 
   // --- 2. CALCULATE SUBCATEGORIES DYNAMICALLY ---
@@ -1125,60 +1116,100 @@ const ProductsPage = () => {
     setCurrentPage(0); // Reset to first page on search
   }, []);
 
-  // Real-time filtering effect
+  // Debounce only the search text to avoid API calls on every keystroke.
   useEffect(() => {
-    // Debounce search input
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, SEARCH_DEBOUNCE_MS);
 
-    const timeout = setTimeout(() => {
-      fetchProducts();
-    }, 500); // 500ms debounce for search
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
-    setSearchTimeout(timeout);
-
-    return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-    };
-  }, [searchQuery, selectedCategory, selectedSubcategory, selectedSizes, selectedColors, priceRange, sortBy, sortOrder]);
-
-  // Fetch products when page changes
-  useEffect(() => {
-    if (currentPage !== 0) { // Don't fetch on initial mount, it's handled above
-      fetchProducts();
-    }
-  }, [currentPage]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const filters: ProductFilterRequest = {
-        searchQuery: searchQuery || undefined,
+      const baseFilters: ProductFilterRequest = {
+        searchQuery: debouncedSearchQuery || undefined,
         category: selectedCategory || undefined,
         subcategory: selectedSubcategory || undefined,
         sizes: selectedSizes.length > 0 ? selectedSizes : undefined,
         colors: selectedColors.length > 0 ? selectedColors : undefined,
         minPrice: priceRange.min > 0 ? priceRange.min : undefined,
-        maxPrice: priceRange.max < 10000 ? priceRange.max : undefined,
-        sortBy: sortBy as any,
+        maxPrice: priceRange.max < PRICE_MAX_LIMIT ? priceRange.max : undefined,
+        sortBy,
         sortOrder,
-        page: currentPage,
-        pageSize: 16,
+        pageSize: SERVER_FETCH_PAGE_SIZE,
       };
 
-      const response = await productApi.searchProducts(filters);
-      setProducts(response.content);
-      setTotalPages(response.totalPages);
-    } catch (error: any) {
+      const firstPageResponse = await productApi.searchProducts({
+        ...baseFilters,
+        page: 0,
+      });
+      const serverTotalPages = Math.max(firstPageResponse.totalPages || 1, 1);
+      let mergedProducts = [...firstPageResponse.content];
+
+      if (serverTotalPages > 1) {
+        const remainingPages = Array.from(
+          { length: serverTotalPages - 1 },
+          (_, index) => index + 1
+        );
+
+        for (let i = 0; i < remainingPages.length; i += SERVER_FETCH_BATCH_SIZE) {
+          const currentBatch = remainingPages.slice(i, i + SERVER_FETCH_BATCH_SIZE);
+          const batchResponses = await Promise.all(
+            currentBatch.map((pageNumber) =>
+              productApi.searchProducts({
+                ...baseFilters,
+                page: pageNumber,
+              })
+            )
+          );
+          batchResponses.forEach((response) => {
+            mergedProducts = mergedProducts.concat(response.content);
+          });
+        }
+      }
+
+      const uniqueProducts = Array.from(
+        new Map(mergedProducts.map((product) => [product.id, product])).values()
+      );
+      setProducts(uniqueProducts);
+    } catch (error: unknown) {
       console.error('Failed to fetch products:', error);
-      toast.error(error.message || 'Failed to fetch products');
+      const message = error instanceof Error ? error.message : 'Failed to fetch products';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    debouncedSearchQuery,
+    priceRange.max,
+    priceRange.min,
+    selectedCategory,
+    selectedColors,
+    selectedSizes,
+    selectedSubcategory,
+    sortBy,
+    sortOrder,
+  ]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const totalProducts = products.length;
+  const totalPages = Math.max(Math.ceil(totalProducts / pageSize), 1);
+  const paginatedProducts = products.slice(
+    currentPage * pageSize,
+    (currentPage + 1) * pageSize
+  );
+
+  useEffect(() => {
+    const maxValidPage = Math.max(totalPages - 1, 0);
+    if (currentPage > maxValidPage) {
+      setCurrentPage(maxValidPage);
+    }
+  }, [currentPage, totalPages]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -1186,7 +1217,7 @@ const ProductsPage = () => {
     setSelectedSubcategory('');
     setSelectedSizes([]);
     setSelectedColors([]);
-    setPriceRange({ min: 0, max: 10000 });
+    setPriceRange({ min: 0, max: PRICE_MAX_LIMIT });
     setSortBy('createdAt');
     setSortOrder('DESC');
     setCurrentPage(0);
@@ -1220,10 +1251,10 @@ const ProductsPage = () => {
   const handlePriceChange = (type: 'min' | 'max', value: number) => {
     setCurrentPage(0); // Reset to first page when filter changes
     if (type === 'min') {
-      const minVal = Math.max(0, Math.min(value, priceRange.max - 100));
+      const minVal = Math.max(0, Math.min(value, priceRange.max - PRICE_STEP));
       setPriceRange({ ...priceRange, min: minVal });
     } else {
-      const maxVal = Math.min(10000, Math.max(value, priceRange.min + 100));
+      const maxVal = Math.min(PRICE_MAX_LIMIT, Math.max(value, priceRange.min + PRICE_STEP));
       setPriceRange({ ...priceRange, max: maxVal });
     }
   };
@@ -1239,13 +1270,25 @@ const ProductsPage = () => {
     setSelectedSubcategory(value);
   };
 
-  const handleSortChange = (value: string) => {
+  const handleSortChange = (value: ProductSortBy) => {
+    setCurrentPage(0);
     setSortBy(value);
   };
 
   const handleSortOrderChange = (value: 'ASC' | 'DESC') => {
+    setCurrentPage(0);
     setSortOrder(value);
   };
+
+  const handlePageSizeChange = (value: number) => {
+    setCurrentPage(0);
+    setPageSize(value);
+  };
+
+  const showingFrom = totalProducts === 0 ? 0 : currentPage * pageSize + 1;
+  const showingTo = totalProducts === 0 ? 0 : Math.min(totalProducts, (currentPage + 1) * pageSize);
+  const formatPriceUpperBound = (value: number) =>
+    value >= PRICE_MAX_LIMIT ? `${formatINR(PRICE_MAX_LIMIT)}+` : formatINR(value);
 
   return (
     <div className="min-h-screen text-foreground bg-background">
@@ -1421,7 +1464,7 @@ const ProductsPage = () => {
                                     <input
                                       type="number"
                                       min="0"
-                                      max="10000"
+                                      max={PRICE_MAX_LIMIT}
                                       value={priceRange.min}
                                       onChange={(e) => handlePriceChange('min', Number(e.target.value))}
                                       className="w-full pl-8 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage focus:border-transparent"
@@ -1435,7 +1478,7 @@ const ProductsPage = () => {
                                     <input
                                       type="number"
                                       min="0"
-                                      max="10000"
+                                      max={PRICE_MAX_LIMIT}
                                       value={priceRange.max}
                                       onChange={(e) => handlePriceChange('max', Number(e.target.value))}
                                       className="w-full pl-8 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage focus:border-transparent"
@@ -1448,17 +1491,18 @@ const ProductsPage = () => {
                               <div className="relative pt-1 pb-6">
                                 <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-3">
                                   <span>{formatINR(0)}</span>
-                                  <span>{formatINR(10000)}</span>
+                                  <span>{formatINR(PRICE_MAX_LIMIT)}+</span>
                                 </div>
                                 
                                 {/* Slider Track */}
+                                <div className="relative px-2">
                                 <div className="relative h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full">
                                   {/* Selected Range */}
                                   <div 
                                     className="absolute h-1.5 bg-sage rounded-full"
                                     style={{
-                                      left: `${(priceRange.min / 10000) * 100}%`,
-                                      right: `${100 - (priceRange.max / 10000) * 100}%`
+                                      left: `${(priceRange.min / PRICE_MAX_LIMIT) * 100}%`,
+                                      right: `${100 - (priceRange.max / PRICE_MAX_LIMIT) * 100}%`
                                     }}
                                   />
                                   
@@ -1466,8 +1510,8 @@ const ProductsPage = () => {
                                   <input
                                     type="range"
                                     min="0"
-                                    max="10000"
-                                    step="100"
+                                    max={PRICE_MAX_LIMIT}
+                                    step={PRICE_STEP}
                                     value={priceRange.min}
                                     onChange={(e) => handlePriceChange('min', Number(e.target.value))}
                                     className="absolute w-full h-1.5 opacity-0 cursor-pointer z-20"
@@ -1477,8 +1521,8 @@ const ProductsPage = () => {
                                   <input
                                     type="range"
                                     min="0"
-                                    max="10000"
-                                    step="100"
+                                    max={PRICE_MAX_LIMIT}
+                                    step={PRICE_STEP}
                                     value={priceRange.max}
                                     onChange={(e) => handlePriceChange('max', Number(e.target.value))}
                                     className="absolute w-full h-1.5 opacity-0 cursor-pointer z-20"
@@ -1486,21 +1530,22 @@ const ProductsPage = () => {
                                   
                                   {/* Min Thumb Visual */}
                                   <div 
-                                    className="absolute w-4 h-4 bg-sage rounded-full border-2 border-white shadow-md -translate-y-1/2 z-10"
-                                    style={{ left: `${(priceRange.min / 10000) * 100}%`, top: '50%' }}
+                                    className="absolute w-4 h-4 bg-sage rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10"
+                                    style={{ left: `${(priceRange.min / PRICE_MAX_LIMIT) * 100}%`, top: '50%' }}
                                   />
                                   
                                   {/* Max Thumb Visual */}
                                   <div 
-                                    className="absolute w-4 h-4 bg-sage rounded-full border-2 border-white shadow-md -translate-y-1/2 z-10"
-                                    style={{ left: `${(priceRange.max / 10000) * 100}%`, top: '50%' }}
+                                    className="absolute w-4 h-4 bg-sage rounded-full border-2 border-white shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10"
+                                    style={{ left: `${(priceRange.max / PRICE_MAX_LIMIT) * 100}%`, top: '50%' }}
                                   />
+                                </div>
                                 </div>
                                 
                                 {/* Current Values Display */}
                                 <div className="flex justify-between mt-4 text-sm">
                                   <span className="font-medium text-sage">{formatINR(priceRange.min)}</span>
-                                  <span className="font-medium text-sage">{formatINR(priceRange.max)}</span>
+                                  <span className="font-medium text-sage">{formatPriceUpperBound(priceRange.max)}</span>
                                 </div>
                               </div>
                             </div>
@@ -1635,7 +1680,7 @@ const ProductsPage = () => {
                           >
                             <select
                               value={sortBy}
-                              onChange={(e) => handleSortChange(e.target.value)}
+                              onChange={(e) => handleSortChange(e.target.value as ProductSortBy)}
                               className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage focus:border-transparent"
                             >
                               <option value="createdAt">Newest</option>
@@ -1663,7 +1708,7 @@ const ProductsPage = () => {
           {/* Products Grid Area - Scrollable */}
           <div className="flex-1 min-w-0">
             {/* Active Filters Display */}
-            {(selectedCategory || selectedSubcategory || selectedSizes.length > 0 || selectedColors.length > 0 || priceRange.min > 0 || priceRange.max < 10000) && (
+            {(selectedCategory || selectedSubcategory || selectedSizes.length > 0 || selectedColors.length > 0 || priceRange.min > 0 || priceRange.max < PRICE_MAX_LIMIT) && (
               <div className="mb-6 flex flex-wrap gap-2">
                 {selectedCategory && (
                   <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-sage/10 text-sage rounded-full text-sm">
@@ -1715,14 +1760,14 @@ const ProductsPage = () => {
                     </button>
                   </div>
                 ))}
-                {(priceRange.min > 0 || priceRange.max < 10000) && (
+                {(priceRange.min > 0 || priceRange.max < PRICE_MAX_LIMIT) && (
                   <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-sage/10 text-sage rounded-full text-sm">
                     <span className="font-medium">
-                      Price: {formatINR(priceRange.min)} - {formatINR(priceRange.max)}
+                      Price: {formatINR(priceRange.min)} - {formatPriceUpperBound(priceRange.max)}
                     </span>
                     <button 
                       onClick={() => {
-                        setPriceRange({ min: 0, max: 10000 });
+                        setPriceRange({ min: 0, max: PRICE_MAX_LIMIT });
                         setCurrentPage(0);
                       }} 
                       className="ml-1 hover:bg-sage/20 p-0.5 rounded-full transition-colors"
@@ -1767,26 +1812,37 @@ const ProductsPage = () => {
             ) : (
               <>
                 {/* Products Count */}
-                <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                  Showing {products.length} products
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Showing {showingFrom}-{showingTo} of {totalProducts} products
+                  </p>
+                  <div className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <label htmlFor="products-page-size" className="font-medium">
+                      Per page:
+                    </label>
+                    <select
+                      id="products-page-size"
+                      value={pageSize}
+                      onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                      className="px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage focus:border-transparent"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Products Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                  {products.map((product) => (
+                  {paginatedProducts.map((product) => (
                     <div key={product.id} className="group">
                       <ProductCard
                         product={product}
                         compact={true}
                         className="transform transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1"
-                        isWishlisted={wishlistIds.includes(product.id)}
-                        onWishlistToggle={(productId: number) => {
-                          setWishlistIds(prev =>
-                            prev.includes(productId)
-                              ? prev.filter(id => id !== productId)
-                              : [...prev, productId]
-                          );
-                        }}
                       />
                     </div>
                   ))}
@@ -1794,58 +1850,106 @@ const ProductsPage = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-                    <button
-                      onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                      disabled={currentPage === 0}
-                      className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Previous
-                    </button>
-                    <div className="flex items-center gap-2">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i;
-                        } else if (currentPage < 3) {
-                          pageNum = i;
-                        } else if (currentPage > totalPages - 4) {
-                          pageNum = totalPages - 5 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center font-medium ${
-                              currentPage === pageNum
-                                ? 'bg-sage text-white'
-                                : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            {pageNum + 1}
-                          </button>
-                        );
-                      })}
+                  <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
+                    <div className="flex flex-col gap-4">
+                      {/* Navigation Buttons */}
+                      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                        <button
+                          onClick={() => {
+                            setCurrentPage(0);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage === 0}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to first page"
+                        >
+                          <FiChevronsLeft size={16} />
+                          <span className="hidden xs:inline">First</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCurrentPage(Math.max(0, currentPage - 1));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage === 0}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to previous page"
+                        >
+                          <FiChevronLeft size={16} />
+                          <span className="hidden xs:inline">Prev</span>
+                        </button>
+
+                        {/* Page Numbers */}
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => {
+                            // Show first page, last page, and 3 pages around current page
+                            const showFirstPage = i === 0;
+                            const showLastPage = i === totalPages - 1;
+                            const showAroundCurrent = Math.abs(i - currentPage) <= 1;
+                            
+                            if (showFirstPage || showLastPage || showAroundCurrent) {
+                              return (
+                                <button
+                                  key={i}
+                                  onClick={() => {
+                                    setCurrentPage(i);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className={`inline-flex items-center justify-center w-10 h-10 text-sm font-semibold rounded-md transition-colors ${
+                                    i === currentPage
+                                      ? 'bg-sage text-white border border-sage'
+                                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                  }`}
+                                  title={`Go to page ${i + 1}`}
+                                >
+                                  {i + 1}
+                                </button>
+                              );
+                            } else if (
+                              (i === 1 && currentPage > 2) ||
+                              (i === totalPages - 2 && currentPage < totalPages - 3)
+                            ) {
+                              return (
+                                <span key={i} className="px-1 text-gray-400 dark:text-gray-600">
+                                  ...
+                                </span>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setCurrentPage(Math.min(totalPages - 1, currentPage + 1));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage >= totalPages - 1}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to next page"
+                        >
+                          <span className="hidden xs:inline">Next</span>
+                          <FiChevronRight size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setCurrentPage(totalPages - 1);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={currentPage === totalPages - 1}
+                          className="inline-flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Go to last page"
+                        >
+                          <span className="hidden xs:inline">Last</span>
+                          <FiChevronsLeft size={16} className="rotate-180" />
+                        </button>
+                      </div>
+
+                      {/* Page Info */}
+                      <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                        Page <span className="font-semibold text-gray-900 dark:text-white">{currentPage + 1}</span> of <span className="font-semibold text-gray-900 dark:text-white">{totalPages}</span>
+                      </div>
                     </div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      Page {currentPage + 1} of {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-                      disabled={currentPage === totalPages - 1}
-                      className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                    >
-                      Next
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
                   </div>
                 )}
               </>

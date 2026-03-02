@@ -441,7 +441,7 @@ export const Categories = () => {
        *   { id:"2", name:"Men", slug:"Men", image:"..." },
        *   ...
        * ]
-       */
+       **/
 
       const mapped: CategoryType[] = res.map((cat: any) => ({
         id: cat.id,

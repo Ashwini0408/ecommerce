@@ -582,10 +582,10 @@ import toast from "react-hot-toast";
 import logo from "../../assets/logo.png";
 import { useWishlist } from "../../context/WishlistContext";
 // import { logout } from "../../store/slices/authSlice";
-import { clearCart } from "../../store/slices/cartSlice";
-import type { AsyncThunkAction, AsyncThunkConfig } from "@reduxjs/toolkit";
+import { clearCart, addToCart } from "../../store/slices/cartSlice";
 import { useAppDispatch } from "../../hooks/useAuth";
 import { userProfileApi } from "../../api/userProfileApi";
+import cartApi from "../../api/cartApi";
 
 
 const Navbar = () => {
@@ -653,6 +653,57 @@ useEffect(() => {
   };
 }, [isAuthenticated, user?.id]);
 
+// Fetch cart from backend when user logs in
+useEffect(() => {
+  if (!isAuthenticated) {
+    return;
+  }
+
+  const fetchCartFromBackend = async () => {
+    try {
+      const response = await cartApi.getCart();
+      const cartData = response.items || [];
+      
+      // Clear Redux cart and repopulate with backend items
+      reduxDispatch(clearCart());
+      
+      cartData.forEach((item: any) => {
+        reduxDispatch(addToCart({
+          itemId: item.id,
+          productId: item.productId,
+          name: item.productName,
+          price: item.unitPrice,
+          salePrice: undefined,
+          quantity: item.quantity,
+          image: item.productImage || '',
+          stock: item.stock || 999,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor,
+        }));
+      });
+    } catch (error) {
+      console.error('Failed to fetch cart on login:', error);
+    }
+  };
+
+  fetchCartFromBackend();
+}, [isAuthenticated, reduxDispatch]);
+
+useEffect(() => {
+  const handleClickOutside = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+
+    // if click is inside navbar, ignore
+    if (target.closest("#navbar-root")) return;
+
+    setIsUserMenuOpen(false);
+  };
+
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
+
+
 const handleLogout = async () => {
   // 🔥 clear Redux cart state
   reduxDispatch(clearCart());
@@ -669,6 +720,7 @@ const handleLogout = async () => {
     <>
       {/* ---------------- NAVBAR ---------------- */}
 <nav
+ id="navbar-root"
   className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
     isScrolled
       ? "bg-gradient-to-r from-[#5E6E54] via-[#6B7D60] to-[#5E6E54] shadow-xl backdrop-blur"
@@ -702,6 +754,9 @@ const handleLogout = async () => {
     { name: "Blog", path: "/blog" },
     { name: "Contact us", path: "/contact" },
     { name: "Testimonials", path: "/testimonials" },
+    ...(isAuthenticated
+      ? [{ name: "Measurements", path: "/measurements" }]
+      : []),
   ].map((item) => (
     <Link
       key={item.name}
@@ -718,26 +773,6 @@ const handleLogout = async () => {
       {item.name}
     </Link>
   ))}
-
-  {/* USER DASHBOARD */}
-  {isAuthenticated && !isAdmin && (
-    <Link
-      to="/dashboard"
-      className="text-white/80 hover:text-white transition-colors"
-    >
-      Dashboard
-    </Link>
-  )}
-
-  {/* ADMIN DASHBOARD */}
-{isAdmin && isAdminRoute && (
-  <Link
-    to="/admin"
-    className="text-white font-semibold"
-  >
-    Dashboard
-  </Link>
-)}
 </div>
             {/* ---------------- RIGHT ACTIONS ---------------- */}
             <div className="hidden md:flex items-center space-x-4">
@@ -782,72 +817,247 @@ const handleLogout = async () => {
 )}
 
 
-              {isAuthenticated ? (
-                <div className="relative">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white/10 text-white"
-                  >
-                    <FiUser size={18} />
-                    <span className="text-sm font-medium">
-                      {profileName || user?.name}
-                    </span>
-                  </motion.button>
+              <div
+  className="relative"
+  onClick={(e) => e.stopPropagation()}
+>
+  <motion.button
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+    className="p-2 text-white/80 hover:text-white"
+  >
+    <FiUser size={22} />
+  </motion.button>
 
-                  <AnimatePresence initial={false}>
-                    {isUserMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-2 w-48 bg-[#7F8F72] rounded-xl shadow-xl overflow-hidden"
-                      >
-                        <Link
-                          to={isAdmin ? "/admin" : "/dashboard"}
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="block px-4 py-3 text-white/90 hover:bg-white/10"
-                        >
-                          Dashboard
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-3 flex items-center gap-2 text-red-300 hover:bg-white/10"
-                        >
-                          <FiLogOut />
-                          Logout
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <Link to="/login">
-                    <button className="px-4 py-2 rounded-lg text-white hover:bg-white/10">
-                      Login
-                    </button>
-                  </Link>
-                  <Link to="/signup">
-                    <button className="px-4 py-2 rounded-lg bg-white text-[#7F8F72] font-semibold">
-                      Sign Up
-                    </button>
-                  </Link>
-                </div>
-              )}
+  <AnimatePresence initial={false}>
+    {isUserMenuOpen && (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        className="absolute right-0 mt-2 w-48 bg-[#7F8F72] rounded-xl shadow-xl overflow-hidden z-[999]
+md:right-0 md:w-48
+max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
+      >
+
+        {/* 🔓 NOT LOGGED IN */}
+        {!isAuthenticated && (
+          <>
+            <Link
+              to="/login"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block px-4 py-3 text-white hover:bg-white/10"
+            >
+              Login
+            </Link>
+            <Link
+              to="/signup"
+              onClick={() => setIsUserMenuOpen(false)}
+              className="block px-4 py-3 text-white hover:bg-white/10"
+            >
+              Create New Account
+            </Link>
+          </>
+        )}
+
+        {/* 🔐 LOGGED IN */}
+        {isAuthenticated && (
+          <>
+            <div className="px-4 py-3 border-b border-white/10">
+              <p className="text-white/70 text-sm">Hello,</p>
+              <p className="text-white font-semibold">{profileName || user?.name || "User"}</p>
+            </div>
+
+            {!isAdmin && (
+              <>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "profile" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "orders" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Orders
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "appointments" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Appointments
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard", { state: { tab: "addresses" } });
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Address
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/measurements/history");
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                >
+                  Measurements
+                </button>
+              </>
+            )}
+
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="block px-4 py-3 text-white hover:bg-white/10"
+              >
+                Dashboard
+              </Link>
+            )}
+
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-3 flex items-center gap-2 text-red-300 hover:bg-white/10"
+            >
+              <FiLogOut />
+              Logout
+            </button>
+          </>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
             </div>
 
             {/* ---------------- MOBILE MENU BUTTON ---------------- */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-white"
-            >
-              {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-            </motion.button>
+            {/* ---------------- MOBILE RIGHT ICONS ---------------- */}
+<div className="flex items-center gap-3 md:hidden relative z-[60]">
+  {!isAdmin && (
+    <button
+      onClick={() => navigate("/wishlist")}
+      className="relative text-white"
+    >
+      <FiHeart size={20} />
+      {wishlistIds.length > 0 && (
+        <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+          {wishlistIds.length}
+        </span>
+      )}
+    </button>
+  )}
+
+  {!isAdmin && (
+    <button
+      onClick={() => navigate("/cart")}
+      className="relative text-white"
+    >
+      <FiShoppingCart size={20} />
+      {totalItems > 0 && (
+        <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+          {totalItems}
+        </span>
+      )}
+    </button>
+  )}
+
+  <button
+    onClick={() => {
+  setIsUserMenuOpen((prev) => !prev);
+}}
+    className="text-white"
+  >
+    <FiUser size={20} />
+  </button>
+
+  {/* Hamburger */}
+  <motion.button
+    whileTap={{ scale: 0.9 }}
+    onClick={() => setIsMenuOpen(!isMenuOpen)}
+    className="text-white"
+  >
+    {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+  </motion.button>
+
+</div>
           </div>
         </div>
+
+        {/* MOBILE USER MENU DROPDOWN */}
+<AnimatePresence initial={false}>
+  {isUserMenuOpen && !isMenuOpen && (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="md:hidden bg-[#6B7D60] border-t border-white/10"
+    >
+      <div className="px-4 py-3 space-y-2">
+        {isAuthenticated ? (
+          <>
+            <p className="text-white/70 text-sm font-medium mb-3">
+              {profileName || user?.name || "User"}
+            </p>
+            <Link
+              to={isAdmin ? "/admin" : "/dashboard"}
+              onClick={() => {
+                setIsUserMenuOpen(false);
+              }}
+              className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Dashboard
+            </Link>
+            <button
+              onClick={() => {
+                handleLogout();
+                setIsUserMenuOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 flex items-center gap-2 text-red-300 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <FiLogOut />
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              to="/login"
+              onClick={() => {
+                setIsUserMenuOpen(false);
+              }}
+              className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Login
+            </Link>
+            <Link
+              to="/signup"
+              onClick={() => {
+                setIsUserMenuOpen(false);
+              }}
+              className="block px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Sign Up
+            </Link>
+          </>
+        )}
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
         {/* ---------------- MOBILE MENU ---------------- */}
  {/* ---------------- MOBILE MENU ---------------- */}
@@ -859,40 +1069,93 @@ const handleLogout = async () => {
       exit={{ opacity: 0, height: 0 }}
       className="md:hidden bg-gradient-to-b from-[#9CAF88] to-[#7F8F72]"
     >
-      {/* 🔒 MOBILE ONLY CONTENT */}
-      <div className="px-4 py-4 space-y-3 md:hidden">
+     {/* 🔒 MOBILE ONLY CONTENT */}
+<div className="px-4 py-4 space-y-3 md:hidden">
 
-        {/* ========== ADMIN MOBILE VIEW ONLY ========== */}
-        {isAdmin && (
-          <>
-            <Link
-              to="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setIsMenuOpen(false)}
-              className="block py-2 text-white font-semibold"
-            >
-              Home
-            </Link>
+  {/* ===== MOBILE ICON ROW ===== */}
+  <div className="flex items-center justify-around mb-4">
 
-            <Link
-              to="/admin"
-              onClick={() => setIsMenuOpen(false)}
-              className="block py-2 text-white font-semibold"
-            >
-              Dashboard
-            </Link>
-          </>
+    {!isAdmin && (
+      <button
+        onClick={() => {
+          navigate("/wishlist");
+          setIsMenuOpen(false);
+        }}
+        className="relative text-white"
+      >
+        <FiHeart size={22} />
+        {wishlistIds.length > 0 && (
+          <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {wishlistIds.length}
+          </span>
         )}
+      </button>
+    )}
 
+    {!isAdmin && (
+      <button
+        onClick={() => {
+          navigate("/cart");
+          setIsMenuOpen(false);
+        }}
+        className="relative text-white"
+      >
+        <FiShoppingCart size={22} />
+        {totalItems > 0 && (
+          <span className="absolute -top-1 -right-2 bg-white text-[#7F8F72] text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {totalItems}
+          </span>
+        )}
+      </button>
+    )}
+
+   <button
+  onClick={(e) => {
+    e.stopPropagation();
+    setIsUserMenuOpen((prev) => !prev);
+  }}
+  className="text-white"
+>
+      <FiUser size={22} />
+    </button>
+
+  </div>
+
+  {/* ========== ADMIN MOBILE VIEW ONLY ========== */}
+  {isAdmin && (
+    <>
+      <Link
+        to="/"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => setIsMenuOpen(false)}
+        className="block py-2 text-white font-semibold"
+      >
+        Home
+      </Link>
+
+      <Link
+        to="/admin"
+        onClick={() => setIsMenuOpen(false)}
+        className="block py-2 text-white font-semibold"
+      >
+        Dashboard
+      </Link>
+    </>
+  )}
         {/* ========== NON-ADMIN MOBILE VIEW ========== */}
         {!isAdmin &&
           [
             { name: "Home", path: "/" },
-            { name: "Services", path: "/services" },
             { name: "About us", path: "/about" },
-            { name: "Contact us", path: "/contact" },
+            {name: "Products", path: "/products" },
+            { name: "Services", path: "/services" },
+            { name: "Blog", path: "/blog" },
             { name: "Testimonials", path: "/testimonials" },
+            { name: "Contact us", path: "/contact" },
+            ...(isAuthenticated
+              ? [{ name: "Measurements", path: "/measurements" }]
+              : []),
           ].map((item) => (
             <Link
               key={item.name}

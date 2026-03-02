@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   FiBriefcase,
-  FiCheck,
   FiEdit2,
   FiHome,
   FiLock,
@@ -25,13 +24,20 @@ import {
   type UserAddress,
 } from '../../api/userProfileApi';
 import { formatINR } from '../../utils/currency';
+import {
+  getRazorpayConstructor,
+  getRazorpayFailureReason,
+  loadRazorpayScript,
+  type PaymentStatusState,
+  type RazorpayPaymentSuccessResponse,
+} from '../../utils/razorpay';
 import toast from 'react-hot-toast';
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
+const PAYMENT_STATUS_STORAGE_KEY = 'latestPaymentStatus';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const IMAGE_BASE_URL =
+  import.meta.env.VITE_API_IMG_URL ||
+  (API_BASE_URL ? API_BASE_URL.replace(/\/api\/?$/i, '') : 'http://localhost:8090');
 
 type AddressType = 'HOME' | 'WORK' | 'OTHER';
 
@@ -61,7 +67,7 @@ const CheckoutPage = () => {
     city: '',
     state: '',
     postalCode: '',
-    country: 'USA',
+    country: 'India',
     phone: user?.phone || '',
   });
 
@@ -76,6 +82,8 @@ const CheckoutPage = () => {
   const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
   const [deletingAddressId, setDeletingAddressId] = useState<number | null>(null);
   const [addressMeta, setAddressMeta] = useState<Record<number, AddressMeta>>({});
+  const [shippingCharges, setShippingCharges] = useState(0);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const [addressForm, setAddressForm] = useState<AddressFormState>({
     contactName: user?.name || '',
     contactPhone: user?.phone || '',
@@ -84,15 +92,13 @@ const CheckoutPage = () => {
     city: '',
     state: '',
     postalCode: '',
-    country: 'USA',
+    country: 'India',
     isDefault: false,
     landmark: '',
     addressType: 'HOME',
   });
 
-  const shippingCost = totalPrice > 50 ? 0 : 10;
-  const tax = totalPrice * 0.1;
-  const finalTotal = totalPrice + shippingCost + tax;
+  const finalTotal = totalPrice + shippingCharges;
 
   const addressTypeOptions = [
     { value: 'HOME' as const, label: 'Home', icon: FiHome },
@@ -102,6 +108,33 @@ const CheckoutPage = () => {
 
   const normalizePhone = (value: string) => value.replace(/\\D/g, '').slice(0, 10);
   const normalizePincode = (value: string) => value.replace(/\\D/g, '').slice(0, 6);
+
+  const getApiErrorDetails = (error: unknown) => {
+    if (error && typeof error === 'object') {
+      const candidate = error as {
+        status?: unknown;
+        message?: unknown;
+        error?: unknown;
+      };
+      const status =
+        typeof candidate.status === 'number' ? candidate.status : undefined;
+      const message =
+        typeof candidate.message === 'string'
+          ? candidate.message
+          : typeof candidate.error === 'string'
+            ? candidate.error
+            : '';
+      return { status, message };
+    }
+    return { status: undefined, message: '' };
+  };
+
+  const getCartItemImageUrl = (path?: string) => {
+    if (!path) return '/placeholder.jpg';
+    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${IMAGE_BASE_URL}${cleanPath}`;
+  };
 
   const getAddressMeta = (address: UserAddress): AddressMeta => {
     if (addressMeta[address.id]) return addressMeta[address.id];
@@ -121,7 +154,7 @@ const CheckoutPage = () => {
       city: '',
       state: '',
       postalCode: '',
-      country: 'USA',
+      country: 'India',
       isDefault: false,
       landmark: '',
       addressType: 'HOME',
@@ -139,6 +172,34 @@ const CheckoutPage = () => {
       toast.error('Failed to load addresses');
     } finally {
       setIsAddressLoading(false);
+    }
+  };
+
+  const calculateShipping = async (address?: UserAddress) => {
+    const targetAddress = address || selectedAddress;
+    if (!targetAddress) return;
+
+    setIsCalculatingShipping(true);
+    try {
+      const response = await orderApi.calculateShipping({
+        address: {
+          addressLine1: targetAddress.addressLine1,
+          addressLine2: targetAddress.addressLine2 || '',
+          city: targetAddress.city,
+          state: targetAddress.state,
+          postalCode: targetAddress.postalCode,
+          country: targetAddress.country || 'India',
+          contactPhone: targetAddress.contactPhone || '',
+        },
+        subtotal: totalPrice,
+      });
+      setShippingCharges(response.shippingCharges);
+    } catch (error: any) {
+      console.warn('Failed to calculate shipping', error);
+      // Fallback to 0 shipping if calculation fails
+      setShippingCharges(0);
+    } finally {
+      setIsCalculatingShipping(false);
     }
   };
 
@@ -194,7 +255,7 @@ const CheckoutPage = () => {
       city: selectedAddress.city,
       state: selectedAddress.state,
       postalCode: selectedAddress.postalCode,
-      country: selectedAddress.country || 'USA',
+      country: selectedAddress.country || '',
       phone: selectedAddress.contactPhone || user?.phone || '',
     });
   }, [selectedAddress, user?.phone]);
@@ -207,6 +268,17 @@ const CheckoutPage = () => {
     }
     document.body.style.overflow = '';
   }, [showAddressModal, showAddEditAddressModal]);
+
+  useEffect(() => {
+    if (paymentMethod === 'razorpay') {
+      void loadRazorpayScript();
+    }
+  }, [paymentMethod]);
+
+  // Calculate shipping when selected address or items change
+  useEffect(() => {
+    calculateShipping();
+  }, [selectedAddress, items.length, totalPrice]);
 
   const openAddressModal = () => {
     if (addresses.length === 0) {
@@ -227,15 +299,6 @@ const CheckoutPage = () => {
   const closeAddressOverlay = () => {
     setShowAddressModal(false);
     setShowAddEditAddressModal(false);
-  };
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (name === 'phone') {
-      setFormData((prev) => ({ ...prev, phone: normalizePhone(value) }));
-      return;
-    }
-    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const validateForm = () => {
@@ -259,88 +322,43 @@ const CheckoutPage = () => {
     return true;
   };
 
-  // const handleRazorpayPayment = async () => {
-  //   if (!isAuthenticated) {
-  //     toast.error('Please login to continue');
-  //     navigate('/login');
-  //     return;
-  //   }
-  //
-  //   if (items.length === 0) {
-  //     toast.error('Your cart is empty');
-  //     navigate('/cart');
-  //     return;
-  //   }
-  //
-  //   if (!validateForm()) return;
-  //
-  //   setLoading(true);
-  //
-  //   try {
-  //     // Create order in backend
-  //     const shippingAddress = {
-  //       addressLine1: formData.addressLine1,
-  //       addressLine2: formData.addressLine2 || undefined,
-  //       city: formData.city,
-  //       state: formData.state,
-  //       postalCode: formData.postalCode,
-  //       country: formData.country,
-  //       contactPhone: formData.phone,
-  //     };
-  //
-  //     const orderData = {
-  //       items: items.map((item) => ({
-  //         productId: item.productId,
-  //         quantity: item.quantity,
-  //         selectedSize: item.selectedSize,
-  //         selectedColor: item.selectedColor,
-  //       })),
-  //       shippingAddress,
-  //     };
-  //
-  //     const order = await orderApi.createOrder(orderData);
-  //
-  //     // Initialize Razorpay
-  //     const options = {
-  //       key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_xxxxxxxxxx',
-  //       amount: Math.round(finalTotal * 100), // Convert to paise
-  //       currency: 'INR',
-  //       name: 'STYLISTE',
-  //       description: `Order #${order.id}`,
-  //       order_id: '', // You would get this from your backend Razorpay order creation
-  //       handler: async function (/* response: any */) {
-  //         // Payment successful
-  //         toast.success('Payment successful! Order placed.');
-  //         dispatch(clearCart());
-  //         navigate(`/dashboard?orderSuccess=${order.id}`);
-  //       },
-  //       prefill: {
-  //         name: user?.name || '',
-  //         email: user?.email || '',
-  //         contact: formData.phone,
-  //       },
-  //       theme: {
-  //         color: '#0ea5e9',
-  //       },
-  //       modal: {
-  //         ondismiss: function () {
-  //           setLoading(false);
-  //           toast.error('Payment cancelled');
-  //         },
-  //       },
-  //     };
-  //
-  //     const razorpay = new window.Razorpay(options);
-  //     razorpay.open();
-  //   } catch (error: any) {
-  //     toast.error(error.message || 'Failed to process payment');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+
+  const clearServerCartAfterOrder = async () => {
+    try {
+      const localBackendItemIds = Array.from(
+        new Set(items.map((item) => Number(item.itemId)).filter((id) => Number.isFinite(id) && id > 0))
+      );
+
+      let backendItemIds = localBackendItemIds;
+      if (backendItemIds.length === 0) {
+        const cartResponse = await cartApi.getCart();
+        backendItemIds = (cartResponse?.items || [])
+          .map((item: { id: number }) => Number(item.id))
+          .filter((id: number) => Number.isFinite(id) && id > 0);
+      }
+
+      if (backendItemIds.length > 0) {
+        await Promise.allSettled(backendItemIds.map((itemId) => cartApi.removeItem(itemId)));
+      }
+    } catch (cartClearError) {
+      console.warn('Order placed, but failed to fully clear server cart.', cartClearError);
+    }
+  };
+
+  const navigateToPaymentStatus = (paymentState: PaymentStatusState) => {
+    sessionStorage.setItem(PAYMENT_STATUS_STORAGE_KEY, JSON.stringify(paymentState));
+    navigate('/payment-status', { state: paymentState });
+  };
+
+  const finalizeSuccessfulOrder = async (orderId: number) => {
+    await clearServerCartAfterOrder();
+    dispatch(clearCart());
+    toast.success('Order placed successfully!');
+    navigate(`/orders/${orderId}`);
+  };
 
   const handlePlaceOrder = async () => {
-    // For demo purposes, simulate successful order without Razorpay
+    // Create order and proceed based on selected payment mode
     if (!isAuthenticated) {
       toast.error('Please login to continue');
       navigate('/login');
@@ -376,36 +394,125 @@ const CheckoutPage = () => {
           selectedColor: item.selectedColor,
         })),
         shippingAddress,
+        paymentMethod: paymentMethod === 'razorpay' ? 'RAZORPAY' : 'COD',
+        shippingCharges,
       };
 
-      const order = await orderApi.createOrder(orderData);
+      const paymentMethodType: "RAZORPAY" | "COD" = paymentMethod === "razorpay" ? "RAZORPAY" : "COD";
+      const orderDataWithType = { ...orderData, paymentMethod: paymentMethodType };
+      const order = await orderApi.createOrder(orderDataWithType);
 
-      // Clear backend cart for authenticated users so cart does not repopulate.
-      try {
-        const localBackendItemIds = Array.from(
-          new Set(items.map((item) => Number(item.itemId)).filter((id) => Number.isFinite(id) && id > 0))
-        );
-
-        let backendItemIds = localBackendItemIds;
-        if (backendItemIds.length === 0) {
-          const cartResponse = await cartApi.getCart();
-          backendItemIds = (cartResponse?.items || [])
-            .map((item: { id: number }) => Number(item.id))
-            .filter((id: number) => Number.isFinite(id) && id > 0);
+      if (paymentMethod === 'razorpay') {
+        const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+        if (!razorpayKeyId || razorpayKeyId === 'your_razorpay_key_id') {
+          throw new Error('Razorpay key is not configured in .env');
         }
 
-        if (backendItemIds.length > 0) {
-          await Promise.allSettled(backendItemIds.map((itemId) => cartApi.removeItem(itemId)));
+        const paymentInit = await orderApi.initiatePayment(order.id);
+
+        const razorpayLoaded = await loadRazorpayScript();
+        if (!razorpayLoaded || !getRazorpayConstructor()) {
+          throw new Error('Failed to load Razorpay checkout');
         }
-      } catch (cartClearError) {
-        console.warn('Order placed, but failed to fully clear server cart.', cartClearError);
+
+        sessionStorage.setItem('razorpayOrderId', paymentInit.razorpayOrderId);
+        sessionStorage.setItem('orderId', String(order.id));
+        sessionStorage.setItem('amount', String(paymentInit.amount));
+        await new Promise<void>((resolve, reject) => {
+          let paymentFlowHandled = false;
+          const markHandled = () => {
+            if (paymentFlowHandled) return false;
+            paymentFlowHandled = true;
+            return true;
+          };
+
+          const buildPaymentState = (
+            status: PaymentStatusState['status'],
+            failureReason?: string
+          ): PaymentStatusState => ({
+            status,
+            orderId: order.id,
+            amount: paymentInit.amount,
+            currency: paymentInit.currency,
+            razorpayOrderId: paymentInit.razorpayOrderId,
+            failureReason,
+            attemptedAt: new Date().toISOString(),
+          });
+
+          const options = {
+            key: razorpayKeyId,
+            order_id: paymentInit.razorpayOrderId,
+            name: 'STYLISTE',
+            description: `Order #${order.id}`,
+            prefill: {
+              name: user?.name || '',
+              email: user?.email || '',
+              contact: formData.phone,
+            },
+            notes: {
+              orderId: String(order.id),
+            },
+            theme: {
+              color: '#6B7D60',
+            },
+            handler: async (response: RazorpayPaymentSuccessResponse) => {
+              if (!markHandled()) return;
+              try {
+                await orderApi.verifyPayment(order.id, {
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                });
+                await finalizeSuccessfulOrder(order.id);
+                resolve();
+              } catch (handlerError) {
+                reject(handlerError);
+              }
+            },
+            modal: {
+              ondismiss: () => {
+                if (!markHandled()) return;
+                navigateToPaymentStatus(
+                  buildPaymentState('cancelled', 'Payment was cancelled by user')
+                );
+                resolve();
+              },
+            },
+          };
+
+          const RazorpayConstructor = getRazorpayConstructor();
+          if (!RazorpayConstructor) {
+            reject(new Error('Failed to load Razorpay checkout'));
+            return;
+          }
+
+          const razorpayInstance = new RazorpayConstructor(options);
+          razorpayInstance.on('payment.failed', (response: unknown) => {
+            if (!markHandled()) return;
+            const reason = getRazorpayFailureReason(response);
+            navigateToPaymentStatus(buildPaymentState('failed', reason));
+            resolve();
+          });
+          razorpayInstance.open();
+        });
+        return;
       }
 
-      toast.success('Order placed successfully!');
-      dispatch(clearCart());
-      navigate(`/dashboard?orderSuccess=${order.id}`);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to place order');
+      await finalizeSuccessfulOrder(order.id);
+    } catch (error: unknown) {
+      const { status, message } = getApiErrorDetails(error);
+      const normalizedMessage = message.toLowerCase();
+      const isStockConflict =
+        status === 409 ||
+        normalizedMessage.includes('modified by another request') ||
+        normalizedMessage.includes('stock');
+
+      if (isStockConflict) {
+        toast.error('Stock changed. Please review your cart and try again.');
+        navigate('/cart');
+      } else {
+        toast.error(message || 'Failed to place order');
+      }
     } finally {
       setLoading(false);
     }
@@ -699,7 +806,7 @@ const CheckoutPage = () => {
                     const effectivePrice = item.salePrice || item.price;
                     const hasDiscount =
                       typeof item.salePrice === 'number' && item.salePrice < item.price;
-                    const discountValue = hasDiscount ? item.price - item.salePrice : 0;
+                    const discountValue = hasDiscount && item.salePrice ? item.price - item.salePrice : 0;
                     const discountPercent = hasDiscount
                       ? Math.round((discountValue / item.price) * 100)
                       : 0;
@@ -709,9 +816,12 @@ const CheckoutPage = () => {
                         className="flex gap-3 rounded-xl border border-sage/15 bg-white p-3 shadow-sm"
                       >
                         <img
-                          src={item.image}
+                          src={getCartItemImageUrl(item.image)}
                           alt={item.name}
                           className="w-20 h-24 rounded-lg object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder.jpg';
+                          }}
                         />
                         <div className="flex-1">
                           <div className="text-sm font-semibold text-dark-900 line-clamp-1">
@@ -840,16 +950,14 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-dark-700">
                   <span>Shipping</span>
                   <span className="font-semibold">
-                    {shippingCost === 0 ? (
+                    {isCalculatingShipping ? (
+                      <span className="text-dark-500 animate-pulse">Calculating...</span>
+                    ) : shippingCharges === 0 ? (
                       <span className="text-sage">FREE</span>
                     ) : (
-                      formatINR(shippingCost)
+                      formatINR(shippingCharges)
                     )}
                   </span>
-                </div>
-                <div className="flex justify-between text-dark-700">
-                  <span>Tax</span>
-                  <span className="font-semibold">{formatINR(tax)}</span>
                 </div>
                 <div className="border-t border-sage/20 pt-3">
                   <div className="flex justify-between text-dark-900 text-xl font-bold">
@@ -1240,8 +1348,6 @@ const CheckoutPage = () => {
         </div>
       )}
 
-      {/* Razorpay Script */}
-      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
       <Footer />
     </div>
   );

@@ -1,0 +1,1132 @@
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import Navbar from "../../components/layout/Navbar";
+import { Footer } from "../../components/layout/Footer";
+import { ArrowLeft, ArrowRight, ClipboardList, User, Dumbbell, Target, Ruler, Camera, Upload, CheckCircle2, ShoppingBag, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import heroMeasurement from "../../assets/hero-measurement.png";
+import {
+  measurementApi,
+  type MeasurementActivityLevel,
+  type MeasurementBodyType,
+  type MeasurementFatDistribution,
+  type MeasurementFitPreference,
+  type MeasurementGender,
+  type MeasurementGoal,
+  type MeasurementHeightUnit,
+  type MeasurementMuscleLevel,
+  type MeasurementPoseValidationDetails,
+  type MeasurementShoulderType,
+  type MeasurementWeightUnit,
+  type ProcessMeasurementData,
+} from "../../api/measurementApi";
+import { useMeasurementJob } from "../../context/MeasurementJobContext";
+
+const TOTAL_STEPS = 6;
+const MAX_IMAGE_SIZE_BYTES = 16 * 1024 * 1024;
+const ACCEPTED_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/jpg"]);
+
+const stepInfo = [
+  { icon: ClipboardList, title: "Basic Information" },
+  { icon: User, title: "Body Context" },
+  { icon: Dumbbell, title: "Activity & Muscle" },
+  { icon: Target, title: "Fit & Goal" },
+  { icon: Ruler, title: "Body Structure" },
+  { icon: Camera, title: "Upload Images" },
+];
+
+type OptionalSelect<T extends string> = T | "";
+
+interface MeasurementFormData {
+  gender: MeasurementGender | "";
+  age: string;
+  height: string;
+  heightUnit: MeasurementHeightUnit;
+  weight: string;
+  weightUnit: MeasurementWeightUnit;
+  fatDistribution: OptionalSelect<MeasurementFatDistribution>;
+  bodyType: OptionalSelect<MeasurementBodyType>;
+  activityLevel: OptionalSelect<MeasurementActivityLevel>;
+  muscleLevel: OptionalSelect<MeasurementMuscleLevel>;
+  measurementGoal: OptionalSelect<MeasurementGoal>;
+  fitPreference: OptionalSelect<MeasurementFitPreference>;
+  shoulderType: OptionalSelect<MeasurementShoulderType>;
+  frontImage: File | null;
+  sideImage: File | null;
+}
+
+const INITIAL_FORM_DATA: MeasurementFormData = {
+  gender: "",
+  age: "",
+  height: "",
+  heightUnit: "cm",
+  weight: "",
+  weightUnit: "kg",
+  fatDistribution: "",
+  bodyType: "",
+  activityLevel: "",
+  muscleLevel: "",
+  measurementGoal: "",
+  fitPreference: "",
+  shoulderType: "",
+  frontImage: null,
+  sideImage: null,
+};
+
+const maleBodyTypeOptions: Array<{ label: string; value: MeasurementBodyType }> = [
+  { label: "Slim", value: "slim" },
+  { label: "Average", value: "avg" },
+  { label: "Athletic", value: "athletic" },
+  { label: "Heavy", value: "heavy" },
+];
+
+const femaleBodyTypeOptions: Array<{ label: string; value: MeasurementBodyType }> = [
+  { label: "Slim", value: "slim" },
+  { label: "Average", value: "avg" },
+  { label: "Curvy", value: "curvy" },
+  { label: "Heavy", value: "heavy" },
+];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const parsePoseValidationDetails = (
+  value: unknown
+): MeasurementPoseValidationDetails | null => {
+  if (!isRecord(value)) return null;
+
+  const frontAccepted = value["front_accepted"];
+  const frontAngle = value["front_angle"];
+  const frontMessage = value["front_message"];
+  const sideAccepted = value["side_accepted"];
+  const sideAngle = value["side_angle"];
+  const sideMessage = value["side_message"];
+  const errorsValue = value["errors"];
+
+  const allTypesValid =
+    typeof frontAccepted === "boolean" &&
+    typeof frontAngle === "number" &&
+    Number.isFinite(frontAngle) &&
+    typeof frontMessage === "string" &&
+    typeof sideAccepted === "boolean" &&
+    typeof sideAngle === "number" &&
+    Number.isFinite(sideAngle) &&
+    typeof sideMessage === "string" &&
+    Array.isArray(errorsValue);
+
+  if (!allTypesValid) return null;
+
+  const errors = errorsValue.filter((item): item is string => typeof item === "string");
+  if (errors.length !== errorsValue.length) return null;
+
+  return {
+    front_accepted: frontAccepted,
+    front_angle: frontAngle,
+    front_message: frontMessage,
+    side_accepted: sideAccepted,
+    side_angle: sideAngle,
+    side_message: sideMessage,
+    errors,
+  };
+};
+
+const getMeasurementErrorDetails = (
+  error: unknown
+): { message: string; validationDetails: MeasurementPoseValidationDetails | null } => {
+  const fallbackMessage = "Failed to process measurements. Please try again.";
+
+  if (!isRecord(error)) {
+    return { message: fallbackMessage, validationDetails: null };
+  }
+
+  const validationDetails = parsePoseValidationDetails(error["validation_details"]);
+  const apiErrorMessage = error["error"];
+  if (typeof apiErrorMessage === "string" && apiErrorMessage.trim()) {
+    return { message: apiErrorMessage, validationDetails };
+  }
+
+  const genericMessage = error["message"];
+  if (typeof genericMessage === "string" && genericMessage.trim()) {
+    return { message: genericMessage, validationDetails };
+  }
+
+  return { message: fallbackMessage, validationDetails };
+};
+
+const isSupportedImage = (file: File): boolean => {
+  const mimeType = file.type.toLowerCase();
+  if (ACCEPTED_IMAGE_MIME_TYPES.has(mimeType)) return true;
+  return /\.(png|jpe?g)$/i.test(file.name);
+};
+
+const formatSize = (value?: { cm?: number; inches?: number }) => {
+  if (!value || value.cm === undefined || value.inches === undefined) return null;
+  return `${value.cm.toFixed(1)} cm / ${value.inches.toFixed(2)} in`;
+};
+
+const buildMeasurementRows = (m: ProcessMeasurementData) =>
+  [
+    { label: "Neck circumference", value: formatSize(m.neck?.circumference) },
+    { label: "Chest circumference", value: formatSize(m.chest?.circumference) },
+    { label: "Upper chest circumference", value: formatSize(m.upper_chest?.circumference) },
+    { label: "Lower chest circumference", value: formatSize(m.lower_chest?.circumference) },
+    { label: "Waist circumference", value: formatSize(m.waist?.circumference) },
+    { label: "Hip circumference", value: formatSize(m.hip?.circumference) },
+    { label: "Shoulder width", value: formatSize(m.shoulder?.width) },
+    { label: "Armhole circumference", value: formatSize(m.armhole?.circumference) },
+    { label: "Upper thigh circumference", value: formatSize(m.upper_thigh?.circumference) },
+    { label: "Knee circumference", value: formatSize(m.knee?.circumference) },
+    { label: "Body length", value: formatSize(m.body_length?.length) },
+    { label: "Arm hand to elbow", value: formatSize(m.arm?.hand_to_elbow) },
+    { label: "Arm shoulder to elbow", value: formatSize(m.arm?.shoulder_to_elbow) },
+    { label: "Arm total length", value: formatSize(m.arm?.total_length) },
+  ].filter((row) => !!row.value);
+
+const Measurement = () => {
+  const job = useMeasurementJob();
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<MeasurementFormData>(INITIAL_FORM_DATA);
+  const [frontPreview, setFrontPreview] = useState<string | null>(null);
+  const [sidePreview, setSidePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [poseValidationDetails, setPoseValidationDetails] =
+    useState<MeasurementPoseValidationDetails | null>(null);
+
+  const genderSelectRef = useRef<HTMLSelectElement>(null);
+  const ageInputRef = useRef<HTMLInputElement>(null);
+  const heightInputRef = useRef<HTMLInputElement>(null);
+  const weightInputRef = useRef<HTMLInputElement>(null);
+  const frontUploadRef = useRef<HTMLLabelElement>(null);
+  const sideUploadRef = useRef<HTMLLabelElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (frontPreview) URL.revokeObjectURL(frontPreview);
+      if (sidePreview) URL.revokeObjectURL(sidePreview);
+    };
+  }, [frontPreview, sidePreview]);
+
+  const progress = (currentStep / TOTAL_STEPS) * 100;
+
+  const bodyTypeOptions =
+    formData.gender === "female" ? femaleBodyTypeOptions : maleBodyTypeOptions;
+
+  const updateField = <K extends keyof MeasurementFormData>(
+    field: K,
+    value: MeasurementFormData[K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = (type: "front" | "side", e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!isSupportedImage(file)) {
+      toast.error("Only PNG, JPG, and JPEG images are allowed");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      toast.error("Image size must be 16MB or less");
+      e.target.value = "";
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setPoseValidationDetails(null);
+
+    if (type === "front") {
+      setFormData((prev) => ({ ...prev, frontImage: file }));
+      setFrontPreview((previousUrl) => {
+        if (previousUrl) URL.revokeObjectURL(previousUrl);
+        return url;
+      });
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, sideImage: file }));
+    setSidePreview((previousUrl) => {
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      return url;
+    });
+  };
+
+  const canNext = () => {
+    switch (currentStep) {
+      case 1:
+        return Boolean(formData.gender && formData.age && formData.height && formData.weight);
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+        return true;
+      case 6:
+        return Boolean(formData.frontImage && formData.sideImage);
+      default:
+        return false;
+    }
+  };
+
+  const scrollToField = (field: HTMLElement | null) => {
+    if (!field) return;
+
+    const targetTop = field.getBoundingClientRect().top + window.scrollY - 110;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+
+    window.setTimeout(() => {
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement ||
+        field instanceof HTMLTextAreaElement ||
+        field instanceof HTMLButtonElement
+      ) {
+        field.focus({ preventScroll: true });
+        return;
+      }
+
+      if (field.tabIndex >= -1) {
+        field.focus({ preventScroll: true });
+      }
+    }, 250);
+  };
+
+  const getFirstIncompleteField = (): HTMLElement | null => {
+    switch (currentStep) {
+      case 1:
+        if (!formData.gender) return genderSelectRef.current;
+        if (!formData.age) return ageInputRef.current;
+        if (!formData.height) return heightInputRef.current;
+        if (!formData.weight) return weightInputRef.current;
+        return null;
+      case 6:
+        if (!formData.frontImage) return frontUploadRef.current;
+        if (!formData.sideImage) return sideUploadRef.current;
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const failValidation = (message: string, field: HTMLElement | null) => {
+    toast.error(message);
+    window.requestAnimationFrame(() => {
+      scrollToField(field);
+    });
+    return false;
+  };
+
+  const validateStepOneValues = () => {
+    if (!formData.gender) {
+      return failValidation("Please select gender", genderSelectRef.current);
+    }
+
+    const age = Number(formData.age);
+    if (!Number.isFinite(age) || age < 13 || age > 100) {
+      return failValidation("Age must be between 13 and 100", ageInputRef.current);
+    }
+
+    const height = Number(formData.height);
+    if (!Number.isFinite(height) || height <= 0) {
+      return failValidation("Please enter a valid height", heightInputRef.current);
+    }
+
+    const weight = Number(formData.weight);
+    if (!Number.isFinite(weight) || weight <= 0) {
+      return failValidation("Please enter a valid weight", weightInputRef.current);
+    }
+
+    return true;
+  };
+
+  const handleNext = () => {
+    if (!canNext()) {
+      toast.error("Please fill in all required fields");
+      window.requestAnimationFrame(() => {
+        scrollToField(getFirstIncompleteField());
+      });
+      return;
+    }
+
+    if (currentStep === 1 && !validateStepOneValues()) {
+      return;
+    }
+
+    if (currentStep < TOTAL_STEPS) setCurrentStep((step) => step + 1);
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) setCurrentStep((step) => step - 1);
+  };
+
+  const handleSubmit = async () => {
+    if (!canNext()) {
+      toast.error("Please upload both front and side view images");
+      window.requestAnimationFrame(() => {
+        scrollToField(getFirstIncompleteField());
+      });
+      return;
+    }
+
+    if (!validateStepOneValues()) {
+      setCurrentStep(1);
+      return;
+    }
+
+    if (!formData.gender || !formData.frontImage || !formData.sideImage || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setPoseValidationDetails(null);
+
+    const payload = {
+      gender: formData.gender,
+      age: Number(formData.age),
+      height: Number(formData.height),
+      heightUnit: formData.heightUnit,
+      weight: Number(formData.weight),
+      weightUnit: formData.weightUnit,
+      fatDistribution: formData.fatDistribution || undefined,
+      bodyType: formData.bodyType || undefined,
+      activityLevel: formData.activityLevel || undefined,
+      muscleLevel: formData.muscleLevel || undefined,
+      shoulderType: formData.shoulderType || undefined,
+      measurementGoal: formData.measurementGoal || undefined,
+      fitPreference: formData.fitPreference || undefined,
+      frontImage: formData.frontImage,
+      sideImage: formData.sideImage,
+    };
+
+    try {
+      const { jobId } = await measurementApi.submitProcess(payload);
+      job.startJob(jobId);
+      // Loading/processing page will show; polling runs in context. No toast here.
+    } catch (error) {
+      const { message, validationDetails } = getMeasurementErrorDetails(error);
+      setPoseValidationDetails(validationDetails);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    if (frontPreview) URL.revokeObjectURL(frontPreview);
+    if (sidePreview) URL.revokeObjectURL(sidePreview);
+    setFrontPreview(null);
+    setSidePreview(null);
+    setCurrentStep(1);
+    setPoseValidationDetails(null);
+    setFormData(INITIAL_FORM_DATA);
+    job.clearResult();
+  };
+
+  // Show processing page when a job is in progress (or when user returns while still processing)
+  if (job.jobId != null) {
+    return (
+      <>
+        <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
+          <Navbar />
+          <div className="absolute inset-0">
+            <img
+              src={heroMeasurement}
+              alt="AI Body Measurement System"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
+          </div>
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pt-20 text-center">
+            <div className="max-w-3xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center gap-4 mb-6"
+              >
+                <div className="w-8 h-px bg-primary-foreground/60" />
+                <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                  Measurement
+                </p>
+                <div className="w-8 h-px bg-primary-foreground/60" />
+              </motion.div>
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="font-serif text-5xl md:text-5xl leading-[1.1] mb-8 text-primary-foreground"
+              >
+                We are calculating your measurements
+              </motion.h1>
+            </div>
+          </div>
+        </section>
+        <section className="py-20 bg-muted/30">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-xl mx-auto px-6 text-center"
+          >
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full border-4 border-primary/20 border-t-primary animate-spin flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-2xl font-serif text-foreground mb-4">
+              Please wait while we process your details
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              You can browse our products in the meantime. We will inform you when your measurement is ready.
+            </p>
+            <Link
+              to="/products"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition font-medium"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              Browse products
+            </Link>
+          </motion.div>
+        </section>
+        <Footer />
+      </>
+    );
+  }
+
+  // Show success view when job completed with result
+  if (job.status === "completed" && job.result) {
+    const submissionResult = job.result;
+    const metadata = submissionResult?.metadata;
+    return (
+      <>
+        <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
+          <Navbar />
+          <div className="absolute inset-0">
+            <img
+              src={heroMeasurement}
+              alt="AI Body Measurement System"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
+          </div>
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pt-20 text-center">
+            <div className="container mx-auto">
+              <div className="max-w-3xl mx-auto">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-center gap-4 mb-6"
+                >
+                  <div className="w-8 h-px bg-primary-foreground/60" />
+                  <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                    Measurement
+                  </p>
+                  <div className="w-8 h-px bg-primary-foreground/60" />
+                </motion.div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="font-serif text-5xl md:text-7xl leading-[1.1] mb-8 text-primary-foreground"
+                >
+                  Submission
+                  <br />
+                  <span className="italic text-accent">Successful</span>
+                </motion.h1>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section className="py-20">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-2xl mx-auto px-6"
+          >
+            <CheckCircle2 className="w-20 h-20 text-primary mx-auto mb-6" />
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-primary text-lg font-bold">-</span>
+              <h2 className="font-serif text-3xl text-foreground">Thank You!</h2>
+            </div>
+            <p className="text-muted-foreground mb-8">
+              Your body measurement details have been submitted successfully. Our expert tailors will review your information and contact you with your personalized measurements.
+            </p>
+            {metadata && (
+              <div className="mb-8 rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Measurement Summary
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">Recommended Size</p>
+                    <p className="text-foreground font-semibold">{metadata.recommended_size}</p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">BMI</p>
+                    <p className="text-foreground font-semibold">
+                      {metadata.bmi.toFixed(1)} ({metadata.bmi_category})
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">Body Type</p>
+                    <p className="text-foreground font-semibold">{metadata.body_type}</p>
+                  </div>
+                  <div className="rounded-lg bg-white p-3 border border-primary/10">
+                    <p className="text-muted-foreground">Input Body Type</p>
+                    <p className="text-foreground font-semibold">
+                      {metadata.body_type_input ?? "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {submissionResult && (
+              <div className="mb-8 rounded-xl border border-primary/15 bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-foreground mb-3">All Measurements</h3>
+                {buildMeasurementRows(submissionResult).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No measurements available.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+                    {buildMeasurementRows(submissionResult).map((row) => (
+                      <div
+                        key={row.label}
+                        className="rounded-lg border border-border/70 bg-muted/10 px-3 py-2"
+                      >
+                        <p className="text-foreground font-medium">{row.label}</p>
+                        <p>{row.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              onClick={resetForm}
+              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+            >
+              Submit Another Measurement
+            </button>
+            <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
+              <p>You can view your saved measurements in your account.</p>
+            </div>
+          </motion.div>
+        </section>
+        <Footer />
+      </>
+    );
+  }
+
+  // Show failed view when job failed
+  if (job.status === "failed") {
+    const details = job.validationDetails;
+    return (
+      <>
+        <section className="relative h-[40vh] min-h-[280px] overflow-hidden bg-primary text-primary-foreground">
+          <Navbar />
+          <div className="absolute inset-0">
+            <img
+              src={heroMeasurement}
+              alt="AI Body Measurement System"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/85 via-primary/70 to-primary/60" />
+          </div>
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pt-20 text-center">
+            <div className="max-w-2xl mx-auto">
+              <h1 className="font-serif text-3xl md:text-4xl leading-[1.1] mb-4 text-primary-foreground">
+                Measurement processing failed
+              </h1>
+            </div>
+          </div>
+        </section>
+        <section className="py-16 bg-muted/30">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-2xl mx-auto px-6"
+          >
+            <p className="text-destructive font-medium mb-4">{job.error}</p>
+            {details && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 mb-6">
+                <p className="font-semibold mb-2">Pose validation</p>
+                <p>Front: {details.front_message} ({details.front_angle.toFixed(1)}°)</p>
+                <p>Side: {details.side_message} ({details.side_angle.toFixed(1)}°)</p>
+                {details.errors.length > 0 && (
+                  <p className="mt-1">{details.errors.join(" ")}</p>
+                )}
+              </div>
+            )}
+            <button
+              onClick={resetForm}
+              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+            >
+              Try again
+            </button>
+          </motion.div>
+        </section>
+        <Footer />
+      </>
+    );
+  }
+
+  const { title: stepTitle } = stepInfo[currentStep - 1];
+
+  return (
+    <>
+      <section className="relative h-[56vh] min-h-[420px] max-h-[620px] overflow-hidden bg-primary text-primary-foreground">
+        <Navbar />
+        <div className="absolute inset-0">
+          <img
+            src={heroMeasurement}
+            alt="AI Body Measurement System"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/75 to-primary/70" />
+        </div>
+        <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pt-20 text-center">
+          <div className="max-w-3xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-center gap-4 mb-6"
+            >
+              <div className="w-8 h-px bg-primary-foreground/60" />
+              <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
+                Measurement
+              </p>
+              <div className="w-8 h-px bg-primary-foreground/60" />
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="font-serif text-5xl md:text-5xl leading-[1.1] mb-8 text-primary-foreground"
+            >
+              AI Body Measurement System
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-primary-foreground/85 text-lg leading-relaxed"
+            >
+              Enter your details for accurate, bespoke tailoring measurements
+            </motion.p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-2xl mx-auto bg-card rounded-2xl shadow-lg p-8 md:p-12"
+          >
+            {/* Progress */}
+            <div className="mb-8">
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                <div 
+                  className="bg-primary h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="text-center text-sm text-muted-foreground">
+                Step {currentStep} of {TOTAL_STEPS}
+              </p>
+            </div>
+
+            {/* Step Header */}
+            <div className="mb-8 border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <span className="text-primary text-lg font-bold">-</span>
+                <h2 className="text-2xl md:text-3xl font-serif flex items-center gap-3 text-foreground">
+                  <span className="text-2xl">{stepTitle}</span>
+                </h2>
+              </div>
+              {currentStep > 1 && currentStep < 6 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  These fields are optional and help improve estimate accuracy.
+                </p>
+              )}
+            </div>
+
+            {/* Step Content */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-6"
+              >
+                {currentStep === 1 && (
+                  <>
+                    <div>
+                      <label className="text-foreground font-medium">Gender *</label>
+                      <select
+                        ref={genderSelectRef}
+                        value={formData.gender}
+                        onChange={(e) => {
+                          const gender = e.target.value as MeasurementFormData["gender"];
+                          setFormData((prev) => ({ ...prev, gender, bodyType: "" }));
+                        }}
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-foreground font-medium">Age *</label>
+                      <input
+                        ref={ageInputRef}
+                        type="number"
+                        placeholder="Enter your age"
+                        value={formData.age}
+                        onChange={(e) => updateField("age", e.target.value)}
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        min={13}
+                        max={100}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-foreground font-medium">Your Height *</label>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        <input
+                          ref={heightInputRef}
+                          type="number"
+                          step="any"
+                          min="0"
+                          placeholder="Height"
+                          value={formData.height}
+                          onChange={(e) => updateField("height", e.target.value)}
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <select
+                          value={formData.heightUnit}
+                          onChange={(e) =>
+                            updateField("heightUnit", e.target.value as MeasurementHeightUnit)
+                          }
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="cm">Centimeters (cm)</option>
+                          <option value="m">Meters (m)</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-foreground font-medium">Your Weight *</label>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        <input
+                          ref={weightInputRef}
+                          type="number"
+                          step="any"
+                          min="0"
+                          placeholder="Weight"
+                          value={formData.weight}
+                          onChange={(e) => updateField("weight", e.target.value)}
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <select
+                          value={formData.weightUnit}
+                          onChange={(e) =>
+                            updateField("weightUnit", e.target.value as MeasurementWeightUnit)
+                          }
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="kg">Kilograms (kg)</option>
+                          <option value="lbs">Pounds (lbs)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {currentStep === 2 && (
+                  <>
+                    <div>
+                      <label className="text-foreground font-medium">Fat Distribution</label>
+                      <select
+                        value={formData.fatDistribution}
+                        onChange={(e) =>
+                          updateField(
+                            "fatDistribution",
+                            e.target.value as MeasurementFormData["fatDistribution"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="upper">Upper</option>
+                        <option value="middle">Middle</option>
+                        <option value="lower">Lower</option>
+                        <option value="even">Even</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-foreground font-medium">Body Type</label>
+                      <select
+                        value={formData.bodyType}
+                        onChange={(e) =>
+                          updateField("bodyType", e.target.value as MeasurementFormData["bodyType"])
+                        }
+                        disabled={!formData.gender}
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-400"
+                      >
+                        <option value="">
+                          {formData.gender
+                            ? "Prefer not to say"
+                            : "Select gender first to choose body type"}
+                        </option>
+                        {bodyTypeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {currentStep === 3 && (
+                  <>
+                    <div>
+                      <label className="text-foreground font-medium">Activity Level</label>
+                      <select
+                        value={formData.activityLevel}
+                        onChange={(e) =>
+                          updateField(
+                            "activityLevel",
+                            e.target.value as MeasurementFormData["activityLevel"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="sedentary">Sedentary</option>
+                        <option value="light">Light</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="active">Active</option>
+                        <option value="very_active">Very Active</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-foreground font-medium">Muscle Level</label>
+                      <select
+                        value={formData.muscleLevel}
+                        onChange={(e) =>
+                          updateField(
+                            "muscleLevel",
+                            e.target.value as MeasurementFormData["muscleLevel"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="low">Low</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="high">High</option>
+                        <option value="very_high">Very High</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {currentStep === 4 && (
+                  <>
+                    <div>
+                      <label className="text-foreground font-medium">Measurement Goal</label>
+                      <select
+                        value={formData.measurementGoal}
+                        onChange={(e) =>
+                          updateField(
+                            "measurementGoal",
+                            e.target.value as MeasurementFormData["measurementGoal"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="fitness">Fitness</option>
+                        <option value="health">Health</option>
+                        <option value="general">General</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-foreground font-medium">Fit Preference</label>
+                      <select
+                        value={formData.fitPreference}
+                        onChange={(e) =>
+                          updateField(
+                            "fitPreference",
+                            e.target.value as MeasurementFormData["fitPreference"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="tight">Tight</option>
+                        <option value="regular">Regular</option>
+                        <option value="loose">Loose</option>
+                        <option value="oversized">Oversized</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {currentStep === 5 && (
+                  <>
+                    <div>
+                      <label className="text-foreground font-medium">Shoulder Type</label>
+                      <select
+                        value={formData.shoulderType}
+                        onChange={(e) =>
+                          updateField(
+                            "shoulderType",
+                            e.target.value as MeasurementFormData["shoulderType"]
+                          )
+                        }
+                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Prefer not to say</option>
+                        <option value="narrow">Narrow</option>
+                        <option value="average">Average</option>
+                        <option value="broad">Broad</option>
+                        <option value="very_broad">Very Broad</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {currentStep === 6 && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <label ref={frontUploadRef} tabIndex={-1} className="cursor-pointer group">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,.jpg,.jpeg"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload("front", e)}
+                        />
+                        <div className="border-2 border-dashed border-primary/40 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition-all min-h-[200px] flex flex-col items-center justify-center gap-3">
+                          {frontPreview ? (
+                            <img
+                              src={frontPreview}
+                              alt="Front view"
+                              className="max-h-40 rounded-lg object-cover mx-auto"
+                            />
+                          ) : (
+                            <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
+                          )}
+                          <p className="font-medium text-foreground text-sm">Front View *</p>
+                          <p className="text-xs text-muted-foreground">PNG/JPG/JPEG, max 16MB</p>
+                          {formData.frontImage && (
+                            <p className="text-xs text-primary truncate max-w-full">
+                              {formData.frontImage.name}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+
+                      <label ref={sideUploadRef} tabIndex={-1} className="cursor-pointer group">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,.jpg,.jpeg"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload("side", e)}
+                        />
+                        <div className="border-2 border-dashed border-primary/40 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 transition-all min-h-[200px] flex flex-col items-center justify-center gap-3">
+                          {sidePreview ? (
+                            <img
+                              src={sidePreview}
+                              alt="Side view"
+                              className="max-h-40 rounded-lg object-cover mx-auto"
+                            />
+                          ) : (
+                            <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
+                          )}
+                          <p className="font-medium text-foreground text-sm">Side View *</p>
+                          <p className="text-xs text-muted-foreground">PNG/JPG/JPEG, max 16MB</p>
+                          {formData.sideImage && (
+                            <p className="text-xs text-primary truncate max-w-full">
+                              {formData.sideImage.name}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+
+                    {poseValidationDetails && (
+                      <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                        <p className="font-semibold mb-2">
+                          Pose validation failed. Please retake your photos.
+                        </p>
+                        <p>
+                          Front: {poseValidationDetails.front_message} (
+                          {poseValidationDetails.front_angle.toFixed(1)}
+                          deg)
+                        </p>
+                        <p>
+                          Side: {poseValidationDetails.side_message} (
+                          {poseValidationDetails.side_angle.toFixed(1)}
+                          deg)
+                        </p>
+                        {poseValidationDetails.errors.length > 0 && (
+                          <p className="mt-1">{poseValidationDetails.errors.join(" ")}</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Navigation Buttons */}
+            <div className="flex items-center justify-between mt-10 pt-6 border-t border-border">
+              {currentStep > 1 ? (
+                <button
+                  onClick={handlePrevious}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Previous
+                </button>
+              ) : (
+                <div />
+              )}
+
+              {currentStep < TOTAL_STEPS ? (
+                <button
+                  onClick={handleNext}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Next <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? "Calculating..." : "Calculate Measurements"}{" "}
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      <Footer />
+    </>
+  );
+};
+
+export default Measurement;
+

@@ -1310,7 +1310,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiEye, FiTrash2, FiX, FiCheck, FiClock, FiAlertCircle, FiSearch, FiMail } from "react-icons/fi";
+import { FiEye, FiX, FiCheck, FiClock, FiMail } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { ContactAdminApi, type ContactMessage, type ContactStatus } from "../../api/contactAdminApi";
 
@@ -1415,22 +1415,6 @@ const AdminContactMessages = () => {
 
   const totalPages = Math.ceil(filteredMessages.length / rowsPerPage);
 
-  // --- DELETE ---
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this message?")) return;
-
-    try {
-      await ContactAdminApi.deleteContact(id);
-      toast.success("Message deleted");
-      fetchMessages(); // Refresh the list
-      if (viewMessage?.id === id) {
-        setViewMessage(null);
-      }
-    } catch (error) {
-      console.error("Error deleting message:", error);
-      toast.error("Delete failed");
-    }
-  };
 
   // --- STATUS BADGE COMPONENT ---
   const StatusBadge = ({ status }: { status: ContactStatus }) => {
@@ -1441,12 +1425,6 @@ const AdminContactMessages = () => {
             color: "bg-yellow-100 text-yellow-800 border border-yellow-200", 
             icon: <FiClock className="w-3 h-3" />, 
             label: "Pending" 
-          };
-        case "IN_PROGRESS":
-          return { 
-            color: "bg-blue-100 text-blue-800 border border-blue-200", 
-            icon: <FiAlertCircle className="w-3 h-3" />, 
-            label: "In Progress" 
           };
         case "RESOLVED":
           return { 
@@ -1625,7 +1603,7 @@ const AdminContactMessages = () => {
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <StatusBadge status={msg.status} />
+                              <StatusBadge status={msg.status as ContactStatus} />
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex space-x-1">
@@ -1770,7 +1748,7 @@ const AdminContactMessages = () => {
                       <div>
                         <h2 className="text-lg font-bold text-gray-900">Message Details</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <StatusBadge status={viewMessage.status} />
+                          <StatusBadge status={viewMessage.status as ContactStatus} />
                           <span className="text-xs text-gray-500">
                             ID: #{viewMessage.id}
                           </span>
@@ -1851,7 +1829,7 @@ const AdminContactMessages = () => {
                         <div className="pt-2 border-t border-gray-200">
                           <p className="text-xs text-gray-500 mb-1">Status</p>
                           <div className="flex items-center gap-2">
-                            <StatusBadge status={viewMessage.status} />
+                            <StatusBadge status={viewMessage.status as ContactStatus} />
                             <span className="text-xs text-gray-600">
                               {viewMessage.status === "RESOLVED" ? "Marked as read" : "Pending"}
                             </span>

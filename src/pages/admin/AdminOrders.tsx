@@ -3220,6 +3220,16 @@ const ORDER_FLOW = [
   "RETURNED",
 ] as const;
 
+const ORDER_STATE_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ["PROCESSING", "CANCELLED"],
+  PROCESSING: ["SHIPPED", "CANCELLED"],
+  SHIPPED: ["OUT_FOR_DELIVERY"],
+  OUT_FOR_DELIVERY: ["DELIVERED"],
+  DELIVERED: ["RETURNED"],
+  CANCELLED: [],
+  RETURNED: [],
+};
+
 // Status configuration with icons and colors
 const STATUS_CONFIG: Record<
   string,
@@ -3335,6 +3345,18 @@ const AdminOrders = () => {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalOrders, setTotalOrders] = useState(0);
+
+  const getAllowedNextStatuses = (currentStatus?: string) =>
+    ORDER_STATE_TRANSITIONS[String(currentStatus || "").toUpperCase()] || [];
+
+  const getStatusSelectOptions = (currentStatus?: string) => {
+    const normalized = String(currentStatus || "PENDING").toUpperCase();
+    const allowed = getAllowedNextStatuses(normalized);
+    if (!ORDER_FLOW.includes(normalized as (typeof ORDER_FLOW)[number])) {
+      return ORDER_FLOW;
+    }
+    return [normalized, ...allowed];
+  };
 
   // Helper function to get timeline with all statuses from update modal
   const getTimelineWithAllStatuses = (
@@ -3588,9 +3610,8 @@ const AdminOrders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const offset = (page - 1) * rowsPerPage;
-
-      const response = await orderApi.getAllOrders(offset, rowsPerPage);
+      const currentPage = Math.max(0, page - 1);
+      const response = await orderApi.getAllOrders(currentPage, rowsPerPage);
 
       let filteredOrders: Order[] = [];
       let totalCount = 0;
@@ -3744,11 +3765,34 @@ const AdminOrders = () => {
       toast.error("Please select a status");
       return;
     }
+
+    if (newStatus === selectedOrder.status) {
+      toast.error("Order is already in this status");
+      return;
+    }
+
+    const allowedTransitions = getAllowedNextStatuses(selectedOrder.status);
+    if (!allowedTransitions.includes(newStatus)) {
+      const allowedText = allowedTransitions.length
+        ? allowedTransitions.join(", ")
+        : "No transitions allowed";
+      toast.error(
+        `Cannot transition from ${selectedOrder.status} to ${newStatus}. Allowed: ${allowedText}`
+      );
+      return;
+    }
+
     try {
-      await orderApi.updateOrderStatus(selectedOrder.id, {
-        status: newStatus,
-        trackingNumber: trackingNumber || undefined,
-      });
+      if (newStatus === "CANCELLED") {
+        await orderApi.adminCancelOrder(selectedOrder.id, {
+          reason: "Cancelled by admin from dashboard",
+        });
+      } else {
+        await orderApi.updateOrderStatus(selectedOrder.id, {
+          status: newStatus,
+          trackingNumber: trackingNumber || undefined,
+        });
+      }
       toast.success("Order status updated successfully");
       setUpdateStatusModal(false);
 
@@ -3776,12 +3820,13 @@ const AdminOrders = () => {
 
   const getPaymentColor = (status: string) => {
     const colors: Record<string, string> = {
+      COMPLETED: "text-green-700 bg-green-100",
       PAID: "text-green-700 bg-green-100",
       PENDING: "text-yellow-700 bg-yellow-100",
       FAILED: "text-red-700 bg-red-100",
       REFUNDED: "text-blue-700 bg-blue-100",
     };
-    return colors[status] || "text-gray-700 bg-gray-100";
+    return colors[String(status || "").toUpperCase()] || "text-gray-700 bg-gray-100";
   };
 
   // Get unique status options from all orders
@@ -3795,13 +3840,16 @@ const AdminOrders = () => {
     return Array.from(statusSet).sort();
   };
 
-  const paymentOptions = ["PAID", "PENDING", "FAILED", "REFUNDED"];
+  const paymentOptions = ["COMPLETED", "PAID", "PENDING", "FAILED", "REFUNDED"];
 
   const totalPages = Math.ceil(totalOrders / rowsPerPage);
   const rowsPerPageOptions = [5, 10, 20, 50, 100];
 
   useEffect(() => {
-    const isModalOpen = showDetailsModal || showTimelineModal || updateStatusModal;
+    const isModalOpen =
+      showDetailsModal ||
+      showTimelineModal ||
+      updateStatusModal;
     document.body.style.overflow = isModalOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
@@ -3820,19 +3868,21 @@ const AdminOrders = () => {
           <p className="text-dark-600 mt-1">{totalOrders} orders total</p>
         </div>
 
-        <div className="flex space-x-3">
-          <button
-            onClick={fetchOrders}
+      <div className="flex space-x-3">
+        <button
+            onClick={() => {
+              fetchOrders();
+            }}
             className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-2"
           >
             <FiRefreshCw className={loading ? "animate-spin" : ""} />
             Refresh Orders
-          </button>
-        </div>
+        </button>
       </div>
+    </div>
 
       {/* --- TABLE WITH COLUMN FILTERS --- */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
         <table className="min-w-full divide-y divide-dark-200">
           <thead className="bg-dark-50">
             <tr>
@@ -4690,12 +4740,17 @@ const AdminOrders = () => {
                       onChange={(e) => setNewStatus(e.target.value)}
                       className="input-field"
                     >
-                      {ORDER_FLOW.map((status) => (
+                      {getStatusSelectOptions(selectedOrder.status).map((status) => (
                         <option key={status} value={status}>
                           {status}
                         </option>
                       ))}
                     </select>
+                    {getAllowedNextStatuses(selectedOrder.status).length === 0 && (
+                      <p className="mt-2 text-xs text-dark-500">
+                        This order is in a terminal state. No further transitions are allowed.
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-dark-300 mb-2 block">
@@ -4712,7 +4767,8 @@ const AdminOrders = () => {
                   <div className="flex space-x-3 pt-4">
                     <button
                       onClick={handleUpdateStatus}
-                      className="flex-1 btn-primary"
+                      disabled={newStatus === selectedOrder.status}
+                      className="flex-1 btn-primary disabled:opacity-60"
                     >
                       Update Status
                     </button>

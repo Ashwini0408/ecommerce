@@ -84,10 +84,13 @@ axiosInstance.interceptors.response.use(
       
       return Promise.reject(data);
     } else if (error.request) {
-      // Request was made but no response received
-      console.error('[API Error] No response received', error.request);
+      // No response (timeout, network error, or cancelled)
+      const isTimeout = error.code === 'ECONNABORTED' || (typeof error.message === 'string' && error.message.toLowerCase().includes('timeout'));
+      console.error('[API Error] No response received', isTimeout ? '(timeout)' : '', error.request);
       return Promise.reject({
-        message: 'Network error - Please check your connection',
+        message: isTimeout
+          ? 'Request took too long. The server may still be processing your measurement—please check the measurement page or try again in a few minutes.'
+          : 'Network error - Please check your connection',
         status: 0,
       });
     } else {
