@@ -271,6 +271,7 @@ import ShippingCommingSoon from './pages/public/ShippingCommingSoon';
 import ReturnCommingSoon from './pages/public/ReturnCommingSoon';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminMeasurements from './pages/admin/AdminMeasurements';
+import AdminBlogCreate from './pages/admin/AdminBlogCreate';
 
 const NotFound = () => (
   <div className="p-8 text-center text-red-500">
@@ -403,6 +404,7 @@ function App() {
   <Route path="appointments" element={<AdminAppointment />} />
   <Route path="contacts" element={<ContactMessages />} />
   <Route path="measurements" element={<AdminMeasurements />} />
+  <Route path="blogs" element={<AdminBlogCreate />} />
   <Route path="reports" element={<div className="p-6">Reports Page</div>} />
   <Route path="settings" element={<div className="p-6">Settings Page</div>} />
 </Route>

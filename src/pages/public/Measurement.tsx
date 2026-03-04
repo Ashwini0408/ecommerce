@@ -1275,7 +1275,7 @@ const Measurement = () => {
                 >
                   {isSubmitting ? "Calculating..." : "Calculate Measurements"}{" "}
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </button>               
               )}
             </div>
           </motion.div>
