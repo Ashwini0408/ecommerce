@@ -3,7 +3,7 @@ import { useState, useRef, createElement, useEffect } from "react";
 import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 import RichTextField from "../../components/admin/RichTextField";
-import { ICON_MAP } from "../../components/admin/IconPickerPopover";
+import { cssSizeToPx, normalizeIconId, renderIconById } from "../../components/admin/iconHub";
 import { blogAdminApi } from "../../api/blogApi";
 
 const border = "#E2E8DE";
@@ -52,7 +52,7 @@ function migrateSectionData(data) {
   if (!data || typeof data !== "object") return data;
   const out = { ...data };
   for (const key of Object.keys(out)) {
-    if (typeof out[key] === "string" && !["img", "alt", "color"].includes(key)) {
+    if (typeof out[key] === "string" && !["img", "alt", "color", "bgColor"].includes(key)) {
       out[key] = ensureHtml(out[key]);
     }
     if (Array.isArray(out[key])) {
@@ -60,7 +60,7 @@ function migrateSectionData(data) {
         if (!item || typeof item !== "object") return item;
         const it = { ...item };
         for (const k of Object.keys(it)) {
-          if (typeof it[k] === "string" && !["img", "alt", "color"].includes(k)) {
+          if (typeof it[k] === "string" && !["img", "alt", "color", "bgColor"].includes(k)) {
             it[k] = ensureHtml(it[k]);
           }
         }
@@ -85,12 +85,13 @@ function RichHtmlWithIcons({ html, style, className }) {
   const processIcons = () => {
     if (!ref.current) return;
     ref.current.querySelectorAll("[data-icon]").forEach((el) => {
-      const name = el.getAttribute("data-icon");
-      const Comp = ICON_MAP[name];
-      if (Comp && !el.dataset.resolved) {
+      const raw = el.getAttribute("data-icon");
+      const iconId = normalizeIconId(raw);
+      if (iconId && !el.dataset.resolved) {
         el.dataset.resolved = "1";
         const size = el.getAttribute("data-icon-size") || "1em";
         const color = el.getAttribute("data-icon-color") || "#6B7F5E";
+        const sizePx = cssSizeToPx(size, 16);
         el.innerHTML = "";
         el.style.display = "inline-flex";
         el.style.verticalAlign = "middle";
@@ -109,7 +110,8 @@ function RichHtmlWithIcons({ html, style, className }) {
         svgWrap.style.height = "100%";
         el.appendChild(svgWrap);
         import("react-dom/client").then(({ createRoot }) => {
-          createRoot(svgWrap).render(createElement(Comp, { size: "100%", color: "currentColor" }));
+          const node = renderIconById(iconId, { sizePx, color: "currentColor" }) || createElement("span", null, "⬡");
+          createRoot(svgWrap).render(node);
         });
       }
     });
@@ -169,6 +171,64 @@ const labelStyle = { display: "block", fontSize: 11, color: muted, marginBottom:
 const btnSmall = { border: `1px solid ${border}`, background: bg, color: ink, borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 11 };
 const btnSage = { border: "none", background: sage, color: white, borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600 };
 const btnDanger = { border: "none", background: rose, color: white, borderRadius: 6, padding: "4px 8px", cursor: "pointer", fontSize: 11 };
+
+const SECTION_BG_SWATCHES = [
+  "#3D5A36",
+  "#4F6B3F",
+  "#6B7F5E",
+  "#1F3A4D",
+  "#25304F",
+  "#4A1F2F",
+  "#7A2E3A",
+  "#2C2C2C",
+  "#FFFFFF",
+  "#F7F6F3",
+];
+
+function SectionBackgroundControls({ value, onChange }) {
+  const current = (value || "").toUpperCase();
+  return (
+    <div style={{ marginBottom: 10, padding: 10, borderRadius: 8, background: "#F5F7F2", border: `1px solid ${border}` }}>
+      <p style={{ margin: 0, fontSize: 11, color: muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4 }}>
+        Background colour
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6, alignItems: "center" }}>
+        {SECTION_BG_SWATCHES.map((clr) => (
+          <button
+            key={clr}
+            type="button"
+            onClick={() => onChange(clr)}
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 999,
+              border: current === clr.toUpperCase() ? `2px solid ${ink}` : "1px solid #D3D9CF",
+              padding: 0,
+              background: clr,
+              cursor: "pointer",
+            }}
+          />
+        ))}
+        <span style={{ fontSize: 11, color: muted, marginLeft: 4 }}>Custom:</span>
+        <input
+          type="color"
+          value={current || "#3D5A36"}
+          onChange={(e) => onChange(e.target.value)}
+          style={{ width: 26, height: 20, borderRadius: 4, border: `1px solid ${border}`, padding: 0, cursor: "pointer" }}
+        />
+        {current && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            style={{ ...btnSmall, fontSize: 10 }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /* ─── ImageUpload (uploads to backend, returns URL) ─── */
 function ImageUpload({ value, onChange, label = "Image" }) {
@@ -258,19 +318,34 @@ function SectionEditor({ section, onChange }) {
   const addItem = (arr, template) => [...arr, template];
   const removeItem = (arr, idx) => arr.filter((_, j) => j !== idx);
 
+  const bg = d.bgColor || "";
+  const bgControls = (
+    <SectionBackgroundControls
+      value={bg}
+      onChange={(val) => set({ bgColor: val })}
+    />
+  );
+
   switch (section.type) {
     case "intro":
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {bgControls}
           <div><p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Paragraph 1</p><RichTextField value={d.p1} onChange={(v) => set({ p1: v })} minHeight={60} /></div>
           <div><p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Paragraph 2 (optional)</p><RichTextField value={d.p2 || ""} onChange={(v) => set({ p2: v })} minHeight={40} /></div>
         </div>
       );
     case "heading":
-      return <RichTextField value={d.text} onChange={(v) => set({ text: v })} minHeight={40} placeholder="Section heading..." />;
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {bgControls}
+          <RichTextField value={d.text} onChange={(v) => set({ text: v })} minHeight={40} placeholder="Section heading..." />
+        </div>
+      );
     case "quote":
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {bgControls}
           <div><p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Quote</p><RichTextField value={d.text} onChange={(v) => set({ text: v })} minHeight={50} /></div>
           <div><p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Attribution</p><RichTextField value={d.by || ""} onChange={(v) => set({ by: v })} minHeight={30} /></div>
         </div>
@@ -278,6 +353,7 @@ function SectionEditor({ section, onChange }) {
     case "takeaways":
       return (
         <div>
+          {bgControls}
           <p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Heading</p>
           <RichTextField value={d.heading} onChange={(v) => set({ heading: v })} minHeight={30} />
           {d.items.map((it, idx) => (
@@ -297,6 +373,7 @@ function SectionEditor({ section, onChange }) {
     case "stats":
       return (
         <div>
+          {bgControls}
           {d.items.map((it, idx) => (
             <div key={idx} style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "start" }}>
               <div style={{ flex: "0 0 120px" }}><RichTextField value={it.val} onChange={(v) => set({ items: setItem(d.items, idx, { val: v }) })} minHeight={30} placeholder="Value" /></div>
@@ -310,6 +387,7 @@ function SectionEditor({ section, onChange }) {
     case "imagetext":
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {bgControls}
           <ImageUpload value={d.img} onChange={(url) => set({ img: url })} label="Section image" />
           <input value={d.alt || ""} onChange={(e) => set({ alt: e.target.value })} placeholder="Alt text" style={inputStyle} />
           <RichTextField value={d.text} onChange={(v) => set({ text: v })} minHeight={60} />
@@ -321,6 +399,7 @@ function SectionEditor({ section, onChange }) {
     case "cards3":
       return (
         <div>
+          {bgControls}
           {d.items.map((it, idx) => (
             <div key={idx} style={{ display: "flex", gap: 6, marginBottom: 8, alignItems: "start" }}>
               <div style={{ flex: "0 0 100px" }}><RichTextField value={it.val} onChange={(v) => set({ items: setItem(d.items, idx, { val: v }) })} minHeight={30} placeholder="Value" /></div>
@@ -337,6 +416,7 @@ function SectionEditor({ section, onChange }) {
     case "imagecards":
       return (
         <div>
+          {bgControls}
           {d.items.map((it, idx) => (
             <div key={idx} style={{ border: `1px solid ${border}`, borderRadius: 8, padding: 10, marginBottom: 8, background: bg }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span style={{ fontSize: 11, color: muted }}>Card #{idx + 1}</span><button onClick={() => set({ items: removeItem(d.items, idx) })} style={btnDanger}>x</button></div>
@@ -351,6 +431,7 @@ function SectionEditor({ section, onChange }) {
     case "darkbox":
       return (
         <div>
+          {bgControls}
           <p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Heading</p>
           <RichTextField value={d.heading} onChange={(v) => set({ heading: v })} minHeight={30} />
           {d.bullets.map((b, idx) => (
@@ -365,6 +446,7 @@ function SectionEditor({ section, onChange }) {
     case "steps":
       return (
         <div>
+          {bgControls}
           <p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Heading</p>
           <RichTextField value={d.heading} onChange={(v) => set({ heading: v })} minHeight={30} />
           {d.items.map((it, idx) => (
@@ -384,6 +466,7 @@ function SectionEditor({ section, onChange }) {
     case "conclusion":
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {bgControls}
           <div><p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Heading</p><RichTextField value={d.heading} onChange={(v) => set({ heading: v })} minHeight={30} /></div>
           <div><p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Body</p><RichTextField value={d.text} onChange={(v) => set({ text: v })} minHeight={80} /></div>
         </div>
@@ -397,27 +480,32 @@ function SectionEditor({ section, onChange }) {
 function SectionPreview({ section }) {
   const d = section.data;
   const hasImg = (src) => src && src.length > 0;
+  const bg = d.bgColor || "";
 
   switch (section.type) {
     case "intro":
       return (
-        <div style={{ fontSize: 18, lineHeight: 1.7, color: ink }}>
+        <div style={{ fontSize: 18, lineHeight: 1.7, color: ink, background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 18 : 0 }}>
           <RichHtmlWithIcons html={d.p1} style={{ marginBottom: 12 }} />
           {d.p2 && <RichHtmlWithIcons html={d.p2} />}
         </div>
       );
     case "heading":
-      return <RichHtmlWithIcons html={d.text} style={{ fontFamily: "Georgia,serif", fontSize: 28, color: ink }} />;
+      return (
+        <div style={{ background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 12 : 0 }}>
+          <RichHtmlWithIcons html={d.text} style={{ fontFamily: "Georgia,serif", fontSize: 28, color: ink }} />
+        </div>
+      );
     case "quote":
       return (
-        <blockquote style={{ borderLeft: `4px solid ${sage}`, margin: 0, padding: "12px 20px", background: sageLight, fontStyle: "italic", color: ink }}>
+        <blockquote style={{ borderLeft: `4px solid ${sage}`, margin: 0, padding: "12px 20px", background: bg || sageLight, fontStyle: "italic", color: ink, borderRadius: 10 }}>
           <RichHtmlWithIcons html={d.text} />
           {d.by && <RichHtmlWithIcons html={d.by} style={{ marginTop: 8, fontSize: 14, color: muted }} />}
         </blockquote>
       );
     case "takeaways":
       return (
-        <div style={{ background: sageLight, border: `1px solid ${sage}33`, borderRadius: 12, padding: 20 }}>
+        <div style={{ background: bg || sageLight, border: `1px solid ${sage}33`, borderRadius: 12, padding: 20 }}>
           <RichHtmlWithIcons html={d.heading} style={{ fontFamily: "Georgia,serif", fontSize: 22, color: ink, marginBottom: 12 }} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {d.items.map((it, i) => (
@@ -431,7 +519,7 @@ function SectionPreview({ section }) {
       );
     case "stats":
       return (
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(d.items.length, 4)}, 1fr)`, gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(d.items.length, 4)}, 1fr)`, gap: 12, background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 16 : 0 }}>
           {d.items.map((it, i) => (
             <div key={i} style={{ textAlign: "center", padding: 16, background: `${rose}11`, borderRadius: 10, border: `1px solid ${rose}22` }}>
               <RichHtmlWithIcons html={it.val} style={{ fontFamily: "Georgia,serif", fontSize: 32, color: rose }} />
@@ -442,14 +530,14 @@ function SectionPreview({ section }) {
       );
     case "imagetext":
       return (
-        <div style={{ display: "grid", gridTemplateColumns: d.left ? "1fr 1.2fr" : "1.2fr 1fr", gap: 20, alignItems: "center" }}>
+        <div style={{ display: "grid", gridTemplateColumns: d.left ? "1fr 1.2fr" : "1.2fr 1fr", gap: 20, alignItems: "center", background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 18 : 0 }}>
           {hasImg(d.img) ? <img src={imgUrl(d.img)} alt={d.alt || ""} style={{ width: "100%", borderRadius: 12, objectFit: "cover" }} /> : <div style={{ aspectRatio: "4/3", background: "#eee", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: muted }}>No image</div>}
           <RichHtmlWithIcons html={d.text} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />
         </div>
       );
     case "cards3":
       return (
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(d.items.length, 3)}, 1fr)`, gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(d.items.length, 3)}, 1fr)`, gap: 12, background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 16 : 0 }}>
           {d.items.map((it, i) => {
             const c = it.color === "rose" ? rose : sage;
             return (
@@ -463,7 +551,7 @@ function SectionPreview({ section }) {
       );
     case "imagecards":
       return (
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(d.items.length, 2)}, 1fr)`, gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(d.items.length, 2)}, 1fr)`, gap: 16, background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 16 : 0 }}>
           {d.items.map((it, i) => (
             <div key={i} style={{ border: `1px solid ${border}`, borderRadius: 10, overflow: "hidden" }}>
               {hasImg(it.img) ? <img src={imgUrl(it.img)} alt="" style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover" }} /> : <div style={{ aspectRatio: "4/3", background: "#eee", display: "flex", alignItems: "center", justifyContent: "center", color: muted }}>No image</div>}
@@ -477,7 +565,7 @@ function SectionPreview({ section }) {
       );
     case "darkbox":
       return (
-        <div style={{ background: ink, color: white, padding: 20, borderRadius: 10 }}>
+        <div style={{ background: bg || ink, color: white, padding: 20, borderRadius: 10 }}>
           <RichHtmlWithIcons html={d.heading} style={{ marginBottom: 10, fontSize: 16, fontWeight: 600 }} />
           <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
             {d.bullets.map((b, i) => (
@@ -491,7 +579,7 @@ function SectionPreview({ section }) {
       );
     case "steps":
       return (
-        <div>
+        <div style={{ background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 16 : 0 }}>
           {d.heading && <RichHtmlWithIcons html={d.heading} style={{ fontFamily: "Georgia,serif", fontSize: 22, color: ink, marginBottom: 14 }} />}
           {d.items.map((it, i) => (
             <div key={i} style={{ display: "flex", gap: 14, marginBottom: 14 }}>
@@ -506,7 +594,7 @@ function SectionPreview({ section }) {
       );
     case "conclusion":
       return (
-        <div>
+        <div style={{ background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 16 : 0 }}>
           {d.heading && <RichHtmlWithIcons html={d.heading} style={{ fontFamily: "Georgia,serif", fontSize: 24, color: ink, marginBottom: 12 }} />}
           <RichHtmlWithIcons html={d.text} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />
         </div>
@@ -820,32 +908,38 @@ export default function AdminBlogCreate() {
             <div key={s.id} style={{ marginBottom: 28 }}>
               {/* Render editable blocks for simple text fields, fallback to SectionPreview for complex ones */}
               {s.type === "intro" && (
-                <div style={{ fontSize: 18, lineHeight: 1.7, color: ink }}>
+                <div style={{ fontSize: 18, lineHeight: 1.7, color: ink, background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 18 : 0 }}>
                   <EditablePreviewBlock html={s.data.p1} onChange={(v) => updatePreviewSection(si, "p1", v)} />
                   {s.data.p2 && <EditablePreviewBlock html={s.data.p2} onChange={(v) => updatePreviewSection(si, "p2", v)} style={{ marginTop: 12 }} />}
                 </div>
               )}
-              {s.type === "heading" && <EditablePreviewBlock html={s.data.text} onChange={(v) => updatePreviewSection(si, "text", v)} style={{ fontFamily: "Georgia,serif", fontSize: 28, color: ink }} />}
+              {s.type === "heading" && (
+                <EditablePreviewBlock
+                  html={s.data.text}
+                  onChange={(v) => updatePreviewSection(si, "text", v)}
+                  style={{ fontFamily: "Georgia,serif", fontSize: 28, color: ink, background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 12 : 0 }}
+                />
+              )}
               {s.type === "quote" && (
-                <blockquote style={{ borderLeft: `4px solid ${sage}`, margin: 0, padding: "12px 20px", background: sageLight, fontStyle: "italic", color: ink }}>
+                <blockquote style={{ borderLeft: `4px solid ${sage}`, margin: 0, padding: "12px 20px", background: s.data.bgColor || sageLight, fontStyle: "italic", color: ink, borderRadius: 10 }}>
                   <EditablePreviewBlock html={s.data.text} onChange={(v) => updatePreviewSection(si, "text", v)} />
                   {s.data.by && <EditablePreviewBlock html={s.data.by} onChange={(v) => updatePreviewSection(si, "by", v)} style={{ marginTop: 8, fontSize: 14, color: muted }} />}
                 </blockquote>
               )}
               {s.type === "conclusion" && (
-                <div>
+                <div style={{ background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 16 : 0 }}>
                   {s.data.heading && <EditablePreviewBlock html={s.data.heading} onChange={(v) => updatePreviewSection(si, "heading", v)} style={{ fontFamily: "Georgia,serif", fontSize: 24, color: ink, marginBottom: 12 }} />}
                   <EditablePreviewBlock html={s.data.text} onChange={(v) => updatePreviewSection(si, "text", v)} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />
                 </div>
               )}
               {s.type === "imagetext" && (
-                <div style={{ display: "grid", gridTemplateColumns: s.data.left ? "1fr 1.2fr" : "1.2fr 1fr", gap: 20, alignItems: "center" }}>
+                <div style={{ display: "grid", gridTemplateColumns: s.data.left ? "1fr 1.2fr" : "1.2fr 1fr", gap: 20, alignItems: "center", background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 18 : 0 }}>
                   {s.data.img ? <img src={imgUrl(s.data.img)} alt={s.data.alt || ""} style={{ width: "100%", borderRadius: 12 }} /> : <div style={{ aspectRatio: "4/3", background: "#eee", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: muted }}>No image</div>}
                   <EditablePreviewBlock html={s.data.text} onChange={(v) => updatePreviewSection(si, "text", v)} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />
                 </div>
               )}
               {s.type === "steps" && (
-                <div>
+                <div style={{ background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 16 : 0 }}>
                   {s.data.heading && <EditablePreviewBlock html={s.data.heading} onChange={(v) => updatePreviewSection(si, "heading", v)} style={{ fontFamily: "Georgia,serif", fontSize: 22, color: ink, marginBottom: 14 }} />}
                   {s.data.items.map((it, ii) => (
                     <div key={ii} style={{ display: "flex", gap: 14, marginBottom: 14 }}>

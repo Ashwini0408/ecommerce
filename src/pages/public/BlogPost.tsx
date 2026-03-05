@@ -7,7 +7,7 @@ import DOMPurify from "dompurify";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
 import { blogPublicApi, type PublicBlogDetail } from "../../api/blogApi";
-import { ICON_MAP } from "../../components/admin/IconPickerPopover";
+import { cssSizeToPx, normalizeIconId, renderIconById } from "../../components/admin/iconHub";
 
 const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "";
 function imgUrl(src: string) {
@@ -33,12 +33,13 @@ function RichHtml({ html, style, className }: { html: string; style?: React.CSSP
   const resolveIcons = () => {
     if (!ref.current) return;
     ref.current.querySelectorAll("[data-icon]").forEach((el: HTMLElement) => {
-      const name = el.getAttribute("data-icon");
-      const Comp = ICON_MAP[name || ""];
-      if (Comp && !el.dataset.resolved) {
+      const raw = el.getAttribute("data-icon");
+      const iconId = normalizeIconId(raw);
+      if (iconId && !el.dataset.resolved) {
         el.dataset.resolved = "1";
         const size = el.getAttribute("data-icon-size") || "1em";
         const color = el.getAttribute("data-icon-color") || sage;
+        const sizePx = cssSizeToPx(size, 16);
         el.innerHTML = "";
         el.style.display = "inline-flex";
         el.style.verticalAlign = "middle";
@@ -53,7 +54,8 @@ function RichHtml({ html, style, className }: { html: string; style?: React.CSSP
         w.style.justifyContent = "center";
         el.appendChild(w);
         import("react-dom/client").then(({ createRoot }) => {
-          createRoot(w).render(createElement(Comp, { size: "100%", color: "currentColor" }));
+          const node = renderIconById(iconId, { sizePx, color: "currentColor" }) || createElement("span", null, "⬡");
+          createRoot(w).render(node);
         });
       }
     });

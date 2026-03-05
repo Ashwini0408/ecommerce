@@ -263,7 +263,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
         </div>
       )}
       {showIcons && (
-        <div style={{ position: "absolute", zIndex: 700, top: 42, right: 0 }}>
+        <div style={{ position: "absolute", zIndex: 700, top: 42, left: 0 }}>
           <IconPickerPopover onSelect={(iconName) => { insertIcon(iconName); setShowIcons(false); }} onClose={() => setShowIcons(false)} />
         </div>
       )}

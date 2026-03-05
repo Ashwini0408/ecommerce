@@ -1,13 +1,14 @@
 // @ts-nocheck
 import { Node, mergeAttributes } from "@tiptap/react";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
-import { ICON_MAP } from "./IconPickerPopover";
+import { cssSizeToPx, normalizeIconId, renderIconById } from "./iconHub";
 
 function InlineIconView({ node, selected }) {
-  const iconName = node.attrs.iconName || "";
+  const iconNameRaw = node.attrs.iconName || "";
+  const iconId = normalizeIconId(iconNameRaw);
   const iconSize = node.attrs.iconSize || "1em";
   const iconColor = node.attrs.iconColor || "#6B7F5E";
-  const Comp = ICON_MAP[iconName];
+  const sizePx = cssSizeToPx(iconSize, 16);
 
   return (
     <NodeViewWrapper
@@ -28,7 +29,7 @@ function InlineIconView({ node, selected }) {
         cursor: "pointer",
       }}
     >
-      {Comp ? <Comp size="100%" /> : <span title={iconName}>⬡</span>}
+      {renderIconById(iconId, { sizePx, color: "currentColor" }) || <span title={iconId}>⬡</span>}
     </NodeViewWrapper>
   );
 }
