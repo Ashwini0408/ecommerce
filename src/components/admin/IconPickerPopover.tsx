@@ -1,61 +1,8 @@
-import { useEffect, useRef, useState, type ComponentType } from "react";
-import {
-  Scissors, Leaf, Heart, Star, Sparkles, Crown, Shirt, Gem, Flower2,
-  Sun, Moon, CloudSun, Flame, Droplets, Wind, Feather, Palette, Brush,
-  PenTool, Ruler, Target, Award, Trophy, Medal, Gift, ShoppingBag,
-  Watch, Glasses, Umbrella, Camera, Image, Film, Music, BookOpen,
-  FileText, Mail, Phone, MapPin, Home, Building2, Globe, Plane,
-  Car, Bike, Anchor, Rocket, Lightbulb, Zap, Battery, Wifi,
-  CheckCircle2, XCircle, AlertTriangle, Info, HelpCircle, Bell,
-  Clock, Calendar, Tag, Bookmark, Link, ExternalLink, Search,
-  Eye, EyeOff, Lock, Unlock, Shield, Key, User, Users,
-  ThumbsUp, ThumbsDown, MessageCircle, Share2, Send, Download,
-  Upload, RefreshCw, RotateCw, ArrowRight, ArrowUp, TrendingUp,
-  BarChart3, PieChart, Activity, Percent,
-} from "lucide-react";
-
-interface IconEntry {
-  name: string;
-  Icon: ComponentType<{ size?: number; className?: string }>;
-}
-
-const ICONS: IconEntry[] = [
-  { name: "scissors", Icon: Scissors }, { name: "leaf", Icon: Leaf }, { name: "heart", Icon: Heart },
-  { name: "star", Icon: Star }, { name: "sparkles", Icon: Sparkles }, { name: "crown", Icon: Crown },
-  { name: "shirt", Icon: Shirt }, { name: "gem", Icon: Gem }, { name: "flower", Icon: Flower2 },
-  { name: "sun", Icon: Sun }, { name: "moon", Icon: Moon }, { name: "cloud-sun", Icon: CloudSun },
-  { name: "flame", Icon: Flame }, { name: "droplets", Icon: Droplets }, { name: "wind", Icon: Wind },
-  { name: "feather", Icon: Feather }, { name: "palette", Icon: Palette }, { name: "brush", Icon: Brush },
-  { name: "pen-tool", Icon: PenTool }, { name: "ruler", Icon: Ruler }, { name: "target", Icon: Target },
-  { name: "award", Icon: Award }, { name: "trophy", Icon: Trophy }, { name: "medal", Icon: Medal },
-  { name: "gift", Icon: Gift }, { name: "shopping-bag", Icon: ShoppingBag }, { name: "watch", Icon: Watch },
-  { name: "glasses", Icon: Glasses }, { name: "umbrella", Icon: Umbrella }, { name: "camera", Icon: Camera },
-  { name: "image", Icon: Image }, { name: "film", Icon: Film }, { name: "music", Icon: Music },
-  { name: "book-open", Icon: BookOpen }, { name: "file-text", Icon: FileText }, { name: "mail", Icon: Mail },
-  { name: "phone", Icon: Phone }, { name: "map-pin", Icon: MapPin }, { name: "home", Icon: Home },
-  { name: "building", Icon: Building2 }, { name: "globe", Icon: Globe }, { name: "plane", Icon: Plane },
-  { name: "car", Icon: Car }, { name: "bike", Icon: Bike }, { name: "anchor", Icon: Anchor },
-  { name: "rocket", Icon: Rocket }, { name: "lightbulb", Icon: Lightbulb }, { name: "zap", Icon: Zap },
-  { name: "battery", Icon: Battery }, { name: "wifi", Icon: Wifi }, { name: "check-circle", Icon: CheckCircle2 },
-  { name: "x-circle", Icon: XCircle }, { name: "alert", Icon: AlertTriangle }, { name: "info", Icon: Info },
-  { name: "help", Icon: HelpCircle }, { name: "bell", Icon: Bell }, { name: "clock", Icon: Clock },
-  { name: "calendar", Icon: Calendar }, { name: "tag", Icon: Tag }, { name: "bookmark", Icon: Bookmark },
-  { name: "link", Icon: Link }, { name: "external-link", Icon: ExternalLink }, { name: "search", Icon: Search },
-  { name: "eye", Icon: Eye }, { name: "eye-off", Icon: EyeOff }, { name: "lock", Icon: Lock },
-  { name: "unlock", Icon: Unlock }, { name: "shield", Icon: Shield }, { name: "key", Icon: Key },
-  { name: "user", Icon: User }, { name: "users", Icon: Users }, { name: "thumbs-up", Icon: ThumbsUp },
-  { name: "thumbs-down", Icon: ThumbsDown }, { name: "message", Icon: MessageCircle }, { name: "share", Icon: Share2 },
-  { name: "send", Icon: Send }, { name: "download", Icon: Download }, { name: "upload", Icon: Upload },
-  { name: "refresh", Icon: RefreshCw }, { name: "rotate", Icon: RotateCw }, { name: "arrow-right", Icon: ArrowRight },
-  { name: "arrow-up", Icon: ArrowUp }, { name: "trending-up", Icon: TrendingUp }, { name: "bar-chart", Icon: BarChart3 },
-  { name: "pie-chart", Icon: PieChart }, { name: "activity", Icon: Activity }, { name: "percent", Icon: Percent },
-];
-
-export const ICON_MAP: Record<string, ComponentType<{ size?: number; className?: string }>> =
-  Object.fromEntries(ICONS.map((i) => [i.name, i.Icon]));
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getIconItems, ICON_PROVIDER_TABS, renderIconById, type IconProvider } from "./iconHub";
 
 interface Props {
-  onSelect: (iconName: string) => void;
+  onSelect: (iconId: string) => void;
   onClose: () => void;
 }
 
@@ -63,6 +10,7 @@ export default function IconPickerPopover({ onSelect, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const mountedAt = useRef(Date.now());
   const [query, setQuery] = useState("");
+  const [provider, setProvider] = useState<IconProvider>("huge");
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -73,9 +21,14 @@ export default function IconPickerPopover({ onSelect, onClose }: Props) {
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
-  const filtered = query
-    ? ICONS.filter((i) => i.name.includes(query.toLowerCase()))
-    : ICONS;
+  const items = useMemo(() => getIconItems(provider), [provider]);
+  const q = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!q) return items;
+    return items.filter((i) => i.label.includes(q) || i.id.includes(q));
+  }, [q, items]);
+  const MAX_RENDER = q ? 1200 : 480;
+  const shown = filtered.slice(0, MAX_RENDER);
 
   return (
     <div
@@ -92,6 +45,29 @@ export default function IconPickerPopover({ onSelect, onClose }: Props) {
         overflow: "hidden",
       }}
     >
+      <div style={{ display: "flex", gap: 6, padding: "8px 10px", borderBottom: "1px solid #E2E8DE", background: "#FAFAF8", flexWrap: "wrap" }}>
+        {ICON_PROVIDER_TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setProvider(t.id); setQuery(""); }}
+            style={{
+              border: provider === t.id ? "1px solid #6B7F5E" : "1px solid #E2E8DE",
+              background: provider === t.id ? "#EEF3EB" : "#fff",
+              color: "#2C2C2C",
+              borderRadius: 999,
+              padding: "4px 8px",
+              cursor: "pointer",
+              fontSize: 11,
+              fontWeight: provider === t.id ? 700 : 600,
+            }}
+            title={t.countHint ? `${t.countHint} icons` : undefined}
+          >
+            {t.label}{t.countHint ? ` · ${t.countHint}` : ""}
+          </button>
+        ))}
+      </div>
       <div style={{ padding: "8px 10px", borderBottom: "1px solid #E2E8DE" }}>
         <input
           autoFocus
@@ -109,6 +85,9 @@ export default function IconPickerPopover({ onSelect, onClose }: Props) {
             boxSizing: "border-box",
           }}
         />
+        <div style={{ marginTop: 6, fontSize: 11, color: "#7A7A7A" }}>
+          {filtered.length > MAX_RENDER ? `Showing ${MAX_RENDER} of ${filtered.length}. Type more to narrow.` : `${filtered.length} icons`}
+        </div>
       </div>
       <div
         style={{
@@ -120,14 +99,14 @@ export default function IconPickerPopover({ onSelect, onClose }: Props) {
           gap: 2,
         }}
       >
-        {filtered.map((item) => (
+        {shown.map((item) => (
           <button
-            key={item.name}
-            title={item.name}
+            key={item.id}
+            title={item.id}
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onSelect(item.name);
+              onSelect(item.id);
             }}
             style={{
               width: 34,
@@ -144,7 +123,9 @@ export default function IconPickerPopover({ onSelect, onClose }: Props) {
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#EEF3EB"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
           >
-            <item.Icon size={18} />
+            <span style={{ display: "inline-flex", width: 18, height: 18, alignItems: "center", justifyContent: "center" }}>
+              {renderIconById(item.id, { sizePx: 18, color: "currentColor" })}
+            </span>
           </button>
         ))}
         {filtered.length === 0 && (
