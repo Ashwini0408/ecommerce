@@ -22,6 +22,18 @@ const ink = "#2C2C2C";
 const muted = "#7A7A7A";
 const rose = "#B5505A";
 
+function isLightBg(hex: string | undefined): boolean {
+  if (!hex || typeof hex !== "string") return false;
+  let h = hex.replace(/^#/, "").trim();
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (h.length < 6) return false;
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6;
+}
+
 function sanitize(html: string) {
   return DOMPurify.sanitize(html || "", {
     ADD_ATTR: ["data-icon", "data-icon-size", "data-icon-color", "contenteditable", "style"],
@@ -151,20 +163,24 @@ function SectionRenderer({ section }: { section: any }) {
           ))}
         </div>
       );
-    case "darkbox":
+    case "darkbox": {
+      const boxBg = d.bgColor || ink;
+      const textClr = isLightBg(boxBg) ? ink : "#fff";
+      const dotClr = isLightBg(boxBg) ? sage : sageLight;
       return (
-        <div style={{ background: ink, color: "#fff", padding: 20, borderRadius: 10 }}>
+        <div style={{ background: boxBg, color: textClr, padding: 20, borderRadius: 10 }}>
           <RichHtml html={d.heading} style={{ marginBottom: 10, fontSize: 16, fontWeight: 600 }} />
           <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
             {d.bullets?.map((b: any, i: number) => (
               <li key={i} style={{ display: "flex", alignItems: "start", gap: 8, marginBottom: 6, fontSize: 14 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: sage, marginTop: 6, flexShrink: 0 }} />
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotClr, marginTop: 6, flexShrink: 0 }} />
                 <RichHtml html={b.text} />
               </li>
             ))}
           </ul>
         </div>
       );
+    }
     case "steps":
       return (
         <div>
