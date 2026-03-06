@@ -13,7 +13,7 @@ import IconPickerPopover from "./IconPickerPopover";
 import InlineIconNode from "./InlineIconExtension";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
-  AlignLeft, AlignCenter, AlignRight, List, ListOrdered,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered,
   Smile, Shapes, Highlighter, Type, Undo2, Redo2, Palette, Maximize2,
 } from "lucide-react";
 
@@ -93,7 +93,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
       Underline,
       TextStyleKit.configure({ backgroundColor: false, lineHeight: false }),
       Highlight.configure({ multicolor: true }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TextAlign.configure({ types: ["heading", "paragraph"], alignments: ['left', 'center', 'right', 'justify'] }),
       Placeholder.configure({ placeholder }),
       InlineIconNode,
     ],
@@ -198,6 +198,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
         <Btn on={active("paragraph", { textAlign: "left" })} click={run(() => editor.chain().focus().setTextAlign("left").run())} title="Left"><AlignLeft size={14} /></Btn>
         <Btn on={active("paragraph", { textAlign: "center" })} click={run(() => editor.chain().focus().setTextAlign("center").run())} title="Center"><AlignCenter size={14} /></Btn>
         <Btn on={active("paragraph", { textAlign: "right" })} click={run(() => editor.chain().focus().setTextAlign("right").run())} title="Right"><AlignRight size={14} /></Btn>
+        <Btn on={active("paragraph", { textAlign: "justify" })} click={run(() => editor.chain().focus().setTextAlign("justify").run())} title="Justify"><AlignJustify size={14} /></Btn>
         <Sep />
         <Btn on={active("bulletList")} click={run(() => editor.chain().focus().toggleBulletList().run())} title="Bullet list"><List size={14} /></Btn>
         <Btn on={active("orderedList")} click={run(() => editor.chain().focus().toggleOrderedList().run())} title="Ordered list"><ListOrdered size={14} /></Btn>
