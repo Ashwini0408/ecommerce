@@ -567,10 +567,12 @@ function SectionPreview({ section }) {
         </div>
       );
     case "imagetext":
+      const imgElement = hasImg(d.img) ? <img src={imgUrl(d.img)} alt={d.alt || ""} style={{ width: "100%", borderRadius: 12, objectFit: "cover" }} /> : <div style={{ aspectRatio: "4/3", background: "#eee", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: muted }}>No image</div>;
+      const textElement = <RichHtmlWithIcons html={d.text} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />;
       return (
-        <div style={{ display: "grid", gridTemplateColumns: d.left ? "1fr 1.2fr" : "1.2fr 1fr", gap: 20, alignItems: "center", background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 18 : 0 }}>
-          {hasImg(d.img) ? <img src={imgUrl(d.img)} alt={d.alt || ""} style={{ width: "100%", borderRadius: 12, objectFit: "cover" }} /> : <div style={{ aspectRatio: "4/3", background: "#eee", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: muted }}>No image</div>}
-          <RichHtmlWithIcons html={d.text} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 20, alignItems: "center", background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 18 : 0 }}>
+          {d.left ? imgElement : textElement}
+          {d.left ? textElement : imgElement}
         </div>
       );
     case "cards3":
@@ -970,12 +972,15 @@ export default function AdminBlogCreate() {
                   <EditablePreviewBlock html={s.data.text} onChange={(v) => updatePreviewSection(si, "text", v)} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />
                 </div>
               )}
-              {s.type === "imagetext" && (
-                <div style={{ display: "grid", gridTemplateColumns: s.data.left ? "1fr 1.2fr" : "1.2fr 1fr", gap: 20, alignItems: "center", background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 18 : 0 }}>
-                  {s.data.img ? <img src={imgUrl(s.data.img)} alt={s.data.alt || ""} style={{ width: "100%", borderRadius: 12 }} /> : <div style={{ aspectRatio: "4/3", background: "#eee", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: muted }}>No image</div>}
-                  <EditablePreviewBlock html={s.data.text} onChange={(v) => updatePreviewSection(si, "text", v)} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />
-                </div>
-              )}
+              {s.type === "imagetext" && ((imgBlock) => {
+                const txtBlock = <EditablePreviewBlock html={s.data.text} onChange={(v) => updatePreviewSection(si, "text", v)} style={{ fontSize: 16, lineHeight: 1.7, color: ink }} />;
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 20, alignItems: "center", background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 18 : 0 }}>
+                    {s.data.left ? imgBlock : txtBlock}
+                    {s.data.left ? txtBlock : imgBlock}
+                  </div>
+                );
+              })(s.data.img ? <img src={imgUrl(s.data.img)} alt={s.data.alt || ""} style={{ width: "100%", borderRadius: 12 }} /> : <div style={{ aspectRatio: "4/3", background: "#eee", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", color: muted }}>No image</div>)}
               {s.type === "steps" && (
                 <div style={{ background: s.data.bgColor || "transparent", borderRadius: s.data.bgColor ? 12 : 0, padding: s.data.bgColor ? 16 : 0 }}>
                   {s.data.heading && <EditablePreviewBlock html={s.data.heading} onChange={(v) => updatePreviewSection(si, "heading", v)} style={{ fontFamily: "Georgia,serif", fontSize: 22, color: ink, marginBottom: 14 }} />}
@@ -991,7 +996,7 @@ export default function AdminBlogCreate() {
                 </div>
               )}
               {s.type === "darkbox" && (
-                <div style={{ background: ink, color: white, padding: 20, borderRadius: 10 }}>
+                <div style={{ background: s.data.bgColor || ink, color: white, padding: 20, borderRadius: 10 }}>
                   <EditablePreviewBlock html={s.data.heading} onChange={(v) => updatePreviewSection(si, "heading", v)} style={{ marginBottom: 10, fontSize: 16, fontWeight: 600 }} />
                   {s.data.bullets.map((b, bi) => (
                     <div key={bi} style={{ display: "flex", alignItems: "start", gap: 8, marginBottom: 6, fontSize: 14 }}>
