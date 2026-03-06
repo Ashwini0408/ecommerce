@@ -19,6 +19,19 @@ const rose = "#B5505A";
 
 const IMG_BASE = import.meta.env.VITE_API_IMG_URL || "";
 
+/** Return true if hex color is light (use dark text for contrast) */
+function isLightBg(hex) {
+  if (!hex || typeof hex !== "string") return false;
+  let h = hex.replace(/^#/, "").trim();
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (h.length < 6) return false;
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6;
+}
+
 /** Resolve image URL: prepend backend base for relative paths */
 function imgUrl(src) {
   if (!src || src.length === 0) return "";
@@ -470,6 +483,10 @@ function SectionEditor({ section, onChange }) {
       return (
         <div>
           {bgControls}
+          {/* Live preview bar so user sees the selected background */}
+          <div style={{ marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: bg || ink, color: isLightBg(bg || ink) ? ink : white, fontSize: 12, fontWeight: 600 }}>
+            Preview: {(typeof d.heading === "string" ? d.heading.replace(/<[^>]*>/g, "").trim() : "") || "Important Notes"}
+          </div>
           <p style={{ margin: "0 0 4px", fontSize: 11, color: muted }}>Heading</p>
           <RichTextField value={d.heading} onChange={(v) => set({ heading: v })} minHeight={30} />
           {d.bullets.map((b, idx) => (
@@ -603,20 +620,24 @@ function SectionPreview({ section }) {
           ))}
         </div>
       );
-    case "darkbox":
+    case "darkbox": {
+      const boxBg = bg || ink;
+      const textClr = isLightBg(boxBg) ? ink : white;
+      const dotClr = isLightBg(boxBg) ? sage : sageLight;
       return (
-        <div style={{ background: bg || ink, color: white, padding: 20, borderRadius: 10 }}>
+        <div style={{ background: boxBg, color: textClr, padding: 20, borderRadius: 10 }}>
           <RichHtmlWithIcons html={d.heading} style={{ marginBottom: 10, fontSize: 16, fontWeight: 600 }} />
           <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
             {d.bullets.map((b, i) => (
               <li key={i} style={{ display: "flex", alignItems: "start", gap: 8, marginBottom: 6, fontSize: 14 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: sage, marginTop: 6, flexShrink: 0 }} />
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotClr, marginTop: 6, flexShrink: 0 }} />
                 <RichHtmlWithIcons html={b.text} />
               </li>
             ))}
           </ul>
         </div>
       );
+    }
     case "steps":
       return (
         <div style={{ background: bg || "transparent", borderRadius: bg ? 12 : 0, padding: bg ? 16 : 0 }}>
@@ -995,17 +1016,22 @@ export default function AdminBlogCreate() {
                   ))}
                 </div>
               )}
-              {s.type === "darkbox" && (
-                <div style={{ background: s.data.bgColor || ink, color: white, padding: 20, borderRadius: 10 }}>
-                  <EditablePreviewBlock html={s.data.heading} onChange={(v) => updatePreviewSection(si, "heading", v)} style={{ marginBottom: 10, fontSize: 16, fontWeight: 600 }} />
-                  {s.data.bullets.map((b, bi) => (
-                    <div key={bi} style={{ display: "flex", alignItems: "start", gap: 8, marginBottom: 6, fontSize: 14 }}>
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: sage, marginTop: 6, flexShrink: 0 }} />
-                      <EditablePreviewBlock html={b.text} onChange={(v) => updatePreviewItemField(si, "bullets", bi, "text", v)} />
-                    </div>
-                  ))}
-                </div>
-              )}
+              {s.type === "darkbox" && (() => {
+                const boxBg = s.data.bgColor || ink;
+                const textClr = isLightBg(boxBg) ? ink : white;
+                const dotClr = isLightBg(boxBg) ? sage : sageLight;
+                return (
+                  <div style={{ background: boxBg, color: textClr, padding: 20, borderRadius: 10 }}>
+                    <EditablePreviewBlock html={s.data.heading} onChange={(v) => updatePreviewSection(si, "heading", v)} style={{ marginBottom: 10, fontSize: 16, fontWeight: 600 }} />
+                    {s.data.bullets.map((b, bi) => (
+                      <div key={bi} style={{ display: "flex", alignItems: "start", gap: 8, marginBottom: 6, fontSize: 14 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: dotClr, marginTop: 6, flexShrink: 0 }} />
+                        <EditablePreviewBlock html={b.text} onChange={(v) => updatePreviewItemField(si, "bullets", bi, "text", v)} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               {s.type === "takeaways" && (
                 <div style={{ background: sageLight, border: `1px solid ${sage}33`, borderRadius: 12, padding: 20 }}>
                   <EditablePreviewBlock html={s.data.heading} onChange={(v) => updatePreviewSection(si, "heading", v)} style={{ fontFamily: "Georgia,serif", fontSize: 22, color: ink, marginBottom: 12 }} />
