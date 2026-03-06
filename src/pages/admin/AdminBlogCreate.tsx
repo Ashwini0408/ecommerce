@@ -310,6 +310,35 @@ function AddModal({ onClose, onAdd }) {
   );
 }
 
+function Toggle({ value, onChange, opts }) {
+  return (
+    <div style={{ display: "flex", gap: 0 }}>
+      {opts.map((o, i) => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={e => { e.stopPropagation(); onChange(o.v); }}
+          style={{
+            flex: 1,
+            padding: "8px 14px",
+            fontSize: 12,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            background: value === o.v ? sageLight : white,
+            color: value === o.v ? sage : muted,
+            border: `1.5px solid ${value === o.v ? sage : border}`,
+            borderRadius: i === 0 ? "7px 0 0 7px" : "0 7px 7px 0",
+            fontWeight: value === o.v ? 700 : 400,
+            transition: "all .15s",
+          }}
+        >
+          {o.l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ─── SectionEditor: visual rich-text form per type ─── */
 function SectionEditor({ section, onChange }) {
   const d = section.data;
@@ -391,9 +420,18 @@ function SectionEditor({ section, onChange }) {
           <ImageUpload value={d.img} onChange={(url) => set({ img: url })} label="Section image" />
           <input value={d.alt || ""} onChange={(e) => set({ alt: e.target.value })} placeholder="Alt text" style={inputStyle} />
           <RichTextField value={d.text} onChange={(v) => set({ text: v })} minHeight={60} />
-          <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, color: ink }}>
-            <input type="checkbox" checked={!!d.left} onChange={(e) => set({ left: e.target.checked })} /> Image on left
-          </label>
+          
+          <div style={{ marginTop: 4 }}>
+            <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 600, color: muted, textTransform: "uppercase", letterSpacing: 0.4 }}>IMAGE POSITION</p>
+            <Toggle
+              value={d.left ? "left" : "right"}
+              onChange={(v) => set({ left: v === "left" })}
+              opts={[
+                { v: "left",  l: "Image on Left"  },
+                { v: "right", l: "Image on Right" },
+              ]}
+            />
+          </div>
         </div>
       );
     case "cards3":
