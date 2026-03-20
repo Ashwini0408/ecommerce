@@ -1795,40 +1795,18 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import measurementStoreApi, { type MeasurementSummary, type MeasurementDetail } from "../../api/measurementStoreApi";
-import { useNavigate } from "react-router-dom";
 
-type MeasurementDetails = MeasurementDetail;
-
-// Extended interface for fallback data
-interface ExtendedMeasurementDetails extends MeasurementSummary {
-  measurements?: {
-    bust?: number;
-    waist?: number;
-    hips?: number;
-    shoulderWidth?: number;
-    armLength?: number;
-    torsoLength?: number;
-    inseam?: number;
-    thighCircumference?: number;
-    calfCircumference?: number;
-    chest?: number;
-    sleeveLength?: number;
-    neckCircumference?: number;
-    // Add these fields that might be nested objects
-    [key: string]: any; // Allow for nested objects
-  };
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
+type MeasurementModalData =
+  | MeasurementDetail
+  | (MeasurementSummary & {
+      user?: MeasurementDetail["user"];
+    });
 
 const AdminMeasurements = () => {
   const [items, setItems] = useState<MeasurementSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalLoading, setModalLoading] = useState(false);
-  const [selectedMeasurement, setSelectedMeasurement] = useState<ExtendedMeasurementDetails | null>(null);
+  const [selectedMeasurement, setSelectedMeasurement] = useState<MeasurementModalData | null>(null);
   const [isLimitedData, setIsLimitedData] = useState(false);
   
   // Modal states
@@ -1845,8 +1823,6 @@ const AdminMeasurements = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  const navigate = useNavigate();
 
   const load = async () => {
     setLoading(true);
@@ -1905,9 +1881,9 @@ const AdminMeasurements = () => {
           console.log("Using summary data as fallback for ID:", id);
           
           // Create a basic details object from summary
-          const fallbackDetails: ExtendedMeasurementDetails = {
+          const fallbackDetails: MeasurementModalData = {
             ...summaryItem,
-            measurements: {}, // Empty measurements object as fallback
+            measurements: summaryItem.measurements ?? null,
             user: summaryItem.userId ? { 
               id: summaryItem.userId,
               name: `User #${summaryItem.userId}`,
@@ -2040,7 +2016,7 @@ const AdminMeasurements = () => {
   };
 
   // Function to recursively render nested measurements
-  const renderNestedMeasurements = (obj: any, parentKey: string = ''): JSX.Element[] => {
+  const renderNestedMeasurements = (obj: any, parentKey: string = '') => {
     if (!obj || typeof obj !== 'object') return [];
     
     return Object.entries(obj).map(([key, value]) => {

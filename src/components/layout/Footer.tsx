@@ -167,8 +167,8 @@ const footerLinks = {
   ],
   support: [
     { name: "Contact Us", href: "/contact" },
-    { name: "Shipping", href: "/shipping" },
-    { name: "Returns", href: "/returns" },
+    // { name: "Shipping", href: "/shipping" },
+    // { name: "Returns", href: "/returns" },
     { name: "Size Guide", href: "/sizeGuide" },
     { name: "Book Appointment", href: "/appointment" },
   ],
