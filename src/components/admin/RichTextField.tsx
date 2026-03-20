@@ -13,10 +13,10 @@ import IconPickerPopover from "./IconPickerPopover";
 import InlineIconNode from "./InlineIconExtension";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
-  AlignLeft, AlignCenter, AlignRight, List, ListOrdered,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered,
   Smile, Shapes, Highlighter, Type, Undo2, Redo2, Palette, Maximize2,
 } from "lucide-react";
-
+ 
 const sage = "#6B7F5E";
 const borderClr = "#E2E8DE";
 const ICON_SIZES = [
@@ -28,9 +28,9 @@ const ICON_SIZES = [
   { label: "2XL", value: "3em" },
   { label: "3XL", value: "4em" },
 ];
-
+ 
 const FONT_SIZES = ["12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "36px", "48px"];
-
+ 
 const FONT_FAMILIES = [
   { label: "Default", value: "" },
   { label: "Georgia (Serif)", value: "Georgia, serif" },
@@ -54,7 +54,7 @@ const FONT_FAMILIES = [
   { label: "Comic Sans MS", value: "Comic Sans MS, cursive" },
   { label: "Brush Script", value: "Brush Script MT, cursive" },
 ];
-
+ 
 function getSelectedIconNode(editor) {
   if (!editor) return null;
   const { state } = editor;
@@ -72,20 +72,20 @@ function getSelectedIconNode(editor) {
   }
   return null;
 }
-
+ 
 interface Props {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   minHeight?: number;
 }
-
+ 
 export default function RichTextField({ value, onChange, placeholder = "Start writing...", minHeight = 80 }: Props) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [showIcons, setShowIcons] = useState(false);
   const [tick, setTick] = useState(0);
   const suppressUpdate = useRef(false);
-
+ 
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -93,7 +93,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
       Underline,
       TextStyleKit.configure({ backgroundColor: false, lineHeight: false }),
       Highlight.configure({ multicolor: true }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TextAlign.configure({ types: ["heading", "paragraph"], alignments: ['left', 'center', 'right', 'justify'] }),
       Placeholder.configure({ placeholder }),
       InlineIconNode,
     ],
@@ -105,7 +105,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
     },
     onSelectionUpdate: () => setTick((t) => t + 1),
   });
-
+ 
   useEffect(() => {
     if (!editor || editor.isDestroyed) return;
     const currentHtml = editor.getHTML();
@@ -115,16 +115,16 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
       suppressUpdate.current = false;
     }
   }, [value, editor]);
-
+ 
   const insertEmoji = useCallback((emoji: string) => {
     editor?.chain().focus().insertContent(emoji).run();
   }, [editor]);
-
+ 
   const insertIcon = useCallback((iconName: string) => {
     if (!editor) return;
     editor.chain().focus().insertContent(`<span data-icon="${iconName}"></span>`).run();
   }, [editor]);
-
+ 
   const updateSelectedIconAttr = useCallback((attrKey: string, attrValue: string) => {
     if (!editor) return;
     const sel = getSelectedIconNode(editor);
@@ -134,14 +134,14 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
     editor.view.dispatch(tr);
     setTick((t) => t + 1);
   }, [editor]);
-
+ 
   if (!editor) return null;
-
+ 
   const active = (name, attrs) => { try { return editor.isActive(name, attrs); } catch { return false; } };
   const attr = (mark, key) => { try { return editor.getAttributes(mark)?.[key] || ""; } catch { return ""; } };
   const run = (fn) => () => fn();
   const selectedIcon = getSelectedIconNode(editor);
-
+ 
   const Btn = ({ on, click, children, title }) => (
     <button
       type="button"
@@ -159,9 +159,9 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
       }}
     >{children}</button>
   );
-
+ 
   const Sep = () => <div style={{ width: 1, height: 20, background: borderClr, margin: "0 3px" }} />;
-
+ 
   return (
     <div style={{ border: `1px solid ${borderClr}`, borderRadius: 10, background: "#fff", position: "relative" }}>
       {/* Main Toolbar */}
@@ -198,6 +198,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
         <Btn on={active("paragraph", { textAlign: "left" })} click={run(() => editor.chain().focus().setTextAlign("left").run())} title="Left"><AlignLeft size={14} /></Btn>
         <Btn on={active("paragraph", { textAlign: "center" })} click={run(() => editor.chain().focus().setTextAlign("center").run())} title="Center"><AlignCenter size={14} /></Btn>
         <Btn on={active("paragraph", { textAlign: "right" })} click={run(() => editor.chain().focus().setTextAlign("right").run())} title="Right"><AlignRight size={14} /></Btn>
+        <Btn on={active("paragraph", { textAlign: "justify" })} click={run(() => editor.chain().focus().setTextAlign("justify").run())} title="Justify"><AlignJustify size={14} /></Btn>
         <Sep />
         <Btn on={active("bulletList")} click={run(() => editor.chain().focus().toggleBulletList().run())} title="Bullet list"><List size={14} /></Btn>
         <Btn on={active("orderedList")} click={run(() => editor.chain().focus().toggleOrderedList().run())} title="Ordered list"><ListOrdered size={14} /></Btn>
@@ -205,7 +206,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
         <Btn on={showEmoji} click={() => { setShowIcons(false); setShowEmoji((p) => !p); }} title="Emoji"><Smile size={14} /></Btn>
         <Btn on={showIcons} click={() => { setShowEmoji(false); setShowIcons((p) => !p); }} title="Insert icon"><Shapes size={14} /></Btn>
       </div>
-
+ 
       {/* Icon controls toolbar (shown when an icon node is selected) */}
       {selectedIcon && (
         <div style={{
@@ -216,7 +217,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
           <Shapes size={13} style={{ color: sage }} />
           <span style={{ fontSize: 11, fontWeight: 600, color: sage, marginRight: 4 }}>Icon: {selectedIcon.node.attrs.iconName}</span>
           <Sep />
-
+ 
           {/* Icon color */}
           <Palette size={13} style={{ color: "#555" }} />
           <div style={{ position: "relative", width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center" }} title="Icon color">
@@ -230,7 +231,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
             />
           </div>
           <Sep />
-
+ 
           {/* Icon size */}
           <Maximize2 size={13} style={{ color: "#555" }} />
           {ICON_SIZES.map((s) => (
@@ -255,7 +256,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
           ))}
         </div>
       )}
-
+ 
       {/* Popovers */}
       {showEmoji && (
         <div style={{ position: "absolute", zIndex: 700, top: 42, left: 0 }}>
@@ -267,7 +268,7 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
           <IconPickerPopover onSelect={(iconName) => { insertIcon(iconName); setShowIcons(false); }} onClose={() => setShowIcons(false)} />
         </div>
       )}
-
+ 
       {/* Editor */}
       <div style={{ padding: "8px 12px", minHeight, cursor: "text" }} onClick={() => { if (!editor.isFocused) editor.chain().focus().run(); }}>
         <EditorContent editor={editor} />
@@ -275,3 +276,5 @@ export default function RichTextField({ value, onChange, placeholder = "Start wr
     </div>
   );
 }
+ 
+ 
