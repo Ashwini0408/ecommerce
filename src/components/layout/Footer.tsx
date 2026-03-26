@@ -338,12 +338,24 @@ export const Footer = () => {
         </div>
  
         {/* Bottom Bar */}
-        <div className="mt-20 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-muted-foreground text-xs tracking-wider">
+        <div className="mt-20 pt-8 border-t border-border grid gap-4 text-center md:grid-cols-[1fr_auto_1fr] md:items-center">
+          <p className="text-muted-foreground text-xs tracking-wider md:justify-self-start">
             © {new Date().getFullYear()} STYLISTE COUTURIER. All rights reserved.
           </p>
  
-          <div className="flex items-center gap-8">
+          <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground md:justify-self-center">
+            Designed &amp; developed by{" "}
+            <a
+              href="https://maximusatlas.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sage hover:text-foreground transition-colors"
+            >
+              Maximus Atlas
+            </a>
+          </p>
+
+          <div className="flex items-center justify-center gap-8 md:justify-self-end">
             <Link
               to="/privacy-policy"
               className="text-muted-foreground hover:text-foreground transition-colors text-xs tracking-wider"
