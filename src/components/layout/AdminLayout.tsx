@@ -126,6 +126,7 @@ import {
   FiRotateCcw,
   FiX,
   FiFileText,
+  FiUserCheck,
 } from "react-icons/fi";
 import useAuth from "../../hooks/useAuth";
 import logo from "../../assets/logo.png";
@@ -146,7 +147,7 @@ const AdminLayout = () => {
     { name: "Returns", path: "/admin/returns", icon: FiRotateCcw },
     { name: "Users Management", path: "/admin/users", icon: FiUsers },
     { name: "Appointments", path: "/admin/appointments", icon: FiCalendar },
-    // { name: "Measurements", path: "/admin/measurements", icon: FiUserCheck },
+    { name: "Measurements", path: "/admin/measurements", icon: FiUserCheck },
     { name: "Blog Management", path: "/admin/blogs", icon: FiFileText },
     { name: "Visit Site", path: "/", icon: FiExternalLink, external: true },
     { name: "Contact Messages", path: "/admin/contacts", icon: FiMail },
