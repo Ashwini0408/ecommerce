@@ -554,8 +554,8 @@ const SignUpPage = () => {
                   <input type="checkbox" className="mt-1 accent-primary" required />
                   <span>
                     I agree to the{' '}
-                    <a href="#" className="font-medium text-sage hover:underline">Terms</a> and{' '}
-                    <a href="#" className="font-medium text-sage hover:underline">Privacy Policy</a>
+                    <a href="./terms-of-service" className="font-medium text-sage hover:underline">Terms</a> and{' '}
+                    <a href="./privacy-policy" className="font-medium text-sage hover:underline">Privacy Policy</a>
                   </span>
                 </motion.label>
 
