@@ -604,6 +604,8 @@ import { Footer } from "../../components/layout/Footer";
 
 import desktopVideo from "../../assets/STYLISTE.mp4";
 import mobileVideo from "../../assets/STYLISTE.mp4";
+import leftVideo from "../../assets/video 1.mp4";
+import rightVideo from "../../assets/video 2.mp4";
 import heroTestimonials from "../../assets/hero-testimonials.jpg";
 
 /* ================= TESTIMONIAL DATA ================= */
@@ -698,14 +700,67 @@ const testimonials = [
   },
 ];
 
+const testimonialVideos = [
+  {
+    id: "left",
+    desktopSrc: leftVideo,
+    mobileSrc: leftVideo,
+    featured: false,
+    orderClassName: "order-2 lg:order-1",
+  },
+  {
+    id: "center",
+    desktopSrc: desktopVideo,
+    mobileSrc: mobileVideo,
+    featured: true,
+    orderClassName: "order-1 lg:order-2",
+  },
+  {
+    id: "right",
+    desktopSrc: rightVideo,
+    mobileSrc: rightVideo,
+    featured: false,
+    orderClassName: "order-3",
+  },
+] as const;
+
+type TestimonialVideoCardProps = {
+  desktopSrc: string;
+  mobileSrc?: string;
+  featured?: boolean;
+};
+
 /* ================= VIDEO CARD ================= */
-function HeroVideo() {
+function TestimonialVideoCard({
+  desktopSrc,
+  mobileSrc = desktopSrc,
+  featured = false,
+}: TestimonialVideoCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 768px)").matches
+      : false
+  );
 
-  const isMobile = window.matchMedia("(max-width: 768px)").matches;
-  const videoSrc = isMobile ? mobileVideo : desktopVideo;
+  const videoSrc = isMobile ? mobileSrc : desktopSrc;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsMobile(event.matches);
+
+    setIsMobile(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -713,14 +768,17 @@ function HeroVideo() {
 
     video.currentTime = 0;
     video.muted = true;
-    video.play().catch(() => {});
+    setIsMuted(true);
     setIsPlaying(true);
+    video.play().catch(() => {
+      setIsPlaying(false);
+    });
 
     return () => {
       video.pause();
       video.currentTime = 0;
     };
-  }, []);
+  }, [videoSrc]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -745,46 +803,68 @@ function HeroVideo() {
   };
 
   return (
+    <div
+      onClick={togglePlay}
+      className={`relative w-full aspect-video rounded-3xl overflow-hidden cursor-pointer bg-black ${
+        featured
+          ? "shadow-2xl ring-1 ring-black/5"
+          : "shadow-xl lg:scale-[0.94] lg:shadow-[0_20px_45px_rgba(0,0,0,0.14)]"
+      }`}
+    >
+      <video
+        ref={videoRef}
+        loop
+        muted
+        playsInline
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${
+          isPlaying ? "opacity-100" : "opacity-70"
+        }`}
+      >
+        <source src={videoSrc} type="video/mp4" />
+      </video>
+
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="bg-black/60 backdrop-blur-md p-6 rounded-full">
+            <Play className="w-10 h-10 text-white" />
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={toggleMute}
+        aria-label={isMuted ? "Unmute testimonial video" : "Mute testimonial video"}
+        className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md p-3 rounded-full text-white"
+      >
+        {isMuted ? <VolumeX /> : <Volume2 />}
+      </button>
+    </div>
+  );
+}
+
+function HeroVideo() {
+  return (
     <section className="py-20 bg-white">
-      <div className="container mx-auto px-6 flex flex-col items-center">
-        {/* VIDEO CARD */}
-        <div
-          onClick={togglePlay}
-          className="relative w-full max-w-3xl aspect-video rounded-3xl overflow-hidden shadow-2xl cursor-pointer bg-black"
-        >
-          <video
-            ref={videoRef}
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            className={`w-full h-full object-cover transition-opacity duration-500 ${
-              isPlaying ? "opacity-100" : "opacity-70"
-            }`}
-          >
-            <source src={videoSrc} type="video/mp4" />
-          </video>
-
-          {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-black/60 backdrop-blur-md p-6 rounded-full">
-                <Play className="w-10 h-10 text-white" />
-              </div>
+      <div className="container mx-auto px-6">
+        <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,0.95fr)]">
+          {testimonialVideos.map((video) => (
+            <div key={video.id} className={video.orderClassName}>
+              <TestimonialVideoCard
+                desktopSrc={video.desktopSrc}
+                mobileSrc={video.mobileSrc}
+                featured={video.featured}
+              />
             </div>
-          )}
-
-          <button
-            onClick={toggleMute}
-            className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md p-3 rounded-full text-white"
-          >
-            {isMuted ? <VolumeX /> : <Volume2 />}
-          </button>
+          ))}
         </div>
 
-        {/* DIVIDER + TEXT */}
-        <div className="mt-10 text-center max-w-xl">
-          <div className="w-20 h-px bg-primary-foreground/30 mx-auto mb-4" />
-          <p className="text-primary-foreground/70 text-sm leading-relaxed">
+        <div className="mt-10 text-center max-w-xl mx-auto">
+          <div className="w-20 h-px bg-primary/20 mx-auto mb-4" />
+          <p className="text-slate-600 text-sm leading-relaxed">
             A glimpse into the craftsmanship, precision, and passion behind every
             Styliste Couturier creation.
           </p>
