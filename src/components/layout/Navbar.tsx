@@ -754,9 +754,9 @@ const handleLogout = async () => {
     { name: "Blog", path: "/blog" },
     { name: "Contact us", path: "/contact" },
     { name: "Testimonials", path: "/testimonials" },
-    // ...(isAuthenticated
-    //   ? [{ name: "Measurements", path: "/measurements" }]
-    //   : []),
+    ...(isAuthenticated
+      ? [{ name: "Measurements", path: "/measurements" }]
+      : []),
   ].map((item) => (
     <Link
       key={item.name}
@@ -907,15 +907,15 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
                 >
                   Address
                 </button>
-                {/* <button
-                  onClick={() => {
-                    navigate("/measurements/history");
-                    setIsUserMenuOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
+                  <button
+                    onClick={() => {
+                      navigate("/measurements/history");
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 text-white hover:bg-white/10 font-light text-sm"
                 >
                   Measurements
-                </button> */}
+                </button> 
               </>
             )}
 
@@ -1153,9 +1153,9 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
             { name: "Blog", path: "/blog" },
             { name: "Testimonials", path: "/testimonials" },
             { name: "Contact us", path: "/contact" },
-            // ...(isAuthenticated
-            //   ? [{ name: "Measurements", path: "/measurements" }]
-            //   : []),
+            ...(isAuthenticated
+              ? [{ name: "Measurements", path: "/measurements" }]
+              : []),
           ].map((item) => (
             <Link
               key={item.name}
