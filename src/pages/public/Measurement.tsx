@@ -17,13 +17,14 @@ import {
   type MeasurementHeightUnit,
   type MeasurementMuscleLevel,
   type MeasurementPoseValidationDetails,
+  type ProcessMeasurementRequest,
   type MeasurementShoulderType,
   type MeasurementWeightUnit,
   type ProcessMeasurementData,
 } from "../../api/measurementApi";
 import { useMeasurementJob } from "../../context/MeasurementJobContext";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 const MAX_IMAGE_SIZE_BYTES = 16 * 1024 * 1024;
 const ACCEPTED_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/jpg"]);
 
@@ -31,7 +32,6 @@ const stepInfo = [
   { icon: ClipboardList, title: "Basic Information" },
   { icon: User, title: "Body Context" },
   { icon: Dumbbell, title: "Activity & Muscle" },
-  { icon: Target, title: "Fit & Goal" },
   { icon: Ruler, title: "Body Structure" },
   { icon: Camera, title: "Upload Images" },
 ];
@@ -94,12 +94,50 @@ function clearStoredProgress(): void {
 }
 
 type OptionalSelect<T extends string> = T | "";
+type HeightInputUnit = MeasurementHeightUnit | "ft";
+
+const HEIGHT_UNIT_TO_CM: Record<HeightInputUnit, number> = {
+  cm: 1,
+  m: 100,
+  ft: 30.48,
+};
+
+const roundHeight = (value: number, decimals = 2) => {
+  const factor = 10 ** decimals;
+  return Math.round((value + Number.EPSILON) * factor) / factor;
+};
+
+const convertHeightToCm = (value: number, unit: HeightInputUnit): number =>
+  value * HEIGHT_UNIT_TO_CM[unit];
+
+const convertHeightFromCm = (valueCm: number, unit: HeightInputUnit): number =>
+  valueCm / HEIGHT_UNIT_TO_CM[unit];
+
+const convertHeightValue = (
+  value: number,
+  fromUnit: HeightInputUnit,
+  toUnit: HeightInputUnit
+): number => {
+  if (fromUnit === toUnit) return value;
+  return convertHeightFromCm(convertHeightToCm(value, fromUnit), toUnit);
+};
+
+const formatHeightFieldValue = (value: number, unit: HeightInputUnit): string => {
+  const decimals = unit === "cm" ? 2 : 3;
+  return Number(roundHeight(value, decimals).toFixed(decimals)).toString();
+};
+
+const getHeightInCm = (height: string, unit: HeightInputUnit): number | null => {
+  const numericHeight = Number(height);
+  if (!Number.isFinite(numericHeight) || numericHeight <= 0) return null;
+  return roundHeight(convertHeightToCm(numericHeight, unit), 2);
+};
 
 interface MeasurementFormData {
   gender: MeasurementGender | "";
   age: string;
   height: string;
-  heightUnit: MeasurementHeightUnit;
+  heightUnit: HeightInputUnit;
   weight: string;
   weightUnit: MeasurementWeightUnit;
   fatDistribution: OptionalSelect<MeasurementFatDistribution>;
@@ -124,8 +162,8 @@ const INITIAL_FORM_DATA: MeasurementFormData = {
   bodyType: "",
   activityLevel: "",
   muscleLevel: "",
-  measurementGoal: "",
-  fitPreference: "",
+  measurementGoal: "clothing",
+  fitPreference: "regular",
   shoulderType: "",
   frontImage: null,
   sideImage: null,
@@ -315,12 +353,33 @@ const Measurement = () => {
 
   const bodyTypeOptions =
     formData.gender === "female" ? femaleBodyTypeOptions : maleBodyTypeOptions;
+  const heightInCm = getHeightInCm(formData.height, formData.heightUnit);
 
   const updateField = <K extends keyof MeasurementFormData>(
     field: K,
     value: MeasurementFormData[K]
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleHeightUnitChange = (nextUnit: HeightInputUnit) => {
+    setFormData((prev) => {
+      if (prev.heightUnit === nextUnit) return prev;
+
+      const numericHeight = Number(prev.height);
+      if (!prev.height || !Number.isFinite(numericHeight) || numericHeight <= 0) {
+        return { ...prev, heightUnit: nextUnit };
+      }
+
+      return {
+        ...prev,
+        heightUnit: nextUnit,
+        height: formatHeightFieldValue(
+          convertHeightValue(numericHeight, prev.heightUnit, nextUnit),
+          nextUnit
+        ),
+      };
+    });
   };
 
   const handleImageUpload = (type: "front" | "side", e: ChangeEvent<HTMLInputElement>) => {
@@ -365,9 +424,8 @@ const Measurement = () => {
       case 2:
       case 3:
       case 4:
-      case 5:
         return true;
-      case 6:
+      case 5:
         return Boolean(formData.frontImage && formData.sideImage);
       default:
         return false;
@@ -405,7 +463,7 @@ const Measurement = () => {
         if (!formData.height) return heightInputRef.current;
         if (!formData.weight) return weightInputRef.current;
         return null;
-      case 6:
+      case 5:
         if (!formData.frontImage) return frontUploadRef.current;
         if (!formData.sideImage) return sideUploadRef.current;
         return null;
@@ -432,8 +490,7 @@ const Measurement = () => {
       return failValidation("Age must be between 13 and 100", ageInputRef.current);
     }
 
-    const height = Number(formData.height);
-    if (!Number.isFinite(height) || height <= 0) {
+    if (getHeightInCm(formData.height, formData.heightUnit) == null) {
       return failValidation("Please enter a valid height", heightInputRef.current);
     }
 
@@ -486,11 +543,19 @@ const Measurement = () => {
     setIsSubmitting(true);
     setPoseValidationDetails(null);
 
-    const payload = {
+    const normalizedHeightCm = getHeightInCm(formData.height, formData.heightUnit);
+    if (normalizedHeightCm == null) {
+      setIsSubmitting(false);
+      setCurrentStep(1);
+      failValidation("Please enter a valid height", heightInputRef.current);
+      return;
+    }
+
+    const payload: ProcessMeasurementRequest = {
       gender: formData.gender,
       age: Number(formData.age),
-      height: Number(formData.height),
-      heightUnit: formData.heightUnit,
+      height: normalizedHeightCm,
+      heightUnit: "cm",
       weight: Number(formData.weight),
       weightUnit: formData.weightUnit,
       fatDistribution: formData.fatDistribution || undefined,
@@ -498,8 +563,8 @@ const Measurement = () => {
       activityLevel: formData.activityLevel || undefined,
       muscleLevel: formData.muscleLevel || undefined,
       shoulderType: formData.shoulderType || undefined,
-      measurementGoal: formData.measurementGoal || undefined,
-      fitPreference: formData.fitPreference || undefined,
+      measurementGoal: "clothing",
+      fitPreference: "regular",
       frontImage: formData.frontImage,
       sideImage: formData.sideImage,
     };
@@ -903,7 +968,7 @@ const Measurement = () => {
                   <span className="text-2xl">{stepTitle}</span>
                 </h2>
               </div>
-              {currentStep > 1 && currentStep < 6 && (
+              {currentStep > 1 && currentStep < TOTAL_STEPS && (
                 <p className="text-xs text-muted-foreground mt-2">
                   These fields are optional and help improve estimate accuracy.
                 </p>
@@ -967,15 +1032,24 @@ const Measurement = () => {
                         />
                         <select
                           value={formData.heightUnit}
-                          onChange={(e) =>
-                            updateField("heightUnit", e.target.value as MeasurementHeightUnit)
-                          }
+                          onChange={(e) => handleHeightUnitChange(e.target.value as HeightInputUnit)}
                           className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <option value="cm">Centimeters (cm)</option>
                           <option value="m">Meters (m)</option>
+                          <option value="ft">Feet (ft)</option>
                         </select>
                       </div>
+                      {formData.heightUnit === "ft" && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Use decimal feet, for example 5.75.
+                        </p>
+                      )}
+                      {heightInCm !== null && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          This will be submitted as {formatHeightFieldValue(heightInCm, "cm")} cm.
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="text-foreground font-medium">Your Weight *</label>
@@ -1098,49 +1172,6 @@ const Measurement = () => {
                 {currentStep === 4 && (
                   <>
                     <div>
-                      <label className="text-foreground font-medium">Measurement Goal</label>
-                      <select
-                        value={formData.measurementGoal}
-                        onChange={(e) =>
-                          updateField(
-                            "measurementGoal",
-                            e.target.value as MeasurementFormData["measurementGoal"]
-                          )
-                        }
-                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="">Prefer not to say</option>
-                        <option value="clothing">Clothing</option>
-                        <option value="fitness">Fitness</option>
-                        <option value="health">Health</option>
-                        <option value="general">General</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-foreground font-medium">Fit Preference</label>
-                      <select
-                        value={formData.fitPreference}
-                        onChange={(e) =>
-                          updateField(
-                            "fitPreference",
-                            e.target.value as MeasurementFormData["fitPreference"]
-                          )
-                        }
-                        className="w-full mt-2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="">Prefer not to say</option>
-                        <option value="tight">Tight</option>
-                        <option value="regular">Regular</option>
-                        <option value="loose">Loose</option>
-                        <option value="oversized">Oversized</option>
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                {currentStep === 5 && (
-                  <>
-                    <div>
                       <label className="text-foreground font-medium">Shoulder Type</label>
                       <select
                         value={formData.shoulderType}
@@ -1162,7 +1193,7 @@ const Measurement = () => {
                   </>
                 )}
 
-                {currentStep === 6 && (
+                {currentStep === 5 && (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <label ref={frontUploadRef} tabIndex={-1} className="cursor-pointer group">
