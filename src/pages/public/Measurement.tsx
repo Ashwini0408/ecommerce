@@ -51,6 +51,59 @@ const funFacts = [
   "Every body shape deserves perfect fit 💫",
 ];
 
+const processingFacts = [
+  "A well-fitted garment improves comfort and confidence.",
+  "Tailored clothing often enhances posture and silhouette.",
+  "Accurate measurements reduce alterations and fitting delays.",
+  "Every body shape deserves a personalized fit.",
+  "Comfort and elegance work best together when proportions feel balanced.",
+];
+
+const fashionArticles = [
+  {
+    category: "Trend Alert",
+    title: "The Revival of Handloom Sarees in Modern Fashion",
+    content:
+      "Handloom sarees are making a strong comeback, with traditional weaving techniques being reimagined into modern silhouettes, jackets, dresses, and statement occasionwear.",
+    readTime: "3 min read",
+  },
+  {
+    category: "Style Guide",
+    title: "How to Choose the Perfect Blouse Design for Your Body Type",
+    content:
+      "Necklines, sleeve shape, and shoulder balance can completely change how an outfit feels. A thoughtful silhouette works with your proportions instead of fighting them.",
+    readTime: "4 min read",
+  },
+  {
+    category: "Behind The Scenes",
+    title: "From Thread to Masterpiece: The Journey of Bespoke Tailoring",
+    content:
+      "Every custom garment passes through careful fabric selection, pattern drafting, fit balancing, and finishing details. The final look depends on precision at every step.",
+    readTime: "5 min read",
+  },
+  {
+    category: "Fashion Forecast",
+    title: "Colors That Will Dominate Wedding Season Styling",
+    content:
+      "Dusty rose, sage green, midnight blue, and champagne gold continue to shape modern festive wardrobes, especially when paired with soft embroidery and textured fabrics.",
+    readTime: "3 min read",
+  },
+  {
+    category: "Pro Tips",
+    title: "5 Fabric Secrets Every Fashion-Forward Woman Should Know",
+    content:
+      "Raw silk adds structure, chiffon softens movement, crepe travels well, and organza creates airy volume. The right fabric choice changes both comfort and shape.",
+    readTime: "4 min read",
+  },
+  {
+    category: "Did You Know",
+    title: "Why Custom-Fit Clothes Almost Always Look Better",
+    content:
+      "When seams, darts, and hemlines align with your natural proportions, the garment looks cleaner, feels easier to wear, and creates a much more polished silhouette.",
+    readTime: "3 min read",
+  },
+];
+
 const MEASUREMENT_PROGRESS_KEY = "measurementProcessingProgress";
 
 interface StoredProcessingProgress {
@@ -70,7 +123,10 @@ function readStoredProgress(): StoredProcessingProgress | null {
       jobId: parsed.jobId,
       progress: Math.min(95, Math.max(0, parsed.progress)),
       phase: typeof parsed.phase === "number" ? Math.max(0, parsed.phase) % processingPhases.length : 0,
-      fact: typeof parsed.fact === "number" ? Math.max(0, parsed.fact) % funFacts.length : 0,
+      fact:
+        typeof parsed.fact === "number"
+          ? Math.max(0, parsed.fact) % processingFacts.length
+          : 0,
     };
   } catch {
     return null;
@@ -289,6 +345,7 @@ const Measurement = () => {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingPhase, setProcessingPhase] = useState(0);
   const [currentFact, setCurrentFact] = useState(0);
+  const [currentArticle, setCurrentArticle] = useState(0);
   const [poseValidationDetails, setPoseValidationDetails] =
     useState<MeasurementPoseValidationDetails | null>(null);
 
@@ -322,6 +379,7 @@ const Measurement = () => {
       setProcessingPhase(0);
       setCurrentFact(0);
     }
+    setCurrentArticle(0);
     const progressInterval = setInterval(() => {
       setProcessingProgress((prev) => (prev >= 95 ? prev : prev + 1));
     }, 500);
@@ -329,12 +387,16 @@ const Measurement = () => {
       setProcessingPhase((prev) => (prev + 1) % processingPhases.length);
     }, 4000);
     const factInterval = setInterval(() => {
-      setCurrentFact((prev) => (prev + 1) % funFacts.length);
+      setCurrentFact((prev) => (prev + 1) % processingFacts.length);
     }, 6000);
+    const articleInterval = setInterval(() => {
+      setCurrentArticle((prev) => (prev + 1) % fashionArticles.length);
+    }, 15000);
     return () => {
       clearInterval(progressInterval);
       clearInterval(phaseInterval);
       clearInterval(factInterval);
+      clearInterval(articleInterval);
     };
   }, [job.jobId]);
 
@@ -593,9 +655,17 @@ const Measurement = () => {
     job.clearResult();
   };
 
+  const changeArticle = (direction: number) => {
+    setCurrentArticle(
+      (prev) => (prev + direction + fashionArticles.length) % fashionArticles.length
+    );
+  };
+
   // Show processing page when a job is in progress (or when user returns while still processing)
   if (job.jobId != null) {
     const PhaseIcon = processingPhases[processingPhase].icon;
+    const activeArticle = fashionArticles[currentArticle];
+    const circumference = 2 * Math.PI * 42;
     return (
       <>
         <AnimatePresence>
@@ -604,7 +674,7 @@ const Measurement = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             style={{ backgroundColor: "rgba(40, 55, 45, 0.9)" }}
-            className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-[4px]"
+            className="hidden"
           >
             <div className="flex flex-col items-center text-center px-6 max-w-md">
               <div className="relative w-32 h-32 mb-8">
@@ -684,13 +754,12 @@ const Measurement = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center gap-4 mb-6"
+                className="mb-6 inline-flex items-center justify-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm"
               >
-                <div className="w-8 h-px bg-primary-foreground/60" />
-                <p className="text-primary-foreground/80 font-sans tracking-[0.3em] text-xs uppercase">
-                  Measurement
+                <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+                <p className="text-primary-foreground/90 font-sans tracking-[0.3em] text-xs uppercase">
+                  Measurement In Progress
                 </p>
-                <div className="w-8 h-px bg-primary-foreground/60" />
               </motion.div>
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
@@ -698,16 +767,335 @@ const Measurement = () => {
                 transition={{ delay: 0.1 }}
                 className="font-serif text-5xl md:text-5xl leading-[1.1] mb-8 text-primary-foreground"
               >
-                We are calculating your measurements
+                We are tailoring your
+                <br />
+                measurement profile
               </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mx-auto max-w-2xl text-base leading-7 text-primary-foreground/80 md:text-lg"
+              >
+                Your photos are being processed now. The loading experience feels richer,
+                while still staying inside the existing Styliste theme.
+              </motion.p>
             </div>
           </div>
         </section>
-        <section className="py-20 bg-muted/30" aria-hidden="true">
-          <div className="max-w-xl mx-auto px-6 text-center">
-            <p className="text-muted-foreground">
-              You can browse our products in the meantime. We will notify you when your measurement is ready.
-            </p>
+        <section className="relative overflow-hidden bg-muted/30 py-10">
+          <div className="absolute -left-20 top-6 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -right-24 top-10 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
+          <div className="relative mx-auto max-w-6xl px-6">
+            <div className="overflow-hidden rounded-[28px] border border-primary/10 bg-background/90 shadow-[0_20px_60px_rgba(47,59,43,0.10)] backdrop-blur-sm">
+              <div className="h-1.5 w-full bg-primary/10">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary"
+                  animate={{ width: `${processingProgress}%` }}
+                  transition={{ duration: 0.3, ease: "linear" }}
+                />
+              </div>
+              <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <PhaseIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/70">
+                      AI Body Analysis
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {processingPhases[processingPhase].label}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/5 px-3 py-1 text-primary">
+                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    Processing
+                  </span>
+                  <span className="font-medium text-foreground">{processingProgress}% complete</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative overflow-hidden bg-muted/30 pb-20">
+          <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-background/60" />
+          <div className="relative mx-auto max-w-6xl px-6">
+            <div className="grid gap-6 lg:grid-cols-[1.04fr,0.96fr]">
+              <div className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="overflow-hidden rounded-[28px] border border-primary/10 bg-card shadow-sm"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img
+                      src={heroMeasurement}
+                      alt="Measurement preview"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#2f3b2b]/90 via-[#2f3b2b]/35 to-transparent" />
+                    <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white/85 backdrop-blur-sm">
+                      <Camera className="h-4 w-4" />
+                      Behind The Scenes
+                    </div>
+                    <motion.div
+                      className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-md"
+                      animate={{ y: [0, -4, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      <p className="text-xs uppercase tracking-[0.2em] text-white/70">
+                        Live Analysis
+                      </p>
+                      <p className="mt-2 font-serif text-2xl text-white">
+                        {processingPhases[processingPhase].label}
+                      </p>
+                    </motion.div>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 border-t border-primary/10 px-5 py-4 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-2">
+                      <Ruler className="h-4 w-4 text-primary" />
+                      Built for the Styliste bespoke journey
+                    </span>
+                    <span className="inline-flex items-center gap-2 text-primary">
+                      <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                      Live
+                    </span>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08 }}
+                  className="rounded-[28px] border border-primary/10 bg-background p-6 shadow-sm"
+                >
+                  <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                        <PhaseIcon className="h-8 w-8" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary/70">
+                          Current Phase
+                        </p>
+                        <h3 className="font-serif text-3xl leading-tight text-foreground">
+                          {processingPhases[processingPhase].label}
+                        </h3>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {processingPhases[processingPhase].tip}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="relative mx-auto h-28 w-28 shrink-0 md:mx-0">
+                      <svg
+                        className="h-full w-full -rotate-90"
+                        viewBox="0 0 100 100"
+                        aria-hidden="true"
+                      >
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="42"
+                          fill="none"
+                          stroke="rgba(102, 107, 67, 0.12)"
+                          strokeWidth="6"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="42"
+                          fill="none"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="6"
+                          strokeLinecap="round"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={circumference * (1 - processingProgress / 100)}
+                          style={{ transition: "stroke-dashoffset 0.3s linear" }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <p className="text-2xl font-semibold text-foreground">
+                          {processingProgress}%
+                        </p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                          Complete
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              <div className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="flex items-center justify-between gap-4 px-1"
+                >
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/70">
+                      While You Wait
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Explore curated style notes without leaving the measurement journey.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {fashionArticles.map((_, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => setCurrentArticle(index)}
+                        className={`h-2 rounded-full transition-all ${
+                          index === currentArticle ? "w-8 bg-primary" : "w-2 bg-primary/20"
+                        }`}
+                        aria-label={`View article ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+
+                <AnimatePresence mode="wait">
+                  <motion.article
+                    key={currentArticle}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.28 }}
+                    className="flex min-h-[330px] flex-col rounded-[28px] border border-primary/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(244,243,236,0.92))] p-6 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+                          {activeArticle.category}
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {activeArticle.readTime}
+                        </p>
+                      </div>
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+                        {(currentArticle + 1).toString().padStart(2, "0")}
+                      </div>
+                    </div>
+
+                    <h3 className="mt-6 font-serif text-4xl leading-tight text-foreground">
+                      {activeArticle.title}
+                    </h3>
+
+                    <p className="mt-5 flex-1 text-base leading-7 text-muted-foreground">
+                      {activeArticle.content}
+                    </p>
+
+                    <div className="mt-6 flex items-center justify-between border-t border-primary/10 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => changeArticle(-1)}
+                        className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-primary"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        Previous
+                      </button>
+                      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        {currentArticle + 1} / {fashionArticles.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => changeArticle(1)}
+                        className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-primary"
+                      >
+                        Next
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </motion.article>
+                </AnimatePresence>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    {
+                      title: "Style Tip",
+                      text: "The best-looking outfit usually starts with fit, not trend chasing.",
+                      icon: Target,
+                    },
+                    {
+                      title: "Precision",
+                      text: "Posture, shoulder line, and proportion cues all shape the final output.",
+                      icon: Ruler,
+                    },
+                  ].map(({ title, text, icon: Icon }, index) => (
+                    <motion.div
+                      key={title}
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.14 + index * 0.05 }}
+                      className="rounded-2xl border border-primary/10 bg-background p-5 shadow-sm"
+                    >
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary/75">
+                        {title}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentFact}
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -16 }}
+                    transition={{ duration: 0.24 }}
+                    className="rounded-2xl border border-primary/10 bg-primary/5 p-5"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary/70">
+                          While We Scan
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {processingFacts[currentFact]}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18 }}
+              className="mt-8 flex flex-col items-center justify-between gap-4 rounded-[24px] border border-amber-200 bg-amber-50/80 px-6 py-5 text-center shadow-sm backdrop-blur-sm sm:flex-row sm:text-left"
+            >
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-amber-700">
+                  Please Wait
+                </p>
+                <p className="mt-2 text-sm text-amber-900/80">
+                  Avoid refreshing the page while the AI finalizes your measurements.
+                </p>
+              </div>
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                Browse products while you wait
+              </Link>
+            </motion.div>
           </div>
         </section>
         <Footer />
