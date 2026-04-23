@@ -58,14 +58,18 @@ axiosInstance.interceptors.response.use(
       
       console.error(`[API Error] ${status}`, data);
       
-      // Handle 401 Unauthorized - Token expired or invalid
-    if (status === 401) {
-  console.warn("[API] 401 Unauthorized");
-
-  // ❌ DO NOT redirect from axios
-  // ❌ DO NOT clear auth automatically
-  // Let the UI / ProtectedRoute decide what to do
-}
+      // Handle 401 Unauthorized - Token expired or invalid → auto logout & redirect
+      if (status === 401) {
+        console.warn("[API] 401 Unauthorized - token expired or invalid, logging out");
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        const path = window.location.pathname || '';
+        const isAuthPage = path === '/login' || path === '/signup' || path === '/forgot-password';
+        if (!isAuthPage) {
+          window.location.replace('/login?expired=1');
+        }
+      }
 
       // Handle 403 Forbidden
       if (status === 403) {

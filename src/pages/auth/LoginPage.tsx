@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import {
   FiChevronLeft,
@@ -104,6 +104,7 @@ const FullPageLoader = () => (
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isLoading, dispatch, isAdmin } = useAuth();
   const reduxDispatch = useAppDispatch();
   const locationState = location.state as LoginLocationState | null;
@@ -142,6 +143,13 @@ const LoginPage = () => {
 
     navigate('/', { replace: true });
   }, [loginSuccess, isLoading, isAdmin, navigate]);
+
+  useEffect(() => {
+    if (searchParams.get('expired') === '1') {
+      toast.error('Your session has expired. Please log in again.');
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {

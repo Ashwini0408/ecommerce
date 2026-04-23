@@ -279,6 +279,16 @@ const authSlice = createSlice({
       state.error = null;
     },
 
+    /** Call this when token expires (401) - clears state without API call */
+    forceLogout: (state) => {
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.isLoading = false;
+      state.isHydrated = true;
+      state.error = null;
+    },
+
     loadUserFromStorage: (state) => {
       const token = localStorage.getItem('authToken');
       const userStr = localStorage.getItem('user');
@@ -357,5 +367,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, loadUserFromStorage } = authSlice.actions;
+export const { clearError, loadUserFromStorage, forceLogout } = authSlice.actions;
 export default authSlice.reducer;
