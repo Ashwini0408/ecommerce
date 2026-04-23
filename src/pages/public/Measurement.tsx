@@ -3,9 +3,35 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../../components/layout/Navbar";
 import { Footer } from "../../components/layout/Footer";
-import { ArrowLeft, ArrowRight, ClipboardList, User, Dumbbell, Target, Ruler, Camera, Upload, CheckCircle2, ShoppingBag } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Camera,
+  CheckCircle2,
+  ClipboardList,
+  Dumbbell,
+  Heart,
+  PlayCircle,
+  Ruler,
+  ScanLine,
+  Scissors,
+  Shirt,
+  ShoppingBag,
+  Sparkles,
+  Target,
+  Upload,
+  User,
+} from "lucide-react";
 import { toast } from "sonner";
 import heroMeasurement from "../../assets/hero-measurement.png";
+import storyWardrobe from "../../assets/story-1-wardrobe.mp4";
+import storyPickSaree from "../../assets/story-2-pick-saree.mp4";
+import storySearch from "../../assets/story-3-search.mp4";
+import storyAiMeasurement from "../../assets/story-ai-measurement.mp4";
+import storyStitching from "../../assets/story-4-stitching.mp4";
+import storyFinishedDress from "../../assets/story-5-finished-dress.mp4";
+import storyWearingDress from "../../assets/story-6-wearing-dress.mp4";
 import {
   measurementApi,
   type MeasurementActivityLevel,
@@ -37,11 +63,36 @@ const stepInfo = [
 ];
 
 const processingPhases = [
-  { icon: Ruler, label: "Calculating proportions...", tip: "Analyzing body ratios." },
-  { icon: Camera, label: "Analyzing posture...", tip: "Validating pose alignment." },
-  { icon: Target, label: "Mapping body structure...", tip: "Matching body models." },
-  { icon: ClipboardList, label: "Generating measurements...", tip: "Computing dimensions." },
-  { icon: CheckCircle2, label: "Finalizing results...", tip: "Preparing your profile." },
+  {
+    icon: ScanLine,
+    label: "Scanning your body profile...",
+    tip: "Our AI analyzes over 40 body points for precision tailoring.",
+  },
+  {
+    icon: Ruler,
+    label: "Calculating proportions...",
+    tip: "We compare your data with 10,000+ body profiles for accuracy.",
+  },
+  {
+    icon: Sparkles,
+    label: "Analyzing body structure...",
+    tip: "Every body is unique - that's why bespoke fits so perfectly.",
+  },
+  {
+    icon: Shirt,
+    label: "Mapping garment dimensions...",
+    tip: "The perfect outfit starts with the perfect measurement.",
+  },
+  {
+    icon: Scissors,
+    label: "Finalizing your measurements...",
+    tip: "Our expert tailors will review these for a flawless fit.",
+  },
+  {
+    icon: Heart,
+    label: "Preparing your style profile...",
+    tip: "You're one step closer to your dream outfit!",
+  },
 ];
 
 const funFacts = [
@@ -52,57 +103,120 @@ const funFacts = [
 ];
 
 const processingFacts = [
-  "A well-fitted garment improves comfort and confidence.",
-  "Tailored clothing often enhances posture and silhouette.",
-  "Accurate measurements reduce alterations and fitting delays.",
-  "Every body shape deserves a personalized fit.",
-  "Comfort and elegance work best together when proportions feel balanced.",
+  "Did you know? A well-fitted garment can make you look 5 years younger!",
+  "Fun fact: The art of bespoke tailoring dates back to the 17th century!",
+  "Tip: Body measurements can change seasonally - we recommend updating every 6 months.",
+  "Style secret: The right fit matters more than the fabric or brand.",
+  "Pro tip: Comfort and elegance go hand in hand with precise measurements.",
+];
+
+const loaderVideos = [
+  {
+    src: storyWardrobe,
+    title: "She Opens Her Wardrobe of Dreams",
+    tag: "Chapter 1 - The Vision",
+  },
+  {
+    src: storyPickSaree,
+    title: "A Saree That Speaks to Her Soul",
+    tag: "Chapter 2 - The Choice",
+  },
+  {
+    src: storySearch,
+    title: "Searching for the Perfect Couturier",
+    tag: "Chapter 3 - The Quest",
+  },
+  {
+    src: storyAiMeasurement,
+    title: "AI Captures Her Perfect Measurements",
+    tag: "Chapter 4 - The Scan",
+  },
+  {
+    src: storyStitching,
+    title: "Master Hands Bring It to Life",
+    tag: "Chapter 5 - The Craft",
+  },
+  {
+    src: storyFinishedDress,
+    title: "A Bespoke Masterpiece Revealed",
+    tag: "Chapter 6 - The Reveal",
+  },
+  {
+    src: storyWearingDress,
+    title: "She Wears Her Story With Grace",
+    tag: "Chapter 7 - The Moment",
+  },
 ];
 
 const fashionArticles = [
   {
-    category: "Trend Alert",
+    category: "TREND ALERT",
     title: "The Revival of Handloom Sarees in Modern Fashion",
     content:
-      "Handloom sarees are making a strong comeback, with traditional weaving techniques being reimagined into modern silhouettes, jackets, dresses, and statement occasionwear.",
+      "Handloom sarees are making a massive comeback in 2025. Designers are blending traditional weaving techniques with contemporary silhouettes. From Banarasi to Chanderi, these timeless fabrics are being reimagined into cocktail dresses, blazers, and even jumpsuits. The key trend? Mixing heritage textiles with modern cuts for a look that's both rooted and revolutionary.",
+    image: "🧵",
     readTime: "3 min read",
   },
   {
-    category: "Style Guide",
+    category: "STYLE GUIDE",
     title: "How to Choose the Perfect Blouse Design for Your Body Type",
     content:
-      "Necklines, sleeve shape, and shoulder balance can completely change how an outfit feels. A thoughtful silhouette works with your proportions instead of fighting them.",
+      "Your blouse design can make or break your entire outfit. For broader shoulders, opt for V-necks and raglan sleeves. Petite frames look stunning in puff sleeves and boat necks. If you love drama, try a backless design with intricate dori work. The secret is understanding your proportions - which is exactly what our AI is calculating right now!",
+    image: "👗",
     readTime: "4 min read",
   },
   {
-    category: "Behind The Scenes",
+    category: "BEHIND THE SCENES",
     title: "From Thread to Masterpiece: The Journey of Bespoke Tailoring",
     content:
-      "Every custom garment passes through careful fabric selection, pattern drafting, fit balancing, and finishing details. The final look depends on precision at every step.",
+      "Every bespoke garment goes through 47 precise steps. It starts with selecting the right fabric - the drape, weight, and texture must align with the design. Then comes pattern drafting, where your unique measurements transform into a blueprint. Expert cutters work with surgical precision, and skilled tailors bring it all to life stitch by stitch. That's why your measurements matter so much!",
+    image: "✂️",
     readTime: "5 min read",
   },
   {
-    category: "Fashion Forecast",
+    category: "FASHION FORECAST",
     title: "Colors That Will Dominate Wedding Season Styling",
     content:
-      "Dusty rose, sage green, midnight blue, and champagne gold continue to shape modern festive wardrobes, especially when paired with soft embroidery and textured fabrics.",
+      "Move over traditional reds! This wedding season, expect to see dusty rose, sage green, midnight blue, and champagne gold taking center stage. Pastel lehengas are trending for day ceremonies, while jewel tones remain the go-to for evening celebrations. The biggest surprise? Black is becoming increasingly popular for reception outfits, styled with gold zari and mirror work.",
+    image: "💎",
     readTime: "3 min read",
   },
   {
-    category: "Pro Tips",
+    category: "PRO TIPS",
     title: "5 Fabric Secrets Every Fashion-Forward Woman Should Know",
     content:
-      "Raw silk adds structure, chiffon softens movement, crepe travels well, and organza creates airy volume. The right fabric choice changes both comfort and shape.",
+      "1. Silk chiffon drapes best for flowing silhouettes. 2. Raw silk adds structure - perfect for tailored jackets. 3. Organza layering creates depth without bulk. 4. Crepe is your best friend for wrinkle-free travel outfits. 5. Velvet is making a huge comeback - but choose stretch velvet for comfort. Understanding fabric is the first step to building a wardrobe that truly works for you.",
+    image: "🎨",
     readTime: "4 min read",
   },
   {
-    category: "Did You Know",
-    title: "Why Custom-Fit Clothes Almost Always Look Better",
+    category: "DID YOU KNOW",
+    title: "The Science Behind Why Custom-Fit Clothes Make You Look Better",
     content:
-      "When seams, darts, and hemlines align with your natural proportions, the garment looks cleaner, feels easier to wear, and creates a much more polished silhouette.",
+      "Studies show that well-fitted clothing can make you appear up to 5 years younger and 3 inches taller! It's all about proportions - when seams align with your natural body lines, it creates a visual harmony that ready-made clothes simply can't achieve. Custom tailoring accounts for 23 unique body measurements, compared to just 3-4 in standard sizing. That's the Styliste difference.",
+    image: "✨",
     readTime: "3 min read",
   },
 ];
+
+const measurementReadouts = [
+  { label: "Shoulder Width", value: "38.2", unit: "cm" },
+  { label: "Bust", value: "86.5", unit: "cm" },
+  { label: "Waist", value: "68.3", unit: "cm" },
+  { label: "Hip", value: "94.1", unit: "cm" },
+  { label: "Arm Length", value: "55.7", unit: "cm" },
+  { label: "Torso Length", value: "42.8", unit: "cm" },
+  { label: "Inseam", value: "76.4", unit: "cm" },
+  { label: "Neck", value: "34.6", unit: "cm" },
+];
+
+const loaderParticles = Array.from({ length: 20 }, (_, index) => ({
+  id: index,
+  left: (index * 17 + 9) % 100,
+  top: (index * 29 + 13) % 100,
+  duration: 3 + (index % 5),
+  delay: (index % 6) * 0.45,
+}));
 
 const MEASUREMENT_PROGRESS_KEY = "measurementProcessingProgress";
 
@@ -346,6 +460,7 @@ const Measurement = () => {
   const [processingPhase, setProcessingPhase] = useState(0);
   const [currentFact, setCurrentFact] = useState(0);
   const [currentArticle, setCurrentArticle] = useState(0);
+  const [currentVideo, setCurrentVideo] = useState(0);
   const [poseValidationDetails, setPoseValidationDetails] =
     useState<MeasurementPoseValidationDetails | null>(null);
 
@@ -380,23 +495,32 @@ const Measurement = () => {
       setCurrentFact(0);
     }
     setCurrentArticle(0);
+    setCurrentVideo(0);
+    const PROCESSING_DURATION_MS = 150000;
+    const TICK_MS = 250;
     const progressInterval = setInterval(() => {
-      setProcessingProgress((prev) => (prev >= 95 ? prev : prev + 1));
-    }, 500);
+      setProcessingProgress((prev) =>
+        prev >= 95 ? prev : Math.min(95, prev + (95 / PROCESSING_DURATION_MS) * TICK_MS)
+      );
+    }, TICK_MS);
     const phaseInterval = setInterval(() => {
       setProcessingPhase((prev) => (prev + 1) % processingPhases.length);
-    }, 4000);
+    }, 25000);
     const factInterval = setInterval(() => {
       setCurrentFact((prev) => (prev + 1) % processingFacts.length);
-    }, 6000);
+    }, 12000);
     const articleInterval = setInterval(() => {
       setCurrentArticle((prev) => (prev + 1) % fashionArticles.length);
-    }, 15000);
+    }, 20000);
+    const videoInterval = setInterval(() => {
+      setCurrentVideo((prev) => (prev + 1) % loaderVideos.length);
+    }, 11000);
     return () => {
       clearInterval(progressInterval);
       clearInterval(phaseInterval);
       clearInterval(factInterval);
       clearInterval(articleInterval);
+      clearInterval(videoInterval);
     };
   }, [job.jobId]);
 
@@ -665,7 +789,11 @@ const Measurement = () => {
   if (job.jobId != null) {
     const PhaseIcon = processingPhases[processingPhase].icon;
     const activeArticle = fashionArticles[currentArticle];
-    const circumference = 2 * Math.PI * 42;
+    const activeVideo = loaderVideos[currentVideo];
+    const visibleReadouts = measurementReadouts.slice(
+      0,
+      Math.min(Math.floor(processingProgress / 12) + 1, measurementReadouts.length)
+    );
     return (
       <>
         <AnimatePresence>
@@ -757,7 +885,7 @@ const Measurement = () => {
                 className="mb-6 inline-flex items-center justify-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-sm"
               >
                 <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-                <p className="text-primary-foreground/90 font-sans tracking-[0.3em] text-xs uppercase">
+                <p className="text-xs font-sans uppercase tracking-[0.3em] text-primary-foreground/90">
                   Measurement In Progress
                 </p>
               </motion.div>
@@ -765,7 +893,7 @@ const Measurement = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="font-serif text-5xl md:text-5xl leading-[1.1] mb-8 text-primary-foreground"
+                className="mb-8 font-serif text-5xl leading-[1.1] text-primary-foreground md:text-5xl"
               >
                 We are tailoring your
                 <br />
@@ -783,320 +911,396 @@ const Measurement = () => {
             </div>
           </div>
         </section>
-        <section className="relative overflow-hidden bg-muted/30 py-10">
-          <div className="absolute -left-20 top-6 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute -right-24 top-10 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
-          <div className="relative mx-auto max-w-6xl px-6">
-            <div className="overflow-hidden rounded-[28px] border border-primary/10 bg-background/90 shadow-[0_20px_60px_rgba(47,59,43,0.10)] backdrop-blur-sm">
-              <div className="h-1.5 w-full bg-primary/10">
+
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#fdfbf7] via-[#f6f1ea] to-[#eef2e6]">
+          <div className="absolute inset-0 pointer-events-none">
+            {loaderParticles.map((particle) => (
+              <motion.div
+                key={particle.id}
+                className="absolute h-1 w-1 rounded-full bg-primary/30"
+                style={{ left: `${particle.left}%`, top: `${particle.top}%` }}
+                animate={{
+                  y: [0, -30, 0],
+                  opacity: [0.2, 0.65, 0.2],
+                }}
+                transition={{
+                  duration: particle.duration,
+                  repeat: Infinity,
+                  delay: particle.delay,
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="sticky top-0 z-30">
+            <div className="h-1 bg-foreground/10">
+              <motion.div
+                className="h-full rounded-r-full bg-gradient-to-r from-primary via-sage to-primary"
+                style={{ width: `${processingProgress}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between border-b border-foreground/5 bg-white/80 px-4 py-3 backdrop-blur-md sm:px-6">
+              <div className="flex items-center gap-3">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary"
-                  animate={{ width: `${processingProgress}%` }}
-                  transition={{ duration: 0.3, ease: "linear" }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                >
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </motion.div>
+                <span className="text-xs font-medium uppercase tracking-wider text-primary">
+                  AI Body Analysis
+                </span>
+                <motion.div
+                  className="h-1.5 w-1.5 rounded-full bg-primary"
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
                 />
               </div>
-              <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <PhaseIcon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/70">
-                      AI Body Analysis
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {processingPhases[processingPhase].label}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/5 px-3 py-1 text-primary">
-                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    Processing
-                  </span>
-                  <span className="font-medium text-foreground">{processingProgress}% complete</span>
-                </div>
+              <div className="flex items-center gap-4">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={processingPhase}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="hidden text-xs text-foreground/50 sm:block"
+                  >
+                    {processingPhases[processingPhase].label}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="font-mono text-sm font-bold text-foreground">
+                  {Math.round(processingProgress)}%
+                </span>
               </div>
             </div>
           </div>
-        </section>
 
-        <section className="relative overflow-hidden bg-muted/30 pb-20">
-          <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-background/60" />
-          <div className="relative mx-auto max-w-6xl px-6">
-            <div className="grid gap-6 lg:grid-cols-[1.04fr,0.96fr]">
-              <div className="space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="overflow-hidden rounded-[28px] border border-primary/10 bg-card shadow-sm"
-                >
-                  <div className="relative aspect-[16/10] overflow-hidden">
-                    <img
-                      src={heroMeasurement}
-                      alt="Measurement preview"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#2f3b2b]/90 via-[#2f3b2b]/35 to-transparent" />
-                    <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white/85 backdrop-blur-sm">
-                      <Camera className="h-4 w-4" />
-                      Behind The Scenes
-                    </div>
+          <div className="container mx-auto flex items-center px-4 py-12">
+            <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-8 lg:grid-cols-2">
+              <motion.div
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, type: "spring", damping: 20 }}
+                className="space-y-4"
+              >
+                <div className="overflow-hidden rounded-2xl border border-foreground/10 bg-white shadow-2xl shadow-primary/10">
+                  <div className="relative aspect-video bg-muted">
+                    <AnimatePresence mode="wait">
+                      <motion.video
+                        key={activeVideo.src}
+                        src={activeVideo.src}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        initial={{ opacity: 0.35, scale: 1.02 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0.35, scale: 0.98 }}
+                        transition={{ duration: 0.8 }}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                      />
+                    </AnimatePresence>
+
+                    <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-foreground/60 via-foreground/10 to-transparent" />
+
                     <motion.div
-                      className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/15 bg-white/10 p-4 text-left backdrop-blur-md"
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute left-4 top-4 flex items-center gap-2 rounded-full border border-foreground/10 bg-white/85 px-3 py-1.5 backdrop-blur-sm"
+                      animate={{ opacity: [0.7, 1, 0.7] }}
+                      transition={{ duration: 2, repeat: Infinity }}
                     >
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/70">
-                        Live Analysis
-                      </p>
-                      <p className="mt-2 font-serif text-2xl text-white">
-                        {processingPhases[processingPhase].label}
-                      </p>
+                      <PlayCircle className="h-3 w-3 text-primary" />
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-foreground/80">
+                        {activeVideo.tag}
+                      </span>
                     </motion.div>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 border-t border-primary/10 px-5 py-4 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-2">
-                      <Ruler className="h-4 w-4 text-primary" />
-                      Built for the Styliste bespoke journey
-                    </span>
-                    <span className="inline-flex items-center gap-2 text-primary">
-                      <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                      Live
-                    </span>
-                  </div>
-                </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.08 }}
-                  className="rounded-[28px] border border-primary/10 bg-background p-6 shadow-sm"
-                >
-                  <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                        <PhaseIcon className="h-8 w-8" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary/70">
-                          Current Phase
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={`title-${currentVideo}`}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="absolute bottom-4 left-4 right-4"
+                      >
+                        <p className="font-serif text-sm italic text-white/90 drop-shadow-lg">
+                          {activeVideo.title}
                         </p>
-                        <h3 className="font-serif text-3xl leading-tight text-foreground">
+                      </motion.div>
+                    </AnimatePresence>
+
+                    <div className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full border border-foreground/10 bg-white/70 px-2.5 py-1.5 backdrop-blur-sm">
+                      {loaderVideos.map((_, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setCurrentVideo(index)}
+                          className={`h-1 rounded-full transition-all ${
+                            index === currentVideo ? "w-4 bg-primary" : "w-1 bg-foreground/30"
+                          }`}
+                          aria-label={`Play video ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-1.5 text-xs text-foreground/50">
+                    <Scissors className="h-3.5 w-3.5 text-primary/70" />
+                    <span>
+                      Clip {currentVideo + 1} of {loaderVideos.length} - Curated for you
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-foreground/40">
+                    <motion.div
+                      className="h-1.5 w-1.5 rounded-full bg-destructive"
+                      animate={{ opacity: [1, 0.3, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    />
+                    <span>Playing</span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-primary/15 bg-white/70 p-4 shadow-sm backdrop-blur-sm">
+                  <div className="mb-3 flex items-center gap-3">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={processingPhase}
+                        initial={{ scale: 0, rotate: -90 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        exit={{ scale: 0, rotate: 90 }}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10"
+                      >
+                        <PhaseIcon className="h-5 w-5 text-primary" />
+                      </motion.div>
+                    </AnimatePresence>
+
+                    <div className="min-w-0 flex-1">
+                      <AnimatePresence mode="wait">
+                        <motion.p
+                          key={processingPhase}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="truncate text-sm font-medium text-foreground/85"
+                        >
                           {processingPhases[processingPhase].label}
-                        </h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {processingPhases[processingPhase].tip}
-                        </p>
-                      </div>
+                        </motion.p>
+                      </AnimatePresence>
+                      <p className="text-xs text-foreground/40">
+                        Phase {processingPhase + 1} of {processingPhases.length}
+                      </p>
                     </div>
 
-                    <div className="relative mx-auto h-28 w-28 shrink-0 md:mx-0">
-                      <svg
-                        className="h-full w-full -rotate-90"
-                        viewBox="0 0 100 100"
-                        aria-hidden="true"
-                      >
+                    <div className="relative h-12 w-12 shrink-0">
+                      <svg className="h-full w-full -rotate-90" viewBox="0 0 48 48">
                         <circle
-                          cx="50"
-                          cy="50"
-                          r="42"
+                          cx="24"
+                          cy="24"
+                          r="20"
+                          stroke="hsl(var(--foreground) / 0.1)"
+                          strokeWidth="2.5"
                           fill="none"
-                          stroke="rgba(102, 107, 67, 0.12)"
-                          strokeWidth="6"
                         />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="42"
-                          fill="none"
+                        <motion.circle
+                          cx="24"
+                          cy="24"
+                          r="20"
                           stroke="hsl(var(--primary))"
-                          strokeWidth="6"
+                          strokeWidth="2.5"
+                          fill="none"
                           strokeLinecap="round"
-                          strokeDasharray={circumference}
-                          strokeDashoffset={circumference * (1 - processingProgress / 100)}
-                          style={{ transition: "stroke-dashoffset 0.3s linear" }}
+                          strokeDasharray={`${2 * Math.PI * 20}`}
+                          strokeDashoffset={2 * Math.PI * 20 * (1 - processingProgress / 100)}
+                          style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary) / 0.4))" }}
                         />
                       </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <p className="text-2xl font-semibold text-foreground">
-                          {processingProgress}%
-                        </p>
-                        <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                          Complete
-                        </p>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="font-mono text-[10px] font-bold text-foreground">
+                          {Math.round(processingProgress)}%
+                        </span>
                       </div>
                     </div>
                   </div>
-                </motion.div>
-              </div>
 
-              <div className="space-y-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="flex items-center justify-between gap-4 px-1"
-                >
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/70">
-                      While You Wait
-                    </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      Explore curated style notes without leaving the measurement journey.
-                    </p>
+                  <div className="flex gap-3 overflow-hidden">
+                    <AnimatePresence>
+                      {visibleReadouts.slice(-4).map((measurement) => (
+                        <motion.div
+                          key={measurement.label}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary/5 px-2.5 py-1.5"
+                        >
+                          <span className="text-[10px] text-foreground/50">
+                            {measurement.label}
+                          </span>
+                          <span className="font-mono text-[10px] font-semibold text-primary">
+                            {measurement.value}
+                            {measurement.unit}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5, type: "spring", damping: 20 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-medium tracking-wide text-foreground/80">
+                      While you wait, explore fashion
+                    </h3>
+                  </div>
+                  <div className="flex gap-1">
                     {fashionArticles.map((_, index) => (
                       <button
                         key={index}
                         type="button"
                         onClick={() => setCurrentArticle(index)}
-                        className={`h-2 rounded-full transition-all ${
-                          index === currentArticle ? "w-8 bg-primary" : "w-2 bg-primary/20"
+                        className={`h-1.5 w-1.5 rounded-full transition-all ${
+                          index === currentArticle ? "w-4 bg-primary" : "bg-foreground/20"
                         }`}
-                        aria-label={`View article ${index + 1}`}
+                        aria-label={`Show article ${index + 1}`}
                       />
                     ))}
                   </div>
-                </motion.div>
+                </div>
 
                 <AnimatePresence mode="wait">
                   <motion.article
                     key={currentArticle}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.28 }}
-                    className="flex min-h-[330px] flex-col rounded-[28px] border border-primary/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(244,243,236,0.92))] p-6 shadow-sm"
+                    initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.98 }}
+                    transition={{ type: "spring", damping: 25 }}
+                    className="flex min-h-[280px] flex-col rounded-2xl border border-foreground/10 bg-white/80 p-6 shadow-md backdrop-blur-sm"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="mb-4 flex items-center gap-3">
+                      <span className="text-3xl">{activeArticle.image}</span>
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="mb-1 block text-[10px] font-bold uppercase tracking-[0.2em] text-primary"
+                        >
                           {activeArticle.category}
-                        </p>
-                        <p className="mt-2 text-sm text-muted-foreground">
+                        </motion.span>
+                        <span className="text-[10px] text-foreground/40">
                           {activeArticle.readTime}
-                        </p>
-                      </div>
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-                        {(currentArticle + 1).toString().padStart(2, "0")}
+                        </span>
                       </div>
                     </div>
 
-                    <h3 className="mt-6 font-serif text-4xl leading-tight text-foreground">
+                    <motion.h3
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="mb-4 font-serif text-xl leading-tight text-foreground md:text-2xl"
+                    >
                       {activeArticle.title}
-                    </h3>
+                    </motion.h3>
 
-                    <p className="mt-5 flex-1 text-base leading-7 text-muted-foreground">
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="flex-1 text-sm leading-relaxed text-foreground/65"
+                    >
                       {activeArticle.content}
-                    </p>
+                    </motion.p>
 
-                    <div className="mt-6 flex items-center justify-between border-t border-primary/10 pt-4">
+                    <div className="mt-5 flex items-center justify-between border-t border-foreground/10 pt-4">
                       <button
                         type="button"
                         onClick={() => changeArticle(-1)}
-                        className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-primary"
+                        className="flex items-center gap-1 text-xs text-foreground/50 transition-colors hover:text-foreground"
                       >
-                        <ArrowLeft className="h-4 w-4" />
+                        <ArrowLeft className="h-3 w-3" />
                         Previous
                       </button>
-                      <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      <span className="text-xs text-foreground/40">
                         {currentArticle + 1} / {fashionArticles.length}
                       </span>
                       <button
                         type="button"
                         onClick={() => changeArticle(1)}
-                        className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-primary"
+                        className="flex items-center gap-1 text-xs text-foreground/50 transition-colors hover:text-foreground"
                       >
                         Next
-                        <ArrowRight className="h-4 w-4" />
+                        <ArrowRight className="h-3 w-3" />
                       </button>
                     </div>
                   </motion.article>
                 </AnimatePresence>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {[
-                    {
-                      title: "Style Tip",
-                      text: "The best-looking outfit usually starts with fit, not trend chasing.",
-                      icon: Target,
-                    },
-                    {
-                      title: "Precision",
-                      text: "Posture, shoulder line, and proportion cues all shape the final output.",
-                      icon: Ruler,
-                    },
-                  ].map(({ title, text, icon: Icon }, index) => (
-                    <motion.div
-                      key={title}
-                      initial={{ opacity: 0, y: 18 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.14 + index * 0.05 }}
-                      className="rounded-2xl border border-primary/10 bg-background p-5 shadow-sm"
-                    >
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-primary/75">
-                        {title}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
-                    </motion.div>
-                  ))}
+                <div className="grid grid-cols-2 gap-3">
+                  <motion.div
+                    className="rounded-xl border border-primary/15 bg-white/70 p-4 shadow-sm"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <Shirt className="mb-2 h-5 w-5 text-primary" />
+                    <p className="mb-1 text-xs font-medium text-foreground/80">Style Tip</p>
+                    <p className="text-[11px] leading-relaxed text-foreground/55">
+                      Custom-fit clothes make you look 5 years younger - science says so!
+                    </p>
+                  </motion.div>
+
+                  <motion.div
+                    className="rounded-xl border border-primary/15 bg-white/70 p-4 shadow-sm"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <Target className="mb-2 h-5 w-5 text-primary" />
+                    <p className="mb-1 text-xs font-medium text-foreground/80">Precision</p>
+                    <p className="text-[11px] leading-relaxed text-foreground/55">
+                      Our AI analyzes 40+ body points for the most accurate measurements.
+                    </p>
+                  </motion.div>
                 </div>
 
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentFact}
-                    initial={{ opacity: 0, x: 16 }}
+                    initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -16 }}
-                    transition={{ duration: 0.24 }}
-                    className="rounded-2xl border border-primary/10 bg-primary/5 p-5"
+                    exit={{ opacity: 0, x: -20 }}
+                    className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/10 px-4 py-3"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary/70">
-                          While We Scan
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                          {processingFacts[currentFact]}
-                        </p>
-                      </div>
-                    </div>
+                    <span className="text-lg">💡</span>
+                    <p className="flex-1 text-xs italic text-foreground/70">
+                      {processingFacts[currentFact]}
+                    </p>
                   </motion.div>
                 </AnimatePresence>
-              </div>
+              </motion.div>
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.18 }}
-              className="mt-8 flex flex-col items-center justify-between gap-4 rounded-[24px] border border-amber-200 bg-amber-50/80 px-6 py-5 text-center shadow-sm backdrop-blur-sm sm:flex-row sm:text-left"
-            >
-              <div>
-                <p className="text-xs font-medium uppercase tracking-[0.22em] text-amber-700">
-                  Please Wait
-                </p>
-                <p className="mt-2 text-sm text-amber-900/80">
-                  Avoid refreshing the page while the AI finalizes your measurements.
-                </p>
-              </div>
-              <Link
-                to="/products"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Browse products while you wait
-              </Link>
-            </motion.div>
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 2 }}
+            className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-300/40 bg-amber-50 px-5 py-2.5 shadow-md backdrop-blur-sm"
+          >
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+            </motion.div>
+            <p className="text-[11px] font-medium text-amber-700">
+              Don&apos;t refresh - AI is processing your measurements
+            </p>
+          </motion.div>
         </section>
         <Footer />
       </>
