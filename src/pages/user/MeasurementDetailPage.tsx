@@ -20,7 +20,7 @@ const MeasurementDetailPage = () => {
   const measurementRows = (detail: MeasurementDetail) => {
     const m = detail.measurements;
     return [
-      { label: "Neck circumference", value: formatSize(m.neck?.circumference) },
+      // { label: "Neck circumference", value: formatSize(m.neck?.circumference) },
       { label: "Chest circumference", value: formatSize(m.chest?.circumference) },
       { label: "Upper chest circumference", value: formatSize(m.upper_chest?.circumference) },
       { label: "Lower chest circumference", value: formatSize(m.lower_chest?.circumference) },
@@ -31,9 +31,9 @@ const MeasurementDetailPage = () => {
       { label: "Upper thigh circumference", value: formatSize(m.upper_thigh?.circumference) },
       { label: "Knee circumference", value: formatSize(m.knee?.circumference) },
       { label: "Body length", value: formatSize(m.body_length?.length) },
-      { label: "Arm hand to elbow", value: formatSize(m.arm?.hand_to_elbow) },
-      { label: "Arm shoulder to elbow", value: formatSize(m.arm?.shoulder_to_elbow) },
-      { label: "Arm total length", value: formatSize(m.arm?.total_length) },
+      // { label: "Arm shoulder to elbow", value: formatSize(m.arm?.shoulder_to_elbow) },
+      // { label: "Arm total length", value: formatSize(m.arm?.total_length) },
+      // { label: "Arm hand to elbow", value: formatSize(m.arm?.hand_to_elbow) },
     ].filter((row) => !!row.value);
   };
 
