@@ -1,4 +1,4 @@
-﻿// import { useState, useEffect } from 'react';
+// import { useState, useEffect } from 'react';
 // import { useParams, useNavigate } from 'react-router-dom';
 // import { motion } from 'framer-motion';
 // import { FiShoppingCart, FiHeart, FiTruck, FiShield, FiArrowLeft } from 'react-icons/fi';
@@ -4445,6 +4445,18 @@ const getCurrentMediaUrl = () => {
               </span>
             </div>
 
+            {/* Virtual Try On Button */}
+            <div className="flex justify-end -mt-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(`/virtual-try-on/${product.id}`)}
+                className="px-4 flex items-center justify-center space-x-2 h-9 text-xs font-bold border-2 border-sage text-sage rounded-lg hover:bg-sage hover:text-white transition-colors"
+              >
+                <span>Virtual Try On</span>
+              </motion.button>
+            </div>
+
             {/* Title */}
             <h1 className="text-2xl font-display font-bold text-foreground">
               {product.name}
@@ -4635,7 +4647,7 @@ const getCurrentMediaUrl = () => {
               </div> */}
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
