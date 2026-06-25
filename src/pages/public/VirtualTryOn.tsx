@@ -7,6 +7,7 @@ import { Footer } from '../../components/layout/Footer';
 import { productApi } from '../../api/productApi';
 import toast from 'react-hot-toast';
 import { uploadImageToLightX, uploadUrlToLightX, generateTryOn } from '../../api/lightxApi';
+import { useAuth } from '../../hooks/useAuth';
 
 const SERVER_URL = import.meta.env.VITE_API_IMG_URL;
 const getImageUrl = (path?: string) => {
@@ -18,6 +19,14 @@ const getImageUrl = (path?: string) => {
 const VirtualTryOn = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error("Please login to use Virtual Try On");
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
 
   const [productImage, setProductImage] = useState<string | null>(null);
   const [userImage, setUserImage] = useState<string | null>(null);

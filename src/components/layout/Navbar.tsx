@@ -603,15 +603,6 @@ const reduxDispatch = useAppDispatch(); // ✅ for cart actions
   const [profileName, setProfileName] = useState<string | null>(null);
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(() => localStorage.getItem('lightx_api_key') || '');
-  const [showKey, setShowKey] = useState(false);
-
-  const handleOpenSettings = () => {
-    setApiKeyInput(localStorage.getItem('lightx_api_key') || '');
-    setIsSettingsOpen(true);
-  };
-
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
@@ -937,15 +928,6 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
                 >
                   Dashboard
                 </Link>
-                <button
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    handleOpenSettings();
-                  }}
-                  className="w-full text-left px-4 py-3 text-white hover:bg-white/10 text-sm font-medium border-t border-white/10"
-                >
-                  Try On Settings
-                </button>
               </>
             )}
 
@@ -1041,17 +1023,7 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
             >
               Dashboard
             </Link>
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  setIsUserMenuOpen(false);
-                  handleOpenSettings();
-                }}
-                className="w-full text-left px-3 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-              >
-                Try On Settings
-              </button>
-            )}
+            {/* (Admin Settings moved to dashboard) */}
             <button
               onClick={() => {
                 handleLogout();
@@ -1172,16 +1144,6 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
       >
         Dashboard
       </Link>
-
-      <button
-        onClick={() => {
-          setIsMenuOpen(false);
-          handleOpenSettings();
-        }}
-        className="w-full text-left py-2 text-white font-semibold"
-      >
-        Try On Settings
-      </button>
     </>
   )}
         {/* ========== NON-ADMIN MOBILE VIEW ========== */}
@@ -1218,79 +1180,7 @@ max-md:fixed max-md:top-20 max-md:left-4 max-md:right-4 max-md:w-auto"
       {/* ---------------- NAVBAR SPACER (IMPORTANT FIX) ---------------- */}
       <div className="h-20" />
 
-      {/* ---------------- TRY ON SETTINGS MODAL ---------------- */}
-      <AnimatePresence>
-        {isSettingsOpen && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSettingsOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-
-            {/* Modal Box */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white p-6 shadow-2xl border border-gray-100 z-10"
-            >
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span>🔧</span> Virtual Try-On Settings
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    LightX API Key
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showKey ? "text" : "password"}
-                      value={apiKeyInput}
-                      onChange={(e) => setApiKeyInput(e.target.value)}
-                      placeholder="Enter your LightX API Key..."
-                      className="w-full rounded-xl border border-gray-300 pl-4 pr-12 py-3 text-gray-800 focus:border-[#7F8F72] focus:ring-1 focus:ring-[#7F8F72] outline-none transition-all text-sm font-medium"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowKey(!showKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-semibold uppercase tracking-wider"
-                    >
-                      {showKey ? "Hide" : "Show"}
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-                    This API key is stored securely in your browser's local storage and used for processing try-on requests.
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                  <button
-                    onClick={() => setIsSettingsOpen(false)}
-                    className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      localStorage.setItem('lightx_api_key', apiKeyInput.trim());
-                      setIsSettingsOpen(false);
-                      toast.success('LightX API Key saved successfully!');
-                    }}
-                    className="px-5 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-[#6B7D60] via-[#7A8D6D] to-[#6B7D60] hover:from-[#5E6E54] hover:to-[#6B7D60] hover:opacity-90 transition-all shadow-md shadow-[#6B7D60]/20"
-                  >
-                    Save Settings
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* ---------------- TRY ON SETTINGS MODAL REMOVED ---------------- */}
     </>
   );
 };
